@@ -10,43 +10,36 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section style={{ padding: '5rem 1.5rem', backgroundColor: '#FAFAF8' }}>
-      <div className="container" style={{ maxWidth: '720px' }}>
+    <section id="faq" className="section-wrap">
+      <div className="container">
+        <div className="section-label">FAQ</div>
         <h2 className="section-title">{t.faqTitle}</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
+        <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {t.faqs.map((faq, i) => (
             <div key={i} style={{
-              backgroundColor: 'white',
+              border: '1px solid var(--color-border)',
               borderRadius: '12px',
-              border: '1px solid #E5E7EB',
               overflow: 'hidden',
             }}>
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: '100%', textAlign: 'left',
-                  padding: '1.1rem 1.25rem',
-                  background: 'none', border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  gap: '1rem',
-                }}
-              >
-                <span style={{ fontWeight: 600, fontSize: '0.925rem', color: '#1A1A2E', lineHeight: 1.4 }}>
+              <button onClick={() => setOpen(open === i ? null : i)} style={{
+                width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '1.25rem 1.5rem', gap: '1rem',
+                background: 'white', border: 'none', cursor: 'pointer',
+                fontFamily: 'inherit', textAlign: 'left',
+              }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>
                   {faq.q}
                 </span>
-                <span style={{
-                  fontSize: '1.2rem', color: '#2B7A78', flexShrink: 0,
-                  transition: 'transform 0.2s',
-                  transform: open === i ? 'rotate(45deg)' : 'none',
-                  display: 'inline-block',
-                }}>
-                  +
-                </span>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--color-text-faint)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ flexShrink: 0, transition: 'transform 0.2s', transform: open === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </button>
               {open === i && (
-                <div style={{ padding: '0 1.25rem 1.1rem', fontSize: '0.875rem', color: '#4B5563', lineHeight: 1.7 }}>
+                <div style={{ padding: '0 1.5rem 1.25rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
                   {faq.a}
                 </div>
               )}
