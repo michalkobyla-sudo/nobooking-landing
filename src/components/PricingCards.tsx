@@ -1,32 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 
 export default function PricingCards() {
   const { lang, currency, setCurrency } = useLang()
   const t = TR[lang]
+  const router = useRouter()
   const [loading, setLoading] = useState<'basic' | 'pro' | null>(null)
 
-  async function handleBuy(plan: 'basic' | 'pro') {
+  function handleBuy(plan: 'basic' | 'pro') {
     setLoading(plan)
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, currency }),
-      })
-      const data = await res.json() as { url?: string; error?: string }
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        alert(lang === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment error. Please try again.')
-      }
-    } catch {
-      alert(lang === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment error. Please try again.')
-    }
-    setLoading(null)
+    router.push(`/zamow?plan=${plan}&currency=${currency}`)
   }
 
   const prices = {
