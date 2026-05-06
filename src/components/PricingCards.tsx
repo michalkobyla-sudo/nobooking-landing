@@ -5,11 +5,11 @@ import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 
 export default function PricingCards() {
-  const { lang, currency } = useLang()
+  const { lang, currency, setCurrency } = useLang()
   const t = TR[lang]
-  const [loading, setLoading] = useState<string | null>(null)
+  const [loading, setLoading] = useState<'basic' | 'pro' | null>(null)
 
-  async function handleCheckout(plan: 'basic' | 'pro') {
+  async function handleBuy(plan: 'basic' | 'pro') {
     setLoading(plan)
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -17,109 +17,139 @@ export default function PricingCards() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, currency }),
       })
-      const data = await res.json()
+      const data = await res.json() as { url?: string; error?: string }
       if (data.url) {
         window.location.href = data.url
       } else {
-        alert('Błąd płatności. Spróbuj ponownie.')
+        alert(lang === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment error. Please try again.')
       }
     } catch {
-      alert('Błąd płatności. Spróbuj ponownie.')
+      alert(lang === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment error. Please try again.')
     }
     setLoading(null)
   }
 
-  const basicPrice = currency === 'eur' ? '199 €' : '799 zł'
-  const proPrice = currency === 'eur' ? '299 €' : '1 199 zł'
-
-  function Card({ plan, price, features, recommended }: {
-    plan: 'basic' | 'pro'
-    price: string
-    features: string[]
-    recommended?: boolean
-  }) {
-    return (
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '20px',
-        padding: '2rem',
-        border: recommended ? '2px solid #2B7A78' : '1px solid #E5E7EB',
-        boxShadow: recommended ? '0 8px 32px rgba(43,122,120,0.12)' : '0 2px 12px rgba(0,0,0,0.05)',
-        position: 'relative',
-        flex: '1',
-        minWidth: '280px',
-        maxWidth: '420px',
-      }}>
-        {recommended && (
-          <div style={{
-            position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: '#2B7A78', color: 'white',
-            fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em',
-            padding: '0.3rem 1rem', borderRadius: '100px',
-            whiteSpace: 'nowrap',
-          }}>
-            {t.pricingRecommended}
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{
-            fontFamily: 'var(--font-cormorant), serif',
-            fontSize: '1.4rem', fontWeight: 700,
-            color: recommended ? '#2B7A78' : '#1A1A2E',
-            marginBottom: '0.5rem',
-          }}>
-            Nobooking {plan === 'basic' ? 'Basic' : 'Pro'}
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-            <span style={{ fontSize: '2.4rem', fontWeight: 800, color: '#1A1A2E', fontFamily: 'var(--font-cormorant), serif' }}>
-              {price}
-            </span>
-            <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>{t.pricingPeriod}</span>
-          </div>
-        </div>
-
-        <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#6B7280', marginBottom: '0.75rem' }}>
-          {t.pricingIncludes}
-        </p>
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
-          {features.map(f => (
-            <li key={f} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', fontSize: '0.875rem', color: '#374151' }}>
-              <span style={{ color: '#10B981', flexShrink: 0, marginTop: '1px' }}>✓</span>
-              {f}
-            </li>
-          ))}
-        </ul>
-
-        <button
-          onClick={() => handleCheckout(plan)}
-          disabled={loading === plan}
-          className={recommended ? 'btn-primary' : 'btn-outline'}
-          style={{
-            width: '100%',
-            justifyContent: 'center',
-            padding: '0.875rem',
-            fontSize: '1rem',
-            opacity: loading === plan ? 0.7 : 1,
-          }}
-        >
-          {loading === plan ? '...' : plan === 'basic' ? t.pricingCtaBasic : t.pricingCtaPro}
-        </button>
-      </div>
-    )
+  const prices = {
+    basic: currency === 'eur' ? '199 €' : '799 zł',
+    pro: currency === 'eur' ? '299 €' : '1 199 zł',
   }
 
   return (
-    <section id="cennik" style={{ padding: '5rem 1.5rem', backgroundColor: '#fff' }}>
+    <section id="cennik" className="section-wrap">
       <div className="container">
+        <div className="section-label">{lang === 'pl' ? 'Cennik' : 'Pricing'}</div>
         <h2 className="section-title">{t.pricingTitle}</h2>
+        <p className="section-sub">
+          {lang === 'pl' ? 'Płacisz raz, korzystasz przez 2 lata. Żadnych subskrypcji, żadnych prowizji.' : 'Pay once, use for 2 years. No subscriptions, no commissions.'}
+        </p>
 
-        <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2rem' }}>
-          <Card plan="basic" price={basicPrice} features={t.basicFeatures} />
-          <Card plan="pro" price={proPrice} features={t.proFeatures} recommended />
+        {/* Currency toggle */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', background: 'var(--color-bg-alt)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-pill)', padding: '4px', gap: '4px' }}>
+            {(['pln', 'eur'] as const).map(c => (
+              <button key={c} onClick={() => setCurrency(c)} style={{
+                padding: '0.4rem 1.25rem', borderRadius: 'var(--radius-pill)',
+                border: 'none', fontFamily: 'inherit', fontSize: '0.875rem', fontWeight: 700,
+                cursor: 'pointer', transition: 'all 0.15s',
+                background: currency === c ? 'var(--color-dark)' : 'transparent',
+                color: currency === c ? 'white' : 'var(--color-text-muted)',
+              }}>
+                {c === 'pln' ? 'PLN zł' : 'EUR €'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: '0.82rem', color: '#9CA3AF', marginTop: '1.5rem' }}>
+        {/* Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
+          {/* Basic */}
+          <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+              Basic
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: '0.25rem' }}>
+              {prices.basic}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-faint)', marginBottom: '1.75rem' }}>
+              {t.pricingPeriod} · {lang === 'pl' ? 'jednorazowo' : 'one-time'}
+            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem' }}>
+              {t.basicFeatures.map((f, i) => (
+                <li key={i} style={{ fontSize: '0.85rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                  <span style={{
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    background: 'var(--color-accent-light)', color: 'var(--color-accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.6rem', fontWeight: 900, flexShrink: 0, marginTop: '1px',
+                  }}>✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => handleBuy('basic')}
+              disabled={loading !== null}
+              style={{
+                width: '100%', padding: '0.875rem',
+                background: 'white', border: '2px solid var(--color-border)',
+                color: 'var(--color-text)', borderRadius: 'var(--radius-md)',
+                fontSize: '0.95rem', fontWeight: 700, fontFamily: 'inherit',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading && loading !== 'basic' ? 0.5 : 1,
+              }}>
+              {loading === 'basic' ? '...' : t.pricingCtaBasic}
+            </button>
+          </div>
+
+          {/* Pro */}
+          <div style={{ border: '2px solid var(--color-dark)', borderRadius: 'var(--radius-xl)', padding: '2rem', position: 'relative' }}>
+            <div style={{
+              position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)',
+              background: 'var(--color-dark)', color: 'white',
+              fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.875rem',
+              borderRadius: 'var(--radius-pill)', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+            }}>
+              ⭐ {t.pricingRecommended}
+            </div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+              Pro
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: '0.25rem' }}>
+              {prices.pro}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-faint)', marginBottom: '1.75rem' }}>
+              {t.pricingPeriod} · {lang === 'pl' ? 'jednorazowo' : 'one-time'}
+            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem' }}>
+              {t.proFeatures.map((f, i) => (
+                <li key={i} style={{ fontSize: '0.85rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                  <span style={{
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    background: 'var(--color-accent-light)', color: 'var(--color-accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.6rem', fontWeight: 900, flexShrink: 0, marginTop: '1px',
+                  }}>✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => handleBuy('pro')}
+              disabled={loading !== null}
+              style={{
+                width: '100%', padding: '0.875rem',
+                background: 'var(--color-dark)', border: '2px solid var(--color-dark)',
+                color: 'white', borderRadius: 'var(--radius-md)',
+                fontSize: '0.95rem', fontWeight: 700, fontFamily: 'inherit',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading && loading !== 'pro' ? 0.5 : 1,
+              }}>
+              {loading === 'pro' ? '...' : t.pricingCtaPro}
+            </button>
+          </div>
+        </div>
+
+        <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--color-text-faint)', marginTop: '1.5rem' }}>
           {t.pricingRenewal}
         </p>
       </div>
