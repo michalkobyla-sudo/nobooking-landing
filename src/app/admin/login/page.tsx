@@ -4,12 +4,6 @@ import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
-// Browser-side client for login only
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export default function AdminLoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -21,6 +15,12 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
+
+    // Create client inside handler so env vars are read at runtime, not build time
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 

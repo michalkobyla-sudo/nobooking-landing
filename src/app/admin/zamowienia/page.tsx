@@ -6,10 +6,13 @@ import { createClient } from '@supabase/supabase-js'
 import type { OrderStatus } from '@/lib/types'
 import { PRICE_LABELS } from '@/lib/prices'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Lazy client — created at runtime so env vars are available
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 interface OrderRow {
   id: string
@@ -71,7 +74,7 @@ export default function AdminZamowieniaPage() {
   }, [router])
 
   async function handleLogout() {
-    await supabase.auth.signOut()
+    await getSupabase().auth.signOut()
     router.push('/admin/login')
   }
 
