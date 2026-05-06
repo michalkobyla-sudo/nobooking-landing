@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
+import { createRequire } from 'module'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
+// Force CJS Stripe bundle — ESM uses fetch() which fails on Vercel serverless
+const _require = createRequire(import.meta.url)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const StripeLib = _require('stripe') as any
 
 const PRICES = {
   basic: { pln: 79900, eur: 19900 },
@@ -23,9 +26,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu'
+  // Trim + strip trailing slash to avoid "Not a valid URL" from Stripe
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu')
+    .trim()
+    .replace(/\/$/, '')
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const stripe = new StripeLib(
+      (process.env.STRIPE_SECRET_KEY ?? '').trim(),
+      { apiVersion: '2026-04-22.dahlia' }
+    )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{
@@ -41,6 +53,7 @@ export async function POST(request: NextRequest) {
       metadata: { plan, currency },
     })
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return NextResponse.json({ url: session.url })
   } catch (err: any) {
     console.error('[checkout] Stripe error:', err)

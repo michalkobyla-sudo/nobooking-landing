@@ -1,25 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
+import { createRequire } from 'module'
 import { Resend } from 'resend'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
+// Force CJS Stripe bundle — ESM uses fetch() which fails on Vercel serverless
+const _require = createRequire(import.meta.url)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const StripeLib = _require('stripe') as any
+
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const sig = request.headers.get('stripe-signature')!
 
-  let event: Stripe.Event
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  const stripe = new StripeLib(
+    (process.env.STRIPE_SECRET_KEY ?? '').trim(),
+    { apiVersion: '2026-04-22.dahlia' }
+  )
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch (err: any) {
     console.error('[webhook] signature error:', err.message)
     return NextResponse.json({ error: 'invalid_signature' }, { status: 400 })
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const session = event.data.object
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const plan = session.metadata?.plan ?? 'basic'
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const customerEmail = session.customer_details?.email ?? ''
     const planLabel = plan === 'pro' ? 'Nobooking Pro' : 'Nobooking Basic'
 
