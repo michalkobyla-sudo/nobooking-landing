@@ -2,32 +2,40 @@
 
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useLang } from '@/context/LangContext'
-import { TR } from '@/lib/translations'
 
 function SukcesContent() {
-  const { lang } = useLang()
-  const t = TR[lang]
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') ?? 'basic'
   const planLabel = plan === 'pro' ? 'Nobooking Pro' : 'Nobooking Basic'
-  const demoUrl = process.env.NEXT_PUBLIC_DEMO_URL || 'https://demo.nobooking.eu'
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F0FAF9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-      <div style={{ textAlign: 'center', maxWidth: '520px' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1A1A2E' }}>
-          {t.successTitle}
+    <div style={{ minHeight: '100vh', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ textAlign: 'center', maxWidth: '540px' }}>
+        <div style={{
+          width: '72px', height: '72px',
+          background: 'var(--color-accent)', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 1.5rem',
+          fontSize: '2rem', color: 'white', fontWeight: 800,
+        }}>
+          ✓
+        </div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: '#111827' }}>
+          Płatność przyjęta!
         </h1>
-        <p style={{ fontSize: '0.95rem', color: '#2B7A78', fontWeight: 600, marginBottom: '1rem' }}>
+        <p style={{ fontSize: '1rem', color: 'var(--color-accent)', fontWeight: 600, marginBottom: '1.5rem' }}>
           {planLabel}
         </p>
-        <p style={{ color: '#4B5563', lineHeight: 1.7, marginBottom: '2rem' }}>
-          {t.successText}
-        </p>
-        <a href={demoUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ fontSize: '1rem' }}>
-          {t.successCta}
+        <div style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.75rem', textAlign: 'left', marginBottom: '2rem' }}>
+          <p style={{ fontWeight: 700, marginBottom: '0.75rem', color: '#111827' }}>Co teraz?</p>
+          <ol style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', color: '#374151', fontSize: '0.9rem', lineHeight: 1.6 }}>
+            <li>Wkrótce dostaniesz od nas email z formularzem onboardingowym.</li>
+            <li>Wypełnij formularz — opisz apartament, podaj zdjęcia i ceny.</li>
+            <li>Zbudujemy Twoją stronę w ciągu <strong>7 dni roboczych</strong>.</li>
+          </ol>
+        </div>
+        <a href="/" style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textDecoration: 'none' }}>
+          ← Wróć na stronę główną
         </a>
       </div>
     </div>
