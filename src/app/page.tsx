@@ -5,6 +5,7 @@ import HowItWorks from '@/components/HowItWorks'
 import FeaturesGrid from '@/components/FeaturesGrid'
 import ComparisonTable from '@/components/ComparisonTable'
 import PricingCards from '@/components/PricingCards'
+import Testimonials from '@/components/Testimonials'
 import DemoCTA from '@/components/DemoCTA'
 import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
@@ -20,6 +21,7 @@ export default function HomePage() {
         <FeaturesGrid />
         <ComparisonTable />
         <PricingCards />
+        <Testimonials />
         <DemoCTA />
         <FAQ />
       </main>
