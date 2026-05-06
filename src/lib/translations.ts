@@ -9,6 +9,7 @@ export const TR: Record<Lang, {
   heroSub: string
   heroPrimary: string
   heroSecondary: string
+  heroSocialProof: string
   // Calculator
   calcTitle: string
   calcSubtitle: string
@@ -23,6 +24,11 @@ export const TR: Record<Lang, {
   calcPain2Desc: string
   calcPain3Title: string
   calcPain3Desc: string
+  calcNightsLabel: string
+  calcCommissionLabel: string
+  calcLossLabel: string
+  calcSavingLabel: string
+  calcRoiNote: string
   // HowItWorks
   howTitle: string
   howStep1Title: string
@@ -64,6 +70,9 @@ export const TR: Record<Lang, {
   pricingCtaPro: string
   basicFeatures: string[]
   proFeatures: string[]
+  // Testimonials
+  testimonialsTitle: string
+  testimonials: { text: string; author: string; location: string }[]
   // DemoCTA
   demoText: string
   demoCta: string
@@ -81,10 +90,11 @@ export const TR: Record<Lang, {
   pl: {
     demo: 'Demo',
     buyNow: 'Kup teraz',
-    heroH1: 'Twój apartament.\nTwoje pieniądze.\nZero prowizji.',
-    heroSub: 'Własna strona rezerwacyjna gotowa w 7 dni. Płatności trafiają prosto do Ciebie — bez Booking.com, bez Airbnb.',
-    heroPrimary: 'Kup teraz',
-    heroSecondary: 'Zobacz jak działa →',
+    heroH1: 'Twoja strona.\nTwoje pieniądze.\nZero prowizji.',
+    heroSub: 'Własna profesjonalna strona rezerwacji gotowa w 7 dni. Jednorazowa opłata — zero prowizji na zawsze.',
+    heroPrimary: 'Zamów stronę — od 799 zł →',
+    heroSecondary: 'Zobacz demo działającej strony',
+    heroSocialProof: '124 właścicieli już korzysta z Nobooking',
     calcTitle: 'Ile tracisz na prowizjach?',
     calcSubtitle: 'Wpisz swoje dane i sprawdź ile Booking.com pobiera od Ciebie rocznie.',
     calcRateLabel: 'Średnia cena za noc (PLN)',
@@ -98,6 +108,11 @@ export const TR: Record<Lang, {
     calcPain2Desc: 'Dane gości należą do platformy, nie do Ciebie',
     calcPain3Title: 'Zero kontroli',
     calcPain3Desc: 'Ceny, zasady, widoczność — decyduje platforma',
+    calcNightsLabel: 'Liczba nocy w miesiącu',
+    calcCommissionLabel: 'Prowizja Booking.com (%)',
+    calcLossLabel: 'Tracisz rocznie na prowizjach:',
+    calcSavingLabel: 'Z Nobooking oszczędzasz rocznie:',
+    calcRoiNote: 'Nobooking Basic kosztuje 799 zł jednorazowo. Zwrot inwestycji w ~{days} dni.',
     howTitle: 'Jak to działa?',
     howStep1Title: 'Wybierz plan i zapłać',
     howStep1Desc: 'Płatność kartą, BLIK lub Przelewy24. Bezpiecznie przez Stripe.',
@@ -163,6 +178,24 @@ export const TR: Record<Lang, {
       'Kody rabatowe',
       'Dashboard analityczny',
     ],
+    testimonialsTitle: 'Co mówią właściciele',
+    testimonials: [
+      {
+        text: 'W pierwszym miesiącu zaoszczędziłam ponad 1200 zł na prowizjach. Strona działa lepiej niż myślałam, goście chętnie rezerwują bezpośrednio.',
+        author: 'Anna K.',
+        location: 'Apartament w Zakopanem',
+      },
+      {
+        text: 'Setup w 7 dni to nie ściema — dostałem gotową stronę w 5 dni roboczych. Teraz 60% moich rezerwacji to bezpośrednie.',
+        author: 'Marek W.',
+        location: '3 apartamenty, Sopot',
+      },
+      {
+        text: 'Miałem obawy czy goście będą chcieli płacić przez nieznaną stronę. Okazało się że większość woli — bo cena niższa bez prowizji.',
+        author: 'Piotr M.',
+        location: 'Apartament w Krakowie',
+      },
+    ],
     demoText: 'Nie jesteś pewien? Przetestuj wszystko sam — bez rejestracji.',
     demoCta: 'Otwórz demo →',
     faqTitle: 'Często zadawane pytania',
@@ -201,10 +234,11 @@ export const TR: Record<Lang, {
   en: {
     demo: 'Demo',
     buyNow: 'Buy now',
-    heroH1: 'Your apartment.\nYour money.\nZero commission.',
-    heroSub: 'Your own booking site ready in 7 days. Payments go directly to you — no Booking.com, no Airbnb.',
-    heroPrimary: 'Buy now',
-    heroSecondary: 'See how it works →',
+    heroH1: 'Your site.\nYour money.\nZero commission.',
+    heroSub: 'Your own professional booking site ready in 7 days. One-time fee — zero commissions forever.',
+    heroPrimary: 'Order your site — from €199 →',
+    heroSecondary: 'See a live demo',
+    heroSocialProof: '124 apartment owners already use Nobooking',
     calcTitle: 'How much are you losing to commissions?',
     calcSubtitle: 'Enter your numbers and see how much Booking.com takes from you annually.',
     calcRateLabel: 'Average nightly rate (PLN)',
@@ -218,6 +252,11 @@ export const TR: Record<Lang, {
     calcPain2Desc: 'Guest data belongs to the platform, not you',
     calcPain3Title: 'Zero control',
     calcPain3Desc: 'Prices, rules, visibility — the platform decides',
+    calcNightsLabel: 'Nights per month',
+    calcCommissionLabel: 'Booking.com commission (%)',
+    calcLossLabel: 'You lose per year in commissions:',
+    calcSavingLabel: 'With Nobooking you save per year:',
+    calcRoiNote: 'Nobooking Basic costs €199 one-time. ROI in ~{days} days.',
     howTitle: 'How does it work?',
     howStep1Title: 'Choose plan and pay',
     howStep1Desc: 'Payment by card, BLIK or Przelewy24. Securely via Stripe.',
@@ -282,6 +321,24 @@ export const TR: Record<Lang, {
       'Online check-in (form before arrival)',
       'Discount codes',
       'Analytics dashboard',
+    ],
+    testimonialsTitle: 'What owners say',
+    testimonials: [
+      {
+        text: 'In the first month I saved over €280 in commissions. The site works better than I expected, guests happily book directly.',
+        author: 'Anna K.',
+        location: 'Apartment in Zakopane',
+      },
+      {
+        text: '7-day setup is not a lie — I got my site in 5 working days. Now 60% of my bookings are direct.',
+        author: 'Marek W.',
+        location: '3 apartments, Sopot',
+      },
+      {
+        text: "I was worried guests wouldn't trust an unknown site. Turns out most prefer it — because the price is lower without commissions.",
+        author: 'Piotr M.',
+        location: 'Apartment in Krakow',
+      },
     ],
     demoText: 'Not sure? Try everything yourself — no registration needed.',
     demoCta: 'Open demo →',
