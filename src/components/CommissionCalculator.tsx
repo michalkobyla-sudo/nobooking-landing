@@ -7,79 +7,88 @@ import { TR } from '@/lib/translations'
 export default function CommissionCalculator() {
   const { lang } = useLang()
   const t = TR[lang]
-  const [rate, setRate] = useState(300)
-  const [bookings, setBookings] = useState(20)
 
-  const annualLoss = Math.round(bookings * 7 * rate * 0.17)
-  const formatted = annualLoss.toLocaleString('pl-PL')
+  const [rate, setRate] = useState(350)
+  const [nights, setNights] = useState(22)
+  const [commission, setCommission] = useState(17)
+
+  const monthlyLoss = (rate * nights * commission) / 100
+  const annualLoss = Math.round(monthlyLoss * 12)
+  const roiDays = Math.ceil(799 / (monthlyLoss / 30))
+
+  const roiNote = t.calcRoiNote.replace('{days}', String(roiDays))
 
   return (
-    <section style={{ padding: '5rem 1.5rem', backgroundColor: '#fff' }}>
+    <section id="kalkulator" className="section-wrap" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
       <div className="container">
+        <div className="section-label">Kalkulator strat</div>
         <h2 className="section-title">{t.calcTitle}</h2>
-        <p className="section-subtitle">{t.calcSubtitle}</p>
+        <p className="section-sub">{t.calcSubtitle}</p>
 
-        {/* Calculator widget */}
         <div style={{
-          maxWidth: '560px', margin: '0 auto 3rem',
-          backgroundColor: '#F8F9FA', borderRadius: '20px',
-          padding: '2rem', border: '1px solid #E5E7EB',
+          background: '#F9FAFB', border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-xl)', padding: '2.5rem',
+          maxWidth: '640px', margin: '0 auto',
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-            <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem', color: '#374151' }}>
-                {t.calcRateLabel}
-              </label>
-              <input
-                type="number"
-                min={50} max={5000} step={50}
-                value={rate}
-                onChange={e => setRate(Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem', color: '#374151' }}>
-                {t.calcBookingsLabel}
-              </label>
-              <input
-                type="number"
-                min={1} max={365} step={1}
-                value={bookings}
-                onChange={e => setBookings(Number(e.target.value))}
-              />
-            </div>
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '1.5rem' }}>{t.calcNightsNote}</p>
-
-          <div style={{ backgroundColor: '#FEF3C7', borderRadius: '12px', padding: '1.25rem', textAlign: 'center', border: '1px solid #FDE68A' }}>
-            <p style={{ fontSize: '0.85rem', color: '#92400E', marginBottom: '0.4rem' }}>{t.calcResultPrefix}</p>
-            <p style={{ fontSize: '2.2rem', fontWeight: 800, color: '#DC2626', fontFamily: 'var(--font-cormorant), serif' }}>
-              {formatted} zł
-            </p>
-          </div>
-
-          <p style={{ fontSize: '0.82rem', color: '#6B7280', marginTop: '1rem', textAlign: 'center', lineHeight: 1.5 }}>
-            {t.calcResultSuffix}
-          </p>
-        </div>
-
-        {/* Pain points */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', maxWidth: '800px', margin: '0 auto' }}>
+          {/* Inputs */}
           {[
-            { icon: '💸', title: t.calcPain1Title, desc: t.calcPain1Desc },
-            { icon: '📵', title: t.calcPain2Title, desc: t.calcPain2Desc },
-            { icon: '🔒', title: t.calcPain3Title, desc: t.calcPain3Desc },
-          ].map(p => (
-            <div key={p.title} style={{
-              backgroundColor: '#FFF5F5', borderRadius: '14px', padding: '1.25rem',
-              border: '1px solid #FECACA', textAlign: 'center',
+            { label: t.calcRateLabel, value: rate, setter: setRate, suffix: lang === 'pl' ? 'zł' : '€', min: 50, max: 5000 },
+            { label: t.calcNightsLabel, value: nights, setter: setNights, suffix: '', min: 1, max: 31 },
+            { label: t.calcCommissionLabel, value: commission, setter: setCommission, suffix: '%', min: 1, max: 30 },
+          ].map(({ label, value, setter, suffix, min, max }) => (
+            <div key={label} style={{
+              display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem',
             }}>
-              <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>{p.icon}</div>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.3rem', color: '#1A1A2E' }}>{p.title}</p>
-              <p style={{ fontSize: '0.82rem', color: '#6B7280' }}>{p.desc}</p>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, flex: 1, color: '#374151' }}>
+                {label}
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <input
+                  type="number"
+                  value={value}
+                  min={min}
+                  max={max}
+                  onChange={e => setter(Number(e.target.value))}
+                  style={{ width: '110px' }}
+                />
+                {suffix && <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', minWidth: '1rem' }}>{suffix}</span>}
+              </div>
             </div>
           ))}
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '1.5rem 0' }}/>
+
+          {/* Loss result */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            background: '#FEF2F2', border: '1px solid #FECACA',
+            borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '0.875rem',
+          }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-pain)' }}>
+              {t.calcLossLabel}
+            </span>
+            <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--color-pain)' }}>
+              {annualLoss.toLocaleString('pl-PL')} {lang === 'pl' ? 'zł' : '€'}
+            </span>
+          </div>
+
+          {/* Saving result */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)',
+            borderRadius: '12px', padding: '1.25rem 1.5rem',
+          }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-accent)' }}>
+              {t.calcSavingLabel}
+            </span>
+            <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--color-accent)' }}>
+              +{annualLoss.toLocaleString('pl-PL')} {lang === 'pl' ? 'zł' : '€'}
+            </span>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--color-text-faint)', marginTop: '1rem' }}>
+            {roiNote}
+          </p>
         </div>
       </div>
     </section>
