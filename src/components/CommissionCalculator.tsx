@@ -42,16 +42,16 @@ export default function CommissionCalculator() {
               <label style={{ fontSize: '0.875rem', fontWeight: 600, flex: 1, color: '#374151', lineHeight: 1.4 }}>
                 {label}
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0, width: '148px' }}>
                 <input
                   type="number"
                   value={value}
                   min={min}
                   max={max}
                   onChange={e => setter(Number(e.target.value))}
-                  style={{ width: '110px' }}
+                  style={{ width: '110px', flexShrink: 0 }}
                 />
-                {suffix && <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', minWidth: '1rem' }}>{suffix}</span>}
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', width: '1.5rem', flexShrink: 0 }}>{suffix}</span>
               </div>
             </div>
           ))}
