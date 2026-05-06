@@ -37,12 +37,12 @@ export default function CommissionCalculator() {
             { label: t.calcCommissionLabel, value: commission, setter: setCommission, suffix: '%', min: 1, max: 30 },
           ].map(({ label, value, setter, suffix, min, max }) => (
             <div key={label} style={{
-              display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem',
+              display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1.25rem',
             }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, flex: 1, color: '#374151' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, flex: 1, color: '#374151', lineHeight: 1.4 }}>
                 {label}
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
                 <input
                   type="number"
                   value={value}

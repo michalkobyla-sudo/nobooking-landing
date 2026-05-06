@@ -20,13 +20,15 @@ export default function Testimonials() {
               border: '1px solid var(--color-border-light)',
               borderRadius: 'var(--radius-lg)',
               padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
               <div style={{ color: '#F59E0B', fontSize: '0.9rem', marginBottom: '0.875rem', letterSpacing: '0.05em' }}>
                 ★★★★★
               </div>
               <p style={{
                 fontSize: '0.875rem', color: '#374151', lineHeight: 1.7,
-                fontStyle: 'italic', marginBottom: '1.25rem',
+                fontStyle: 'italic', marginBottom: '1.25rem', flex: 1,
               }}>
                 &ldquo;{item.text}&rdquo;
               </p>

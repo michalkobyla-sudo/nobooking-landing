@@ -26,6 +26,7 @@ export default function HowItWorks() {
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '2rem',
+          alignItems: 'start',
         }}>
           {steps.map(step => (
             <div key={step.num} style={{

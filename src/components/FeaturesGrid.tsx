@@ -45,6 +45,8 @@ export default function FeaturesGrid() {
               padding: '1.75rem',
               transition: 'border-color 0.2s, box-shadow 0.2s',
               cursor: 'default',
+              display: 'flex',
+              flexDirection: 'column',
             }}
               onMouseEnter={e => {
                 e.currentTarget.style.borderColor = 'var(--color-accent-border)'
@@ -60,7 +62,7 @@ export default function FeaturesGrid() {
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.4rem' }}>
                 {feature.title}
               </h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.65 }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.65, flex: 1 }}>
                 {feature.desc}
               </p>
             </div>

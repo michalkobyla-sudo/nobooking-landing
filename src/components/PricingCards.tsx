@@ -63,7 +63,7 @@ export default function PricingCards() {
         {/* Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
           {/* Basic */}
-          <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
+          <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
               Basic
             </div>
@@ -73,7 +73,7 @@ export default function PricingCards() {
             <div style={{ fontSize: '0.78rem', color: 'var(--color-text-faint)', marginBottom: '1.75rem' }}>
               {t.pricingPeriod} · {lang === 'pl' ? 'jednorazowo' : 'one-time'}
             </div>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem' }}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem', flex: 1 }}>
               {t.basicFeatures.map((f, i) => (
                 <li key={i} style={{ fontSize: '0.85rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                   <span style={{
@@ -102,7 +102,7 @@ export default function PricingCards() {
           </div>
 
           {/* Pro */}
-          <div style={{ border: '2px solid var(--color-dark)', borderRadius: 'var(--radius-xl)', padding: '2rem', position: 'relative' }}>
+          <div style={{ border: '2px solid var(--color-dark)', borderRadius: 'var(--radius-xl)', padding: '2rem', position: 'relative', display: 'flex', flexDirection: 'column' }}>
             <div style={{
               position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)',
               background: 'var(--color-dark)', color: 'white',
@@ -120,7 +120,7 @@ export default function PricingCards() {
             <div style={{ fontSize: '0.78rem', color: 'var(--color-text-faint)', marginBottom: '1.75rem' }}>
               {t.pricingPeriod} · {lang === 'pl' ? 'jednorazowo' : 'one-time'}
             </div>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem' }}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.75rem', flex: 1 }}>
               {t.proFeatures.map((f, i) => (
                 <li key={i} style={{ fontSize: '0.85rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                   <span style={{
