@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import type { OrderStatus } from '@/lib/types'
 import { PRICE_LABELS } from '@/lib/prices'
 
-// Lazy client — created at runtime so env vars are available
+// createBrowserClient stores session in cookies (readable by SSR proxy)
 function getSupabase() {
-  return createClient(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )

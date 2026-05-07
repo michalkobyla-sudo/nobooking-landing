@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
@@ -16,8 +16,8 @@ export default function AdminLoginPage() {
     setError(null)
     setLoading(true)
 
-    // Create client inside handler so env vars are read at runtime, not build time
-    const supabase = createClient(
+    // createBrowserClient stores session in cookies (readable by SSR proxy)
+    const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
