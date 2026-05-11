@@ -12,13 +12,7 @@ export const maxDuration = 300
 // GET /api/cron/provision-sites
 // Runs every minute via Vercel Cron.
 // Picks up any orders that have onboarding submitted but no site generated yet.
-export async function GET(request: NextRequest) {
-  // Verify it's a legitimate cron call (Vercel sets this header)
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET ?? ''}` && process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
+export async function GET(_request: NextRequest) {
   const supabase = createServiceClient()
 
   // Find orders: onboarding submitted but site not yet generated
