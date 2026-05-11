@@ -67,3 +67,102 @@ export interface Order {
   revision_count: number           // 0–4
   revision_notes: string | null    // ostatnie uwagi klienta
 }
+
+// ─── SITE ─────────────────────────────────────────────────────────────────────
+
+export interface Site {
+  id: string
+  created_at: string
+  order_id: string
+  slug: string
+  plan: 'basic' | 'pro'
+  active: boolean
+  config: Record<string, unknown>  // ApartmentConfig JSON
+  owner_email: string
+  owner_user_id: string | null
+  stripe_account_id: string | null
+  stripe_onboarded: boolean
+}
+
+// ─── BOOKING ──────────────────────────────────────────────────────────────────
+
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+
+export interface Booking {
+  id: string
+  created_at: string
+  site_id: string
+  guest_name: string
+  guest_email: string
+  guest_phone: string
+  check_in: string        // YYYY-MM-DD
+  check_out: string       // YYYY-MM-DD
+  nights: number
+  guests_count: number
+  total_price: number
+  currency: string
+  stripe_session_id: string | null
+  stripe_payment_id: string | null
+  stripe_paid: boolean
+  status: BookingStatus
+  token: string
+  discount_code: string | null
+  discount_pct: number
+  notes: string | null
+  checkin_sent: boolean
+  checkin_submitted: boolean
+}
+
+// ─── BLOCKED DATE ─────────────────────────────────────────────────────────────
+
+export interface BlockedDate {
+  id: string
+  site_id: string
+  date: string    // YYYY-MM-DD
+  reason: string | null
+}
+
+// ─── REVIEW ───────────────────────────────────────────────────────────────────
+
+export interface Review {
+  id: string
+  created_at: string
+  site_id: string
+  booking_id: string | null
+  guest_name: string
+  score: number
+  text: string
+  published: boolean
+}
+
+// ─── DISCOUNT CODE ────────────────────────────────────────────────────────────
+
+export interface DiscountCode {
+  id: string
+  created_at: string
+  site_id: string
+  code: string
+  discount_pct: number
+  max_uses: number | null
+  uses_count: number
+  valid_until: string | null
+  active: boolean
+}
+
+// ─── CHECKIN FORM ─────────────────────────────────────────────────────────────
+
+export interface CheckinGuest {
+  name: string
+  dob: string
+  passport: string
+  country: string
+}
+
+export interface CheckinForm {
+  id: string
+  created_at: string
+  booking_id: string
+  guests_data: CheckinGuest[]
+  arrival_time: string | null
+  notes: string | null
+}

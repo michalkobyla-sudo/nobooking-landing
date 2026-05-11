@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { sendOnboardingSubmittedNotification, sendSiteReadyEmail } from '@/lib/email'
+import { sendOnboardingSubmittedNotification, sendSiteReadyEmail, sendOwnerWelcomeEmail } from '@/lib/email'
 import { generateSiteConfig, toSlug } from '@/lib/generate-site'
+import { provisionSite } from '@/lib/provision-site'
+import { createOnboardingLink } from '@/lib/stripe-connect'
 import type { Order } from '@/lib/types'
 
 interface Params {
@@ -117,7 +119,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     console.error('[onboarding] notification error:', err)
   )
 
-  // Generate site config via AI (non-blocking — kicks off in background)
+  // Generate site config + provision (non-blocking — kicks off in background)
   const supabaseForUpdate = createServiceClient()
   ;(async () => {
     try {
@@ -125,21 +127,51 @@ export async function POST(request: NextRequest, { params }: Params) {
         Object.entries(body).map(([k, v]) => [k, v ?? null])
       ) } as Order
 
+      // 1. Generate AI config
       const config = await generateSiteConfig(updatedOrder)
       const slug = toSlug(order.apartment_name)
+      const configJson = JSON.stringify(config)
 
+      // 2. Update orders table
       await supabaseForUpdate
         .from('orders')
         .update({
           site_slug: slug,
-          generated_config: JSON.stringify(config),
+          generated_config: configJson,
           site_generated_at: new Date().toISOString(),
         })
         .eq('id', order.id)
 
-      await sendSiteReadyEmail(updatedOrder, slug)
+      // 3. Provision site (creates sites record + auth user + Stripe Connect account)
+      const { tempPassword, stripeAccountId } = await provisionSite(updatedOrder, slug, configJson)
+
+      // 4. Generate Stripe Connect onboarding URL (for welcome email CTA)
+      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+      let stripeOnboardUrl = `${siteUrl}/api/connect/onboard?slug=${slug}`
+      if (stripeAccountId) {
+        try {
+          stripeOnboardUrl = await createOnboardingLink(stripeAccountId, slug)
+        } catch {
+          // fallback to our redirect route if link generation fails
+        }
+      }
+
+      // 5. Send welcome email with login credentials + Stripe Connect link
+      await sendOwnerWelcomeEmail({
+        email: (updatedOrder.ob_contact_email ?? updatedOrder.email).toLowerCase().trim(),
+        first_name: updatedOrder.first_name,
+        apartment_name: updatedOrder.apartment_name,
+        slug,
+        temp_password: tempPassword,
+        stripe_onboard_url: stripeOnboardUrl,
+        plan: updatedOrder.plan,
+      })
+
+      // 6. Send site-ready email with revision link (to order email)
+      await sendSiteReadyEmail(updatedOrder, slug, 0, 4)
+
     } catch (err) {
-      console.error('[onboarding] site generation error:', err)
+      console.error('[onboarding] provision error:', err)
     }
   })()
 

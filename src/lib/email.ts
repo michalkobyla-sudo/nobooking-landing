@@ -372,6 +372,105 @@ export async function sendRevisionCompleteEmail(order: Order, slug: string) {
   )
 }
 
+/** Email: Welcome owner — login credentials + Stripe Connect link */
+export async function sendOwnerWelcomeEmail(params: {
+  email: string
+  first_name: string
+  apartment_name: string
+  slug: string
+  temp_password: string
+  stripe_onboard_url: string
+  plan: 'basic' | 'pro'
+}) {
+  const { email, first_name, apartment_name, slug, temp_password, stripe_onboard_url, plan } = params
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const adminUrl = `${siteUrl}/sites/${slug}/admin`
+  const previewUrl = `${siteUrl}/sites/${slug}`
+
+  await sendEmail(
+    email,
+    `🎉 Twoja strona jest gotowa — dostępy do panelu admina`,
+    wrapEmail(`
+      ${renderHeader('Witaj na pokładzie!')}
+
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(first_name)}</strong>! 🎉</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Twoja strona apartamentu <strong>${escapeHtml(apartment_name)}</strong> jest gotowa
+          i zaczyna przyjmować rezerwacje!
+        </p>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.875rem; font-weight: 700; color: #059669; margin-bottom: 0.25rem;">
+            🏠 Twoja strona
+          </div>
+          <a href="${previewUrl}" style="color: #059669; font-weight: 600; word-break: break-all; font-size: 0.9rem;">${previewUrl}</a>
+        </div>
+
+        <div style="background: #1f2937; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; color: white;">
+          <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 1rem;">
+            Dane logowania do panelu admina
+          </div>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem; width: 40%;">Adres panelu</td>
+              <td style="padding: 0.4rem 0; font-size: 0.8rem;">
+                <a href="${adminUrl}" style="color: #34d399; word-break: break-all;">${adminUrl}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem;">Email</td>
+              <td style="padding: 0.4rem 0; font-size: 0.8rem; color: white;">${escapeHtml(email)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem;">Hasło tymczasowe</td>
+              <td style="padding: 0.4rem 0; font-size: 0.9rem; font-weight: 700; color: #fbbf24; font-family: monospace; letter-spacing: 0.05em;">
+                ${escapeHtml(temp_password)}
+              </td>
+            </tr>
+          </table>
+          <p style="margin: 1rem 0 0; font-size: 0.75rem; color: #6b7280;">
+            ⚠️ Zmień hasło po pierwszym logowaniu w Ustawieniach panelu.
+          </p>
+        </div>
+
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.875rem; font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">
+            💳 Krok obowiązkowy: podłącz płatności Stripe
+          </div>
+          <p style="font-size: 0.8rem; color: #78350f; margin: 0 0 1rem; line-height: 1.6;">
+            Aby goście mogli płacić za rezerwacje, musisz podłączyć swoje konto Stripe.
+            Zajmuje to 5 minut.
+          </p>
+          <a href="${stripe_onboard_url}" style="display: inline-block; background: #d97706; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
+            Podłącz płatności →
+          </a>
+        </div>
+
+        ${plan === 'pro' ? `
+        <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #5b21b6;">
+          ⭐ <strong>Plan Pro</strong> — SMS, online check-in i kody rabatowe są już aktywne w Twoim panelu.
+        </div>
+        ` : ''}
+
+        <div style="text-align: center; margin: 2rem 0;">
+          <a href="${adminUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
+            Przejdź do panelu admina →
+          </a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
+        <p style="color: #374151; margin: 0; font-size: 0.875rem; line-height: 1.7;">
+          W razie pytań odpowiedz na tego emaila — jestem do dyspozycji.<br/>
+          <strong>Michał · Nobooking</strong>
+        </p>
+      </div>
+
+      ${renderFooter()}
+    `)
+  )
+}
+
 /** Email 3: Notify Michał that onboarding form was submitted */
 export async function sendOnboardingSubmittedNotification(order: Order) {
   await sendEmail(
