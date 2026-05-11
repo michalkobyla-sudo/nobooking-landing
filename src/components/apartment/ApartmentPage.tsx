@@ -549,8 +549,9 @@ function VideoSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Calendar + price calculator ─────────────────────────────────────────────
 
-function CalendarPricer({ config, lang, ui, primary, isMobile }: {
+function CalendarPricer({ config, lang, ui, primary, isMobile, slug }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
+  siteId: string; slug: string
 }) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -799,10 +800,11 @@ function MapSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Booking form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ config, lang, ui, primary, isMobile }: {
+function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
+  siteId: string; slug: string
 }) {
-  void config; void lang
+  void lang
   const [form, setForm] = useState({ arrival: '', departure: '', guests: '2', name: '', email: '', phone: '', message: '', discount: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -951,8 +953,10 @@ function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui:
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function ApartmentPage({ config, showDemoBanner = false }: {
+export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false }: {
   config: ApartmentConfig
+  siteId?: string
+  slug?: string
   showDemoBanner?: boolean
 }) {
   const [lang, setLang] = useState<Lang>('pl')
@@ -987,11 +991,11 @@ export default function ApartmentPage({ config, showDemoBanner = false }: {
       <ApartmentInfo config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <Gallery config={config} ui={ui} primary={primary} isMobile={isMobile} />
       <VideoSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <CalendarPricer config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
+      <CalendarPricer config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} />
       <Reviews config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <GuestPortal config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <MapSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
+      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} />
       <ApartmentFooter config={config} ui={ui} primary={primary} />
     </div>
   )

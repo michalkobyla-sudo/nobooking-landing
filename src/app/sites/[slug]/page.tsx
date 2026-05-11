@@ -10,13 +10,14 @@ export default async function SitePage({ params }: Props) {
   const { slug } = await params
   const supabase = createServiceClient()
 
-  const { data: order } = await supabase
-    .from('orders')
-    .select('generated_config, apartment_name, first_name, last_name')
-    .eq('site_slug', slug)
+  const { data: site } = await supabase
+    .from('sites')
+    .select('id, config, active')
+    .eq('slug', slug)
+    .eq('active', true)
     .single()
 
-  if (!order?.generated_config) {
+  if (!site?.config) {
     return (
       <div style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center',
@@ -36,16 +37,14 @@ export default async function SitePage({ params }: Props) {
     )
   }
 
-  let config: ApartmentConfig
-  try {
-    config = JSON.parse(order.generated_config) as ApartmentConfig
-  } catch {
-    return (
-      <div style={{ padding: '4rem', textAlign: 'center', color: '#9CA3AF', fontFamily: '-apple-system, sans-serif' }}>
-        Błąd wczytywania konfiguracji strony.
-      </div>
-    )
-  }
+  const config = site.config as unknown as ApartmentConfig
 
-  return <ApartmentPage config={config} showDemoBanner={false} />
+  return (
+    <ApartmentPage
+      config={config}
+      siteId={site.id as string}
+      slug={slug}
+      showDemoBanner={false}
+    />
+  )
 }
