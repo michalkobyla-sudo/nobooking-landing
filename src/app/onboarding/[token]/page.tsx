@@ -17,6 +17,7 @@ export default async function OnboardingPage({ params }: Props) {
     submitted?: boolean
     first_name?: string
     apartment_name?: string
+    plan?: 'basic' | 'pro'
   }
 
   if (!data.found) {
@@ -58,6 +59,7 @@ export default async function OnboardingPage({ params }: Props) {
       token={token}
       firstName={data.first_name ?? ''}
       apartmentName={data.apartment_name ?? ''}
+      plan={data.plan ?? 'basic'}
     />
   )
 }

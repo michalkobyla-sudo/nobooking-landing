@@ -24,10 +24,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
-  if (!order.stripe_paid) {
-    return NextResponse.json({ error: 'not_paid' }, { status: 400 })
-  }
-
   try {
     await sendOnboardingEmail(order as Order)
   } catch (err) {

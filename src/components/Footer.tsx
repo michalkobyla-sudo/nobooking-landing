@@ -12,13 +12,13 @@ export default function Footer() {
         { label: 'Jak to działa', id: 'jak-dziala' },
         { label: 'Funkcje', id: 'funkcje' },
         { label: 'Cennik', id: 'cennik' },
-        { label: 'Demo', href: process.env.NEXT_PUBLIC_DEMO_URL || 'https://demo.nobooking.eu' },
+        { label: 'Demo', href: '/demo' },
       ]
     : [
         { label: 'How it works', id: 'jak-dziala' },
         { label: 'Features', id: 'funkcje' },
         { label: 'Pricing', id: 'cennik' },
-        { label: 'Demo', href: process.env.NEXT_PUBLIC_DEMO_URL || 'https://demo.nobooking.eu' },
+        { label: 'Demo', href: '/demo' },
       ]
 
   const companyLinks = lang === 'pl'

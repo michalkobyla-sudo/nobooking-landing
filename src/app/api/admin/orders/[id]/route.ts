@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, requireAdmin } from '@/lib/supabase'
-import type { OrderStatus } from '@/lib/types'
+import { sendStatusUpdateEmail } from '@/lib/email'
+import type { Order, OrderStatus } from '@/lib/types'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -39,13 +40,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   const supabase = createServiceClient()
-  const { error } = await supabase
+  const { data: order, error } = await supabase
     .from('orders')
     .update({ status })
     .eq('id', id)
+    .select()
+    .single()
 
   if (error) {
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
+  }
+
+  // Send email notification to client for key status changes
+  try {
+    await sendStatusUpdateEmail(order as Order, status)
+  } catch (err) {
+    console.error('[status-update] email error:', err)
   }
 
   return NextResponse.json({ success: true })

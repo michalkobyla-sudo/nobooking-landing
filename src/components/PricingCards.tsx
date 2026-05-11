@@ -48,7 +48,7 @@ export default function PricingCards() {
         </div>
 
         {/* Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
+        <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
           {/* Basic */}
           <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>

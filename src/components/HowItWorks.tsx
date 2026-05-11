@@ -22,7 +22,7 @@ export default function HowItWorks() {
           {lang === 'pl' ? 'Bez kodowania, bez agencji, bez miesięcznych abonamentów.' : 'No coding, no agencies, no monthly subscriptions.'}
         </p>
 
-        <div style={{
+        <div className="grid-3col" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '2rem',
@@ -51,6 +51,26 @@ export default function HowItWorks() {
               </p>
             </div>
           ))}
+        </div>
+
+        {/* Demo links */}
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '3rem', flexWrap: 'wrap' }}>
+          <a href="/demo" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
+            padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600,
+            color: 'var(--color-text)', textDecoration: 'none', background: 'white',
+          }}>
+            🏠 {lang === 'pl' ? 'Zobacz demo strony apartamentu' : 'View apartment site demo'}
+          </a>
+          <a href="/admin/demo/zamowienia" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
+            padding: '0.75rem 1.5rem', fontSize: '0.875rem', fontWeight: 600,
+            color: 'var(--color-text)', textDecoration: 'none', background: 'white',
+          }}>
+            ⚙️ {lang === 'pl' ? 'Zobacz demo panelu admina' : 'View admin panel demo'}
+          </a>
         </div>
       </div>
     </section>

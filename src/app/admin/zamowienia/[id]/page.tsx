@@ -44,6 +44,8 @@ export default function OrderDetailPage() {
   const [statusSaving, setStatusSaving] = useState(false)
   const [onboardingSending, setOnboardingSending] = useState(false)
   const [onboardingMsg, setOnboardingMsg] = useState<string | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [generateMsg, setGenerateMsg] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -67,6 +69,24 @@ export default function OrderDetailPage() {
     })
     setOrder(prev => prev ? { ...prev, status } : prev)
     setStatusSaving(false)
+  }
+
+  async function handleGenerateSite(sendEmail: boolean) {
+    setGenerating(true)
+    setGenerateMsg(null)
+    const res = await fetch(`/api/admin/orders/${id}/generate-site`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sendEmail }),
+    })
+    const data = await res.json() as { success?: boolean; slug?: string; error?: string; detail?: string }
+    if (data.success && data.slug) {
+      setGenerateMsg(`✅ Wygenerowano! /sites/${data.slug}`)
+      setOrder(prev => prev ? { ...prev, site_slug: data.slug ?? null } : prev)
+    } else {
+      setGenerateMsg(`❌ Błąd: ${data.error ?? 'nieznany'}${data.detail ? ` — ${data.detail}` : ''}`)
+    }
+    setGenerating(false)
   }
 
   async function handleSendOnboarding() {
@@ -171,15 +191,18 @@ export default function OrderDetailPage() {
 
         {/* Onboarding */}
         <Section title="Formularz onboardingowy">
-          {!order.stripe_paid && (
-            <p style={{ fontSize: '0.875rem', color: '#9CA3AF' }}>Oczekiwanie na płatność</p>
-          )}
-
-          {order.stripe_paid && !order.onboarding_submitted && (
+          {!order.onboarding_submitted && (
             <div>
-              <p style={{ fontSize: '0.875rem', color: '#374151', marginBottom: '1rem' }}>
-                Formularz nie został jeszcze wypełniony.
-              </p>
+              {!order.stripe_paid && (
+                <p style={{ fontSize: '0.8rem', color: '#F59E0B', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '0.5rem 0.875rem', marginBottom: '1rem', fontWeight: 600 }}>
+                  ⚠ Płatność Stripe nie potwierdzona — możesz mimo to wysłać formularz
+                </p>
+              )}
+              {order.stripe_paid && (
+                <p style={{ fontSize: '0.875rem', color: '#374151', marginBottom: '1rem' }}>
+                  Formularz nie został jeszcze wypełniony.
+                </p>
+              )}
               <button
                 onClick={handleSendOnboarding}
                 disabled={onboardingSending}
@@ -202,14 +225,21 @@ export default function OrderDetailPage() {
 
           {order.onboarding_submitted && (
             <div>
+              <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.75rem' }}>Opis i specyfikacja</h4>
               <Row label="Opis" value={order.ob_description} />
-              <Row label="Cena za noc" value={order.ob_price_per_night?.toString()} />
+              <Row label="Tagline" value={order.ob_tagline} />
+              <Row label="Adres" value={order.ob_address} />
+              <Row label="Sypialnie" value={order.ob_bedrooms?.toString()} />
+              <Row label="Łazienki" value={order.ob_bathrooms?.toString()} />
+              <Row label="Powierzchnia" value={order.ob_sqm ? `${order.ob_sqm} m²` : null} />
+
+              <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '1rem 0 0.75rem' }}>Zdjęcia i media</h4>
+              <Row label="Link do zdjęć" value={order.ob_photos_link} />
+              <Row label="Link do wideo" value={order.ob_video_link} />
+
+              <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '1rem 0 0.75rem' }}>Cennik</h4>
+              <Row label="Cena za noc" value={order.ob_price_per_night ? `${order.ob_price_per_night} ${(order.ob_currency ?? 'EUR').toUpperCase()}` : null} />
               <Row label="Maks. gości" value={order.ob_max_guests?.toString()} />
-              <Row label="Check-in" value={order.ob_checkin_time} />
-              <Row label="Check-out" value={order.ob_checkout_time} />
-              <Row label="Udogodnienia" value={order.ob_amenities} />
-              <Row label="Zasady" value={order.ob_rules} />
-              <Row label="Zdjęcia" value={order.ob_photos_link} />
               {order.ob_seasons && (
                 <div style={{ marginBottom: '0.625rem' }}>
                   <span style={{ fontSize: '0.8rem', color: '#9CA3AF', display: 'block', marginBottom: '0.25rem' }}>Sezony</span>
@@ -218,7 +248,97 @@ export default function OrderDetailPage() {
                   </pre>
                 </div>
               )}
+
+              <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '1rem 0 0.75rem' }}>Zasady i udogodnienia</h4>
+              <Row label="Check-in" value={order.ob_checkin_time} />
+              <Row label="Check-out" value={order.ob_checkout_time} />
+              <Row label="Udogodnienia" value={order.ob_amenities} />
+              <Row label="Zasady" value={order.ob_rules} />
+
+              <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '1rem 0 0.75rem' }}>Kontakt i domena</h4>
+              <Row label="Email kontaktowy" value={order.ob_contact_email} />
+              <Row label="Telefon kontaktowy" value={order.ob_contact_phone} />
+              <Row label="Domena" value={order.ob_domain} />
+              <Row label="Instagram" value={order.ob_instagram} />
+              <Row label="Facebook" value={order.ob_facebook} />
+              {order.ob_color && (
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.625rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#9CA3AF', minWidth: '140px' }}>Kolor</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: order.ob_color, border: '1px solid #E5E7EB' }} />
+                    <span style={{ fontSize: '0.875rem', color: '#111827', fontWeight: 500 }}>{order.ob_color}</span>
+                  </div>
+                </div>
+              )}
+
+              {(order.ob_sms_phone || order.ob_checkin_fields) && (
+                <>
+                  <h4 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D1D5DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '1rem 0 0.75rem' }}>Pro — dodatkowe</h4>
+                  <Row label="SMS telefon" value={order.ob_sms_phone} />
+                  {order.ob_checkin_fields && (
+                    <div style={{ marginBottom: '0.625rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#9CA3AF', display: 'block', marginBottom: '0.25rem' }}>Pola online check-in</span>
+                      <pre style={{ fontSize: '0.8rem', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '0.75rem', overflow: 'auto', color: '#374151', whiteSpace: 'pre-wrap' }}>
+                        {order.ob_checkin_fields}
+                      </pre>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+          )}
+        </Section>
+        {/* Site generation */}
+        <Section title="Wygenerowana strona">
+          {order.site_slug ? (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <a
+                  href={`/sites/${order.site_slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1.5px solid #bbf7d0', color: '#059669', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 700, textDecoration: 'none' }}
+                >
+                  🌐 nobooking.eu/sites/{order.site_slug} ↗
+                </a>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleGenerateSite(false)}
+                  disabled={generating}
+                  style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB', borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'inherit', cursor: generating ? 'not-allowed' : 'pointer', opacity: generating ? 0.7 : 1 }}
+                >
+                  {generating ? '⏳ Generowanie...' : '🔄 Regeneruj (bez emaila)'}
+                </button>
+                <button
+                  onClick={() => handleGenerateSite(true)}
+                  disabled={generating}
+                  style={{ background: '#059669', color: 'white', border: 'none', borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, fontFamily: 'inherit', cursor: generating ? 'not-allowed' : 'pointer', opacity: generating ? 0.7 : 1 }}
+                >
+                  {generating ? '⏳ Generowanie...' : '🔄 Regeneruj + wyślij email'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {!order.onboarding_submitted && (
+                <p style={{ fontSize: '0.875rem', color: '#9CA3AF', marginBottom: '1rem' }}>
+                  Formularz onboardingowy nie został jeszcze wypełniony.
+                </p>
+              )}
+              <button
+                onClick={() => handleGenerateSite(true)}
+                disabled={generating}
+                style={{ background: '#059669', color: 'white', border: 'none', borderRadius: '8px', padding: '0.7rem 1.5rem', fontSize: '0.875rem', fontWeight: 700, fontFamily: 'inherit', cursor: generating ? 'not-allowed' : 'pointer', opacity: generating ? 0.7 : 1 }}
+              >
+                {generating ? '⏳ Generuję stronę AI... (ok. 15 sek)' : '✨ Wygeneruj stronę AI →'}
+              </button>
+            </div>
+          )}
+          {generateMsg && (
+            <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: generateMsg.startsWith('✅') ? '#059669' : '#DC2626', fontWeight: 600 }}>
+              {generateMsg}
+            </p>
           )}
         </Section>
       </div>

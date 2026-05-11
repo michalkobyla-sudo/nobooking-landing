@@ -1,0 +1,65 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+.pj { font-family: 'Plus Jakarta Sans', sans-serif; }
+</style>
+
+<h2>Kolor akcentu</h2>
+<p class="subtitle">Plus Jakarta Sans + układ A — który akcent najlepiej sprzedaje?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="teal" onclick="toggleSelect(this)">
+    <div class="card-image pj" style="background:#FAFAF8;padding:1.5rem;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;border:1px solid #E5E7EB;">
+      <div style="display:inline-block;background:#E6F4F1;color:#2B7A78;font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:0.25rem 0.75rem;border-radius:100px;">🏠 Dla właścicieli apartamentów</div>
+      <div style="font-size:1.6rem;font-weight:800;line-height:1.05;color:#0F0F0F;letter-spacing:-0.04em;text-align:center;">Przestań płacić<br/><span style="text-decoration:line-through;color:#DC2626;">17% Booking.com</span><br/>zarabiaj więcej.</div>
+      <div style="color:#6B7280;font-size:0.7rem;text-align:center;line-height:1.5;">Twoja własna strona rezerwacji gotowa w 7 dni.</div>
+      <div style="display:flex;gap:0.5rem;">
+        <div style="background:#2B7A78;color:white;padding:0.4rem 1rem;border-radius:100px;font-size:0.68rem;font-weight:700;">Zamów od 799 zł →</div>
+        <div style="border:1.5px solid #E5E7EB;color:#6B7280;padding:0.4rem 0.875rem;border-radius:100px;font-size:0.68rem;">Demo</div>
+      </div>
+      <div style="display:flex;gap:1.5rem;">
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#2B7A78;">0%</div><div style="font-size:0.58rem;color:#9CA3AF;">prowizji</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#2B7A78;">7 dni</div><div style="font-size:0.58rem;color:#9CA3AF;">realizacja</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#2B7A78;">2 lata</div><div style="font-size:0.58rem;color:#9CA3AF;">bez opłat</div></div>
+      </div>
+    </div>
+    <div class="card-body"><h3>A — Teal #2B7A78 (obecny)</h3><p>Obecna marka. Spokojny, profesjonalny, zaufany. Kojarzy się z nieruchomościami i ekologią.</p></div>
+  </div>
+
+  <div class="card" data-choice="black-only" onclick="toggleSelect(this)">
+    <div class="card-image pj" style="background:#FAFAF8;padding:1.5rem;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;border:1px solid #E5E7EB;">
+      <div style="display:inline-block;background:#F3F4F6;color:#374151;font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:0.25rem 0.75rem;border-radius:100px;">🏠 Dla właścicieli apartamentów</div>
+      <div style="font-size:1.6rem;font-weight:800;line-height:1.05;color:#0F0F0F;letter-spacing:-0.04em;text-align:center;">Przestań płacić<br/><span style="text-decoration:line-through;color:#DC2626;">17% Booking.com</span><br/>zarabiaj więcej.</div>
+      <div style="color:#6B7280;font-size:0.7rem;text-align:center;line-height:1.5;">Twoja własna strona rezerwacji gotowa w 7 dni.</div>
+      <div style="display:flex;gap:0.5rem;">
+        <div style="background:#0F0F0F;color:white;padding:0.4rem 1rem;border-radius:100px;font-size:0.68rem;font-weight:700;">Zamów od 799 zł →</div>
+        <div style="border:1.5px solid #E5E7EB;color:#6B7280;padding:0.4rem 0.875rem;border-radius:100px;font-size:0.68rem;">Demo</div>
+      </div>
+      <div style="display:flex;gap:1.5rem;">
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#0F0F0F;">0%</div><div style="font-size:0.58rem;color:#9CA3AF;">prowizji</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#0F0F0F;">7 dni</div><div style="font-size:0.58rem;color:#9CA3AF;">realizacja</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#0F0F0F;">2 lata</div><div style="font-size:0.58rem;color:#9CA3AF;">bez opłat</div></div>
+      </div>
+    </div>
+    <div class="card-body"><h3>B — Czarno-biały (zero koloru)</h3><p>Radykalnie minimalistyczny. Całkowity kontrast, najsilniejsza typografia. Klimat Apple, Notion. Bardzo odważne.</p></div>
+  </div>
+
+  <div class="card" data-choice="teal-vibrant" onclick="toggleSelect(this)">
+    <div class="card-image pj" style="background:#FAFAF8;padding:1.5rem;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;border:1px solid #E5E7EB;">
+      <div style="display:inline-block;background:#ECFDF5;color:#059669;font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:0.25rem 0.75rem;border-radius:100px;">🏠 Dla właścicieli apartamentów</div>
+      <div style="font-size:1.6rem;font-weight:800;line-height:1.05;color:#0F0F0F;letter-spacing:-0.04em;text-align:center;">Przestań płacić<br/><span style="text-decoration:line-through;color:#DC2626;">17% Booking.com</span><br/>zarabiaj więcej.</div>
+      <div style="color:#6B7280;font-size:0.7rem;text-align:center;line-height:1.5;">Twoja własna strona rezerwacji gotowa w 7 dni.</div>
+      <div style="display:flex;gap:0.5rem;">
+        <div style="background:#059669;color:white;padding:0.4rem 1rem;border-radius:100px;font-size:0.68rem;font-weight:700;">Zamów od 799 zł →</div>
+        <div style="border:1.5px solid #E5E7EB;color:#6B7280;padding:0.4rem 0.875rem;border-radius:100px;font-size:0.68rem;">Demo</div>
+      </div>
+      <div style="display:flex;gap:1.5rem;">
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#059669;">0%</div><div style="font-size:0.58rem;color:#9CA3AF;">prowizji</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#059669;">7 dni</div><div style="font-size:0.58rem;color:#9CA3AF;">realizacja</div></div>
+        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:#059669;">2 lata</div><div style="font-size:0.58rem;color:#9CA3AF;">bez opłat</div></div>
+      </div>
+    </div>
+    <div class="card-body"><h3>C — Szmaragdowa zieleń #059669</h3><p>Żywsza, bardziej wibrująca zieleń. Kojarzy się z pieniędzmi, sukcesem, "go". Podobna do obecnej ale bardziej energetyczna.</p></div>
+  </div>
+
+</div>

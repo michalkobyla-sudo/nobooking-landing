@@ -6,7 +6,7 @@ import { TR } from '@/lib/translations'
 export default function Hero() {
   const { lang } = useLang()
   const t = TR[lang]
-  const demoUrl = process.env.NEXT_PUBLIC_DEMO_URL || 'https://demo.nobooking.eu'
+  const demoUrl = '/demo'
 
   function scrollToPricing() {
     document.getElementById('cennik')?.scrollIntoView({ behavior: 'smooth' })
@@ -25,7 +25,7 @@ export default function Hero() {
         gridTemplateColumns: '1.2fr 1fr',
         gap: '3rem',
         alignItems: 'center',
-      }}>
+      }} className="grid-hero">
         {/* LEFT: Text */}
         <div>
           {/* Badge */}
@@ -73,7 +73,7 @@ export default function Hero() {
             <button onClick={scrollToPricing} className="btn-primary">
               {t.heroPrimary}
             </button>
-            <a href={demoUrl} target="_blank" rel="noopener noreferrer" className="btn-outline">
+            <a href={demoUrl} className="btn-outline">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>

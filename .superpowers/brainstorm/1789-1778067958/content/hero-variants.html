@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F3F4F6; color: #0F0F0F; -webkit-font-smoothing: antialiased; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6B7280; margin-bottom: 0.5rem; }
+.variant { border-radius: 16px; overflow: hidden; border: 3px solid transparent; cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
+.variant:hover { border-color: #059669; transform: translateY(-2px); }
+.variant.selected { border-color: #059669; }
+
+/* ── VARIANT A: Gradient background + product screenshot ── */
+.var-a { background: linear-gradient(160deg, #FAFAFA 0%, #F0FDF4 100%); padding: 0; }
+.var-a-header { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #E5E7EB; padding: 0 2.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.var-a-header .logo { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.03em; }
+.var-a-header .logo span { color: #059669; }
+.var-a-header nav { display: flex; gap: 1.5rem; }
+.var-a-header nav a { font-size: 0.8rem; font-weight: 600; color: #6B7280; text-decoration: none; }
+.var-a-header .cta { background: #0F0F0F; color: white; padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+.var-a-body { padding: 4rem 2.5rem 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; max-width: 1000px; margin: 0 auto; }
+.var-a-text {}
+.var-a-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: white; border: 1px solid #D1FAE5; color: #059669; font-size: 0.68rem; font-weight: 700; padding: 0.28rem 0.75rem; border-radius: 100px; margin-bottom: 1.25rem; }
+.var-a-h1 { font-size: 2.6rem; font-weight: 800; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 1.1rem; }
+.var-a-sub { font-size: 0.9rem; color: #6B7280; line-height: 1.65; margin-bottom: 1.5rem; }
+.var-a-btns { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+.var-a-btn-p { background: #059669; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.9rem; font-weight: 700; text-decoration: none; display: inline-block; }
+.var-a-btn-o { border: 1.5px solid #E5E7EB; color: #374151; padding: 0.7rem 1.5rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-block; }
+.var-a-social { display: flex; align-items: center; gap: 0.6rem; }
+.var-a-avatars { display: flex; }
+.var-a-avatars span { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; background: #E5E7EB; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #6B7280; margin-left: -6px; }
+.var-a-avatars span:first-child { margin-left: 0; }
+.var-a-social-text { font-size: 0.75rem; color: #6B7280; }
+.var-a-social-text strong { color: #0F0F0F; }
+.var-a-mockup { background: white; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #E5E7EB; }
+.mockup-bar { background: #F9FAFB; border-bottom: 1px solid #E5E7EB; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.mockup-url { background: white; border: 1px solid #E5E7EB; border-radius: 6px; flex: 1; padding: 0.25rem 0.6rem; font-size: 0.65rem; color: #9CA3AF; }
+.mockup-body { padding: 1.25rem; }
+.mockup-apt-img { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); border-radius: 10px; height: 90px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.875rem; }
+.mockup-apt-img svg { width: 32px; height: 32px; stroke: #059669; fill: none; stroke-width: 1.5; }
+.mockup-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.mockup-date-box { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 0.5rem; }
+.mockup-date-label { font-size: 0.55rem; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.mockup-date-val { font-size: 0.78rem; font-weight: 700; }
+.mockup-price-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-top: 1px solid #F3F4F6; }
+.mockup-price-row span { font-size: 0.72rem; color: #6B7280; }
+.mockup-price-row strong { font-size: 0.78rem; font-weight: 700; }
+.mockup-book-btn { background: #059669; color: white; width: 100%; padding: 0.6rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 0.75rem; }
+
+/* ── VARIANT B: Dark header + big centered with visual accent ── */
+.var-b { background: #fff; }
+.var-b-header { background: #0F0F0F; padding: 0 2.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.var-b-header .logo { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.03em; color: white; }
+.var-b-header .logo span { color: #059669; }
+.var-b-header nav { display: flex; gap: 1.5rem; }
+.var-b-header nav a { font-size: 0.8rem; font-weight: 600; color: #9CA3AF; text-decoration: none; }
+.var-b-header .cta { background: #059669; color: white; padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+.var-b-ticker { background: #059669; padding: 0.5rem 2rem; text-align: center; font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: 0.04em; }
+.var-b-hero { padding: 4.5rem 2rem 4rem; text-align: center; background: #fff; }
+.var-b-h1 { font-size: 3.2rem; font-weight: 800; line-height: 1.03; letter-spacing: -0.05em; margin-bottom: 1.25rem; }
+.var-b-h1 .strike { text-decoration: line-through; color: #DC2626; }
+.var-b-h1 .accent { color: #059669; }
+.var-b-sub { font-size: 1rem; color: #6B7280; max-width: 480px; margin: 0 auto 2rem; line-height: 1.65; }
+.var-b-ctas { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2.5rem; }
+.var-b-btn-p { background: #059669; color: white; padding: 0.875rem 2rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; text-decoration: none; }
+.var-b-btn-o { border: 2px solid #E5E7EB; color: #374151; padding: 0.825rem 1.75rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+.var-b-stats-bar { background: #F9FAFB; border: 1px solid #F3F4F6; border-radius: 16px; display: inline-flex; gap: 0; overflow: hidden; margin-bottom: 2.5rem; }
+.var-b-stat { padding: 1rem 2rem; text-align: center; border-right: 1px solid #F3F4F6; }
+.var-b-stat:last-child { border-right: none; }
+.var-b-stat-num { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.04em; }
+.var-b-stat-num.g { color: #059669; }
+.var-b-stat-label { font-size: 0.7rem; color: #9CA3AF; font-weight: 500; }
+.var-b-logos { text-align: center; }
+.var-b-logos p { font-size: 0.72rem; color: #D1D5DB; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.var-b-logos-row { display: flex; justify-content: center; align-items: center; gap: 2.5rem; }
+.var-b-logo-item { font-size: 0.82rem; font-weight: 700; color: #9CA3AF; }
+
+/* ── VARIANT C: Split hero with big number shock ── */
+.var-c { background: #fff; }
+.var-c-header { background: rgba(255,255,255,0.95); border-bottom: 1px solid #F3F4F6; padding: 0 2.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.var-c-header .logo { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.03em; }
+.var-c-header .logo span { color: #059669; }
+.var-c-header nav a { font-size: 0.8rem; font-weight: 600; color: #6B7280; text-decoration: none; margin-left: 1.5rem; }
+.var-c-header .cta { background: #0F0F0F; color: white; padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; margin-left: 1rem; }
+.var-c-hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 380px; }
+.var-c-left { background: #0F0F0F; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; }
+.var-c-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280; margin-bottom: 1rem; }
+.var-c-big-num { font-size: 6rem; font-weight: 800; letter-spacing: -0.06em; line-height: 1; color: #DC2626; margin-bottom: 0.25rem; }
+.var-c-big-label { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+.var-c-big-sub { font-size: 0.8rem; color: #6B7280; line-height: 1.5; }
+.var-c-right { background: #FAFAFA; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; }
+.var-c-h1 { font-size: 2rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 0.875rem; }
+.var-c-h1 .accent { color: #059669; }
+.var-c-sub { font-size: 0.85rem; color: #6B7280; line-height: 1.65; margin-bottom: 1.5rem; }
+.var-c-btn { background: #059669; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.9rem; font-weight: 700; text-decoration: none; display: inline-block; margin-bottom: 1.25rem; }
+.var-c-proof { display: flex; gap: 1.25rem; }
+.var-c-proof-item { text-align: center; }
+.var-c-proof-num { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.03em; }
+.var-c-proof-num.g { color: #059669; }
+.var-c-proof-label { font-size: 0.65rem; color: #9CA3AF; }
+
+/* click overlay */
+.variant-label { text-align: center; padding: 0.6rem; background: rgba(0,0,0,0.03); font-size: 0.75rem; font-weight: 700; color: #6B7280; }
+</style>
+</head>
+<body>
+
+<p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.85rem;color:#374151;font-weight:600;text-align:center;margin-bottom:0.5rem;">Kliknij wariant który najbardziej pasuje jako górna część strony:</p>
+
+<!-- VARIANT A -->
+<div class="variant" data-choice="split-mockup" onclick="this.classList.toggle('selected'); window.parent && window.parent.postMessage({type:'select',choice:'split-mockup'},'*')">
+<div class="variant-label">A — Podzielony: tekst po lewej + mockup produktu po prawej + jasne tło</div>
+<div class="var-a">
+  <div class="var-a-header">
+    <div class="logo">No<span>booking</span></div>
+    <nav><a href="#">Jak działa</a><a href="#">Cennik</a><a href="#">FAQ</a></nav>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div style="display:flex;background:#F3F4F6;border-radius:6px;padding:2px;gap:2px;"><span style="padding:0.18rem 0.5rem;border-radius:4px;background:white;font-size:0.7rem;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,0.08);">PL</span><span style="padding:0.18rem 0.5rem;font-size:0.7rem;font-weight:600;color:#9CA3AF;">EN</span></div>
+      <a href="#" class="cta">Zamów stronę →</a>
+    </div>
+  </div>
+  <div class="var-a-body">
+    <div class="var-a-text">
+      <div class="var-a-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Dla właścicieli apartamentów
+      </div>
+      <div class="var-a-h1">Twoja strona.<br/>Twoje <span style="color:#059669;">pieniądze.</span><br/><span style="font-size:1.6rem;color:#6B7280;font-weight:600;text-decoration:line-through;">Zero prowizji.</span></div>
+      <p class="var-a-sub">Profesjonalna strona rezerwacji gotowa w 7 dni. Jednorazowo od 799 zł — bez miesięcznych opłat, bez prowizji.</p>
+      <div class="var-a-btns">
+        <a href="#" class="var-a-btn-p">Zamów stronę — od 799 zł →</a>
+        <a href="#" class="var-a-btn-o">Zobacz demo działającej strony</a>
+      </div>
+      <div class="var-a-social">
+        <div class="var-a-avatars">
+          <span>AK</span><span>MW</span><span>PM</span><span style="background:#ECFDF5;color:#059669;">+</span>
+        </div>
+        <div class="var-a-social-text"><strong>124 właścicieli</strong> już korzysta z Nobooking</div>
+      </div>
+    </div>
+    <div class="var-a-mockup">
+      <div class="mockup-bar">
+        <div class="dot" style="background:#FF5F57;"></div>
+        <div class="dot" style="background:#FFBD2E;"></div>
+        <div class="dot" style="background:#28CA41;"></div>
+        <div class="mockup-url">moj-apartament.pl</div>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-apt-img">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div style="font-size:0.85rem;font-weight:800;margin-bottom:0.25rem;">Apartament przy plaży</div>
+        <div style="font-size:0.7rem;color:#6B7280;margin-bottom:0.875rem;">Sopot · 2 osoby · WiFi · Parking</div>
+        <div class="mockup-dates">
+          <div class="mockup-date-box"><div class="mockup-date-label">Check-in</div><div class="mockup-date-val">15 lip</div></div>
+          <div class="mockup-date-box"><div class="mockup-date-label">Check-out</div><div class="mockup-date-val">22 lip</div></div>
+        </div>
+        <div class="mockup-price-row"><span>7 nocy × 320 zł</span><strong>2 240 zł</strong></div>
+        <div class="mockup-price-row"><span>Opłata za sprzątanie</span><strong>150 zł</strong></div>
+        <div class="mockup-price-row" style="border-top:2px solid #0F0F0F;"><span style="font-weight:700;">Razem</span><strong style="color:#059669;">2 390 zł</strong></div>
+        <div class="mockup-book-btn">Zarezerwuj i zapłać</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- VARIANT B -->
+<div class="variant" data-choice="dark-header-stats" onclick="this.classList.toggle('selected'); window.parent && window.parent.postMessage({type:'select',choice:'dark-header-stats'},'*')">
+<div class="variant-label">B — Ciemny header + zielony ticker + duże wycentrowane + stats bar + social proof</div>
+<div class="var-b">
+  <div class="var-b-header">
+    <div class="logo">No<span>booking</span></div>
+    <nav><a href="#">Jak działa</a><a href="#">Cennik</a><a href="#">FAQ</a></nav>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div style="display:flex;background:#1F2937;border-radius:6px;padding:2px;gap:2px;"><span style="padding:0.18rem 0.5rem;border-radius:4px;background:#374151;color:white;font-size:0.7rem;font-weight:700;">PL</span><span style="padding:0.18rem 0.5rem;font-size:0.7rem;font-weight:600;color:#6B7280;">EN</span></div>
+      <a href="#" class="cta">Zamów →</a>
+    </div>
+  </div>
+  <div class="var-b-ticker">🏠 Właściciel z 30 nocami/mies. odzyskuje średnio 18 360 zł rocznie — zero prowizji z Nobooking</div>
+  <div class="var-b-hero">
+    <div class="var-b-h1">Przestań płacić<br/><span class="strike">17% Booking.com</span><br/><span class="accent">zarabiaj więcej.</span></div>
+    <p class="var-b-sub">Twoja własna profesjonalna strona rezerwacji. Gotowa w 7 dni. Jednorazowo od 799 zł.</p>
+    <div class="var-b-ctas">
+      <a href="#" class="var-b-btn-p">Zamów stronę — od 799 zł →</a>
+      <a href="#" class="var-b-btn-o">Zobacz demo</a>
+    </div>
+    <div class="var-b-stats-bar">
+      <div class="var-b-stat"><div class="var-b-stat-num g">0%</div><div class="var-b-stat-label">prowizji</div></div>
+      <div class="var-b-stat"><div class="var-b-stat-num">7 dni</div><div class="var-b-stat-label">realizacja</div></div>
+      <div class="var-b-stat"><div class="var-b-stat-num">2 lata</div><div class="var-b-stat-label">bez opłat</div></div>
+      <div class="var-b-stat"><div class="var-b-stat-num g">124+</div><div class="var-b-stat-label">stron działa</div></div>
+    </div>
+    <div class="var-b-logos">
+      <p>Płatności obsługiwane przez</p>
+      <div class="var-b-logos-row">
+        <span class="var-b-logo-item">stripe</span>
+        <span class="var-b-logo-item">VISA</span>
+        <span class="var-b-logo-item">Mastercard</span>
+        <span class="var-b-logo-item">BLIK</span>
+        <span class="var-b-logo-item"> Pay</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- VARIANT C -->
+<div class="variant" data-choice="split-number-shock" onclick="this.classList.toggle('selected'); window.parent && window.parent.postMessage({type:'select',choice:'split-number-shock'},'*')">
+<div class="variant-label">C — Podzielony: ciemna lewa z dużą czerwoną liczbą 17% + jasna prawa z CTA</div>
+<div class="var-c">
+  <div class="var-c-header">
+    <div class="logo">No<span>booking</span></div>
+    <div>
+      <nav style="display:inline;"><a href="#" style="text-decoration:none;">Jak działa</a><a href="#" style="text-decoration:none;">Cennik</a><a href="#" style="text-decoration:none;">FAQ</a></nav>
+      <a href="#" class="cta">Zamów →</a>
+    </div>
+  </div>
+  <div class="var-c-hero">
+    <div class="var-c-left">
+      <div class="var-c-eyebrow">Booking.com bierze od Ciebie</div>
+      <div class="var-c-big-num">17%</div>
+      <div class="var-c-big-label">każdej Twojej rezerwacji.</div>
+      <p class="var-c-big-sub">Przy 30 nocach × 350 zł to<br/><span style="color:white;font-weight:700;">1 785 zł miesięcznie.</span> W rok — <span style="color:#FCA5A5;font-weight:700;">21 420 zł.</span></p>
+    </div>
+    <div class="var-c-right">
+      <div class="var-c-h1">Odzyskaj te pieniądze.<br/><span class="accent">Zacznij dziś.</span></div>
+      <p class="var-c-sub">Własna strona rezerwacji gotowa w 7 dni. Jednorazowo od 799 zł — bez prowizji, bez subskrypcji.</p>
+      <a href="#" class="var-c-btn">Zamów stronę — od 799 zł →</a>
+      <div class="var-c-proof">
+        <div class="var-c-proof-item"><div class="var-c-proof-num g">0%</div><div class="var-c-proof-label">prowizji</div></div>
+        <div class="var-c-proof-item"><div class="var-c-proof-num">7 dni</div><div class="var-c-proof-label">realizacja</div></div>
+        <div class="var-c-proof-item"><div class="var-c-proof-num g">124+</div><div class="var-c-proof-label">klientów</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+document.querySelectorAll('.variant').forEach(v => {
+  v.addEventListener('click', () => {
+    document.querySelectorAll('.variant').forEach(x => x.classList.remove('selected'));
+    v.classList.add('selected');
+    const choice = v.dataset.choice;
+    fetch('/event', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'click',choice,text:v.querySelector('.variant-label').textContent})});
+  });
+});
+</script>
+</body>
+</html>

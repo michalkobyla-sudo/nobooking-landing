@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nobooking.eu — Full Redesign Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; color: #0F0F0F; -webkit-font-smoothing: antialiased; }
+
+/* ── HEADER ── */
+.header { position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #F3F4F6; padding: 0 2rem; height: 64px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
+.logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.03em; color: #0F0F0F; }
+.logo span { color: #059669; }
+.nav { display: flex; align-items: center; gap: 2rem; }
+.nav a { font-size: 0.85rem; font-weight: 600; color: #6B7280; text-decoration: none; }
+.nav a:hover { color: #0F0F0F; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.lang-toggle { display: flex; background: #F3F4F6; border-radius: 8px; padding: 3px; gap: 2px; }
+.lang-btn { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: #9CA3AF; }
+.lang-btn.active { background: white; color: #0F0F0F; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.btn-sm { background: #0F0F0F; color: white; padding: 0.45rem 1.1rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+
+/* ── HERO ── */
+.hero { background: #FAFAFA; padding: 6rem 2rem 5rem; text-align: center; border-bottom: 1px solid #F3F4F6; }
+.hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: #ECFDF5; color: #059669; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.875rem; border-radius: 100px; margin-bottom: 2rem; border: 1px solid #D1FAE5; }
+.hero h1 { font-size: clamp(2.8rem, 5.5vw, 4.5rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.04em; color: #0F0F0F; margin-bottom: 1.5rem; }
+.hero h1 .strike { text-decoration: line-through; color: #DC2626; opacity: 0.75; }
+.hero h1 .accent { color: #059669; }
+.hero-sub { font-size: 1.1rem; color: #6B7280; line-height: 1.7; max-width: 520px; margin: 0 auto 2.5rem; }
+.hero-ctas { display: flex; gap: 0.875rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
+.btn-primary { background: #059669; color: white; padding: 0.875rem 2rem; border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: background 0.2s; }
+.btn-primary:hover { background: #047857; }
+.btn-outline { border: 2px solid #E5E7EB; color: #374151; padding: 0.825rem 1.875rem; border-radius: 10px; font-size: 1rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-outline:hover { border-color: #0F0F0F; color: #0F0F0F; }
+.hero-stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: #0F0F0F; }
+.stat-num.green { color: #059669; }
+.stat-label { font-size: 0.8rem; color: #9CA3AF; font-weight: 500; margin-top: 0.1rem; }
+.stat-divider { width: 1px; background: #E5E7EB; height: 48px; align-self: center; }
+
+/* ── PAIN BANNER ── */
+.pain-banner { background: #0F0F0F; padding: 1.25rem 2rem; text-align: center; }
+.pain-banner p { color: #9CA3AF; font-size: 0.85rem; font-weight: 500; }
+.pain-banner strong { color: white; }
+.pain-banner .red { color: #FCA5A5; }
+
+/* ── SECTION COMMON ── */
+.section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+.section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #059669; margin-bottom: 0.875rem; text-align: center; }
+.section-title { font-size: clamp(1.9rem, 3.5vw, 2.75rem); font-weight: 800; letter-spacing: -0.04em; color: #0F0F0F; text-align: center; margin-bottom: 1rem; line-height: 1.1; }
+.section-sub { font-size: 1rem; color: #6B7280; text-align: center; max-width: 520px; margin: 0 auto 3.5rem; line-height: 1.7; }
+
+/* ── CALCULATOR ── */
+.calc-wrap { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 20px; padding: 2.5rem; max-width: 640px; margin: 0 auto; }
+.calc-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.calc-label { font-size: 0.85rem; font-weight: 600; color: #374151; flex: 1; }
+.calc-input { background: white; border: 1.5px solid #E5E7EB; border-radius: 8px; padding: 0.6rem 0.875rem; font-size: 1rem; font-weight: 700; width: 130px; text-align: right; font-family: 'Plus Jakarta Sans', sans-serif; }
+.calc-divider { border: none; border-top: 1px solid #E5E7EB; margin: 1.5rem 0; }
+.calc-result { display: flex; justify-content: space-between; align-items: center; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.calc-result-label { font-size: 0.9rem; font-weight: 600; color: #DC2626; }
+.calc-result-value { font-size: 2rem; font-weight: 800; color: #DC2626; letter-spacing: -0.04em; }
+.calc-saving { display: flex; justify-content: space-between; align-items: center; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 1.25rem 1.5rem; }
+.calc-saving-label { font-size: 0.9rem; font-weight: 600; color: #059669; }
+.calc-saving-value { font-size: 2rem; font-weight: 800; color: #059669; letter-spacing: -0.04em; }
+
+/* ── HOW IT WORKS ── */
+.hiw-bg { background: #FAFAFA; border-top: 1px solid #F3F4F6; border-bottom: 1px solid #F3F4F6; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.step { text-align: center; padding: 2rem 1.5rem; }
+.step-num { width: 48px; height: 48px; background: #0F0F0F; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; margin: 0 auto 1.25rem; }
+.step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.step p { font-size: 0.85rem; color: #6B7280; line-height: 1.6; }
+
+/* ── FEATURES ── */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.feature-card { background: #FAFAFA; border: 1px solid #F3F4F6; border-radius: 16px; padding: 1.75rem; transition: border-color 0.2s, box-shadow 0.2s; }
+.feature-card:hover { border-color: #D1FAE5; box-shadow: 0 4px 24px rgba(5,150,105,0.08); }
+.feature-icon { width: 44px; height: 44px; background: #ECFDF5; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+.feature-icon svg { width: 22px; height: 22px; stroke: #059669; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.feature-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+.feature-card p { font-size: 0.82rem; color: #6B7280; line-height: 1.6; }
+
+/* ── COMPARISON ── */
+.comparison-table { width: 100%; border-collapse: collapse; border-radius: 16px; overflow: hidden; border: 1px solid #E5E7EB; }
+.comparison-table th { padding: 1rem 1.25rem; font-size: 0.85rem; font-weight: 700; text-align: center; }
+.comparison-table th:first-child { text-align: left; background: #F9FAFB; }
+.comparison-table th.nobooking { background: #0F0F0F; color: white; }
+.comparison-table th.other { background: #F9FAFB; color: #6B7280; }
+.comparison-table td { padding: 0.875rem 1.25rem; font-size: 0.85rem; border-top: 1px solid #F3F4F6; text-align: center; }
+.comparison-table td:first-child { text-align: left; font-weight: 600; background: #FAFAFA; }
+.check { color: #059669; font-weight: 800; font-size: 1.1rem; }
+.cross { color: #DC2626; font-size: 1.1rem; }
+.partial { color: #D97706; font-size: 0.8rem; font-weight: 600; }
+
+/* ── PRICING ── */
+.pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 760px; margin: 0 auto; }
+.pricing-card { border: 2px solid #E5E7EB; border-radius: 20px; padding: 2rem; position: relative; }
+.pricing-card.pro { border-color: #0F0F0F; }
+.pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #0F0F0F; color: white; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.875rem; border-radius: 100px; letter-spacing: 0.06em; white-space: nowrap; }
+.pricing-name { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6B7280; margin-bottom: 0.75rem; }
+.pricing-price { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 0.25rem; }
+.pricing-period { font-size: 0.78rem; color: #9CA3AF; margin-bottom: 1.5rem; }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.75rem; }
+.pricing-features li { font-size: 0.85rem; color: #374151; display: flex; align-items: flex-start; gap: 0.5rem; }
+.pricing-features li::before { content: ''; width: 18px; height: 18px; background: #ECFDF5; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.pricing-features li.check-item::before { content: '✓'; font-size: 0.65rem; font-weight: 900; color: #059669; display: flex; align-items: center; justify-content: center; }
+.pricing-btn { width: 100%; padding: 0.875rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; text-align: center; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+.pricing-btn.outline { background: white; border: 2px solid #E5E7EB; color: #0F0F0F; }
+.pricing-btn.filled { background: #0F0F0F; border: 2px solid #0F0F0F; color: white; }
+
+/* ── SOCIAL PROOF ── */
+.testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.testimonial { background: #FAFAFA; border: 1px solid #F3F4F6; border-radius: 16px; padding: 1.5rem; }
+.testimonial-stars { color: #F59E0B; font-size: 0.9rem; margin-bottom: 0.75rem; }
+.testimonial-text { font-size: 0.85rem; color: #374151; line-height: 1.65; margin-bottom: 1rem; font-style: italic; }
+.testimonial-author { font-size: 0.8rem; font-weight: 700; }
+.testimonial-role { font-size: 0.75rem; color: #9CA3AF; }
+
+/* ── CTA BANNER ── */
+.cta-banner { background: #0F0F0F; padding: 4rem 2rem; text-align: center; }
+.cta-banner h2 { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; letter-spacing: -0.04em; color: white; margin-bottom: 1rem; }
+.cta-banner p { color: #9CA3AF; font-size: 0.95rem; margin-bottom: 2rem; }
+.btn-white { background: white; color: #0F0F0F; padding: 0.875rem 2rem; border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* ── FAQ ── */
+.faq-list { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
+.faq-item { border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.25rem 1.5rem; }
+.faq-q { font-size: 0.95rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.faq-q svg { flex-shrink: 0; stroke: #9CA3AF; }
+.faq-a { font-size: 0.85rem; color: #6B7280; line-height: 1.7; margin-top: 0.75rem; }
+
+/* ── FOOTER ── */
+.footer { background: #0F0F0F; padding: 3rem 2rem 2rem; }
+.footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; margin-bottom: 2rem; }
+.footer-brand p { font-size: 0.82rem; color: #6B7280; margin-top: 0.5rem; max-width: 220px; line-height: 1.6; }
+.footer-links { display: flex; gap: 3rem; }
+.footer-col h4 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9CA3AF; margin-bottom: 0.875rem; }
+.footer-col a { display: block; font-size: 0.82rem; color: #6B7280; text-decoration: none; margin-bottom: 0.5rem; }
+.footer-col a:hover { color: white; }
+.footer-bottom { border-top: 1px solid #1F2937; padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.footer-bottom p { font-size: 0.78rem; color: #4B5563; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">No<span>booking</span></div>
+  <nav class="nav">
+    <a href="#">Jak to działa</a>
+    <a href="#">Funkcje</a>
+    <a href="#">Cennik</a>
+    <a href="#">FAQ</a>
+  </nav>
+  <div class="header-actions">
+    <div class="lang-toggle">
+      <div class="lang-btn active">PL</div>
+      <div class="lang-btn">EN</div>
+    </div>
+    <a href="#" class="btn-sm">Zamów stronę →</a>
+  </div>
+</header>
+
+<!-- PAIN BANNER -->
+<div class="pain-banner">
+  <p>📊 Właściciel apartamentu z 30 nocami/miesiąc traci średnio <strong class="red">1 530 zł miesięcznie</strong> na prowizjach Booking.com</p>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Dla właścicieli apartamentów wakacyjnych
+  </div>
+  <h1>
+    Przestań płacić<br/>
+    <span class="strike">17% Booking.com</span><br/>
+    <span class="accent">zarabiaj więcej.</span>
+  </h1>
+  <p class="hero-sub">
+    Twoja własna profesjonalna strona rezerwacji. Gotowa w 7 dni roboczych. Jednorazowa opłata — zero prowizji na zawsze.
+  </p>
+  <div class="hero-ctas">
+    <a href="#" class="btn-primary">Zamów stronę — od 799 zł →</a>
+    <a href="#" class="btn-outline">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Zobacz demo
+    </a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num green">0%</div>
+      <div class="stat-label">prowizji za rezerwację</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-num">7 dni</div>
+      <div class="stat-label">czas realizacji</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-num">2 lata</div>
+      <div class="stat-label">bez żadnych opłat</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-num green">124+</div>
+      <div class="stat-label">stron już działa</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMISSION CALCULATOR -->
+<div style="background:#fff; border-bottom: 1px solid #F3F4F6;">
+<div class="section">
+  <div class="section-label">Kalkulator strat</div>
+  <h2 class="section-title">Ile tracisz na Booking.com?</h2>
+  <p class="section-sub">Wpisz swoje liczby — zobaczysz dokładnie ile możesz odzyskać każdego roku.</p>
+  <div class="calc-wrap">
+    <div class="calc-row">
+      <span class="calc-label">Średnia cena za noc</span>
+      <input class="calc-input" type="number" value="350"> <span style="font-size:0.85rem;color:#6B7280;">zł</span>
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">Liczba nocy w miesiącu</span>
+      <input class="calc-input" type="number" value="22">
+    </div>
+    <div class="calc-row">
+      <span class="calc-label">Prowizja Booking.com</span>
+      <input class="calc-input" type="number" value="17"> <span style="font-size:0.85rem;color:#6B7280;">%</span>
+    </div>
+    <hr class="calc-divider">
+    <div class="calc-result">
+      <span class="calc-result-label">Tracisz rocznie na prowizjach:</span>
+      <span class="calc-result-value">15 708 zł</span>
+    </div>
+    <div class="calc-saving">
+      <span class="calc-saving-label">Z Nobooking oszczędzasz rocznie:</span>
+      <span class="calc-saving-value">+15 708 zł</span>
+    </div>
+    <p style="text-align:center;font-size:0.78rem;color:#9CA3AF;margin-top:1rem;">Nobooking Basic kosztuje 799 zł jednorazowo. Zwrot inwestycji w <strong style="color:#059669;">~18 dni.</strong></p>
+  </div>
+</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="hiw-bg">
+<div class="section">
+  <div class="section-label">Jak to działa</div>
+  <h2 class="section-title">Gotowa strona w 3 krokach</h2>
+  <p class="section-sub">Bez kodowania, bez agencji, bez miesięcznych abonamentów.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Zamów i wypełnij brief</h3>
+      <p>Wybierz plan, zapłać jednorazowo. Otrzymasz formularz — nazwa apartamentu, zdjęcia, cennik.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>My budujemy stronę</h3>
+      <p>Nasz zespół tworzy Twoją stronę w 7 dni roboczych. Dostajesz gotowy system rezerwacji.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Zbieraj bezpośrednie rezerwacje</h3>
+      <p>Udostępniasz link gościom. Rezerwują i płacą bezpośrednio — zero prowizji, pieniądze trafiają do Ciebie.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- FEATURES -->
+<div style="background:#fff; border-bottom: 1px solid #F3F4F6;">
+<div class="section">
+  <div class="section-label">Co dostajesz</div>
+  <h2 class="section-title">Wszystko czego potrzebujesz</h2>
+  <p class="section-sub">Kompletny system rezerwacji — nie musisz znać się na technologii.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h3>Kalendarz rezerwacji</h3>
+      <p>Interaktywny kalendarz z dostępnością. Goście sami wybierają terminy, Ty widzisz wszystko w panelu.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div>
+      <h3>Płatności online</h3>
+      <p>Stripe Checkout — Visa, Mastercard, BLIK, Apple Pay, Google Pay. Pieniądze trafiają prosto na Twoje konto.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>SMS i email powiadomienia</h3>
+      <p>Automatyczne potwierdzenia rezerwacji dla gości i dla Ciebie. Nic Cię nie ominie.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h3>Sezony i ceny dynamiczne</h3>
+      <p>Ustal różne ceny na sezon wysoki i niski. System automatycznie stosuje właściwą stawkę.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <h3>Panel administracyjny</h3>
+      <p>Przeglądaj wszystkie rezerwacje, zarządzaj dostępnością, edytuj treści strony bez kodowania.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <h3>SEO i Google</h3>
+      <p>Strona zoptymalizowana pod Google. Twoi goście znajdą Cię organicznie, nie tylko przez Booking.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMPARISON TABLE -->
+<div style="background:#FAFAFA;border-top:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;">
+<div class="section">
+  <div class="section-label">Porównanie</div>
+  <h2 class="section-title">Nobooking vs pośrednicy</h2>
+  <p class="section-sub">Dlaczego własna strona to zawsze lepsza inwestycja.</p>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Funkcja</th>
+        <th class="nobooking">Nobooking</th>
+        <th class="other">Booking.com</th>
+        <th class="other">Airbnb</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Prowizja od rezerwacji</td><td><span class="check">0%</span></td><td><span class="cross">15–17%</span></td><td><span class="cross">14–16%</span></td></tr>
+      <tr><td>Własna domena i branding</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Bezpośredni kontakt z gościem</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Panel administracyjny</td><td><span class="check">✓</span></td><td><span class="partial">Ograniczony</span></td><td><span class="partial">Ograniczony</span></td></tr>
+      <tr><td>Płatności na Twoje konto</td><td><span class="check">✓ Natychmiast</span></td><td><span class="partial">Po 30+ dniach</span></td><td><span class="partial">Po 24h</span></td></tr>
+      <tr><td>Koszt</td><td><span class="check">799 zł jednorazowo</span></td><td><span class="cross">Prowizja bez końca</span></td><td><span class="cross">Prowizja bez końca</span></td></tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- PRICING -->
+<div style="background:#fff;">
+<div class="section" id="cennik">
+  <div class="section-label">Cennik</div>
+  <h2 class="section-title">Prosta, jednorazowa opłata</h2>
+  <p class="section-sub">Płacisz raz, korzystasz przez 2 lata. Żadnych subskrypcji, żadnych prowizji.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="pricing-name">Basic</div>
+      <div class="pricing-price">799 zł</div>
+      <div class="pricing-period">jednorazowo · ważne 2 lata</div>
+      <ul class="pricing-features">
+        <li class="check-item">Profesjonalna strona rezerwacji</li>
+        <li class="check-item">Kalendarz z płatnościami online</li>
+        <li class="check-item">SMS i email powiadomienia</li>
+        <li class="check-item">Panel administracyjny</li>
+        <li class="check-item">Sezony i ceny dynamiczne</li>
+        <li class="check-item">Certyfikat SSL + hosting</li>
+      </ul>
+      <button class="pricing-btn outline">Zamów Basic →</button>
+    </div>
+    <div class="pricing-card pro">
+      <div class="pricing-badge">⭐ Najpopularniejszy</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-price">1 199 zł</div>
+      <div class="pricing-period">jednorazowo · ważne 2 lata</div>
+      <ul class="pricing-features">
+        <li class="check-item">Wszystko z Basic</li>
+        <li class="check-item">Wielojęzyczna strona (PL/EN/DE)</li>
+        <li class="check-item">Kody rabatowe</li>
+        <li class="check-item">Galeria wideo</li>
+        <li class="check-item">Opinie gości</li>
+        <li class="check-item">Priorytetowy support</li>
+      </ul>
+      <button class="pricing-btn filled">Zamów Pro →</button>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:0.82rem;color:#9CA3AF;margin-top:1.5rem;">Dostępna też wersja w EUR: Basic 199€ / Pro 299€</p>
+</div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div style="background:#FAFAFA;border-top:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;">
+<div class="section">
+  <div class="section-label">Opinie klientów</div>
+  <h2 class="section-title">Co mówią właściciele</h2>
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"W pierwszym miesiącu zaoszczędziłam ponad 1200 zł na prowizjach. Strona działa lepiej niż myślałam, goście chętnie rezerwują bezpośrednio."</p>
+      <div class="testimonial-author">Anna K.</div>
+      <div class="testimonial-role">Apartament w Zakopanem</div>
+    </div>
+    <div class="testimonial">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"Setup w 7 dni to nie ściema — dostałem gotową stronę w 5 dni roboczych. Teraz 60% moich rezerwacji to bezpośrednie."</p>
+      <div class="testimonial-author">Marek W.</div>
+      <div class="testimonial-role">3 apartamenty, Sopot</div>
+    </div>
+    <div class="testimonial">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"Miałem obawy czy goście będą chcieli płacić przez nieznaną stronę. Okazało się że większość woli — bo cena niższa bez prowizji."</p>
+      <div class="testimonial-author">Piotr M.</div>
+      <div class="testimonial-role">Apartament w Krakowie</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CTA BANNER -->
+<div class="cta-banner">
+  <h2>Gotowy przestać oddawać 17%?</h2>
+  <p>Dołącz do 124 właścicieli apartamentów którzy zarabiają więcej z Nobooking.</p>
+  <a href="#" class="btn-white">Zamów stronę — od 799 zł →</a>
+</div>
+
+<!-- FAQ -->
+<div style="background:#fff;">
+<div class="section">
+  <div class="section-label">FAQ</div>
+  <h2 class="section-title">Najczęstsze pytania</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q">Czy muszę znać się na technologii?
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Nie. Dostarczamy gotową stronę — wystarczy że wypełnisz brief z informacjami o apartamencie. Możesz też samodzielnie edytować treści przez panel administracyjny.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Co się dzieje po 2 latach?
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Oferujemy odnowienie na kolejne 2 lata w niższej cenie. Twoja strona i dane nigdzie nie przepadają — masz czas na decyzję.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Czy mogę mieć własną domenę?
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Tak. Pomagamy skonfigurować domenę którą wybierzesz (np. moj-apartament.pl). Koszty rejestracji domeny to ~30–50 zł/rok i są po Twojej stronie.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Jak działają płatności?
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Integrujemy Stripe — goście płacą kartą, BLIK-iem lub Apple/Google Pay. Pieniądze trafiają bezpośrednio na Twoje konto Stripe, skąd wypłacasz do banku.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div style="font-weight:800;font-size:1.1rem;color:white;letter-spacing:-0.03em;">No<span style="color:#059669;">booking</span></div>
+        <p>Profesjonalne strony rezerwacji dla właścicieli apartamentów wakacyjnych.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Produkt</h4>
+          <a href="#">Jak to działa</a>
+          <a href="#">Funkcje</a>
+          <a href="#">Cennik</a>
+          <a href="#">Demo</a>
+        </div>
+        <div class="footer-col">
+          <h4>Firma</h4>
+          <a href="#">O nas</a>
+          <a href="#">Kontakt</a>
+          <a href="#">Regulamin</a>
+          <a href="#">Prywatność</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Nobooking. Wszelkie prawa zastrzeżone.</p>
+      <p>Made with ♥ in Poland</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

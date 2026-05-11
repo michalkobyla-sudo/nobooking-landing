@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { sendOnboardingSubmittedNotification } from '@/lib/email'
+import { sendOnboardingSubmittedNotification, sendSiteReadyEmail } from '@/lib/email'
+import { generateSiteConfig, toSlug } from '@/lib/generate-site'
 import type { Order } from '@/lib/types'
 
 interface Params {
@@ -13,7 +14,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, onboarding_submitted, first_name, apartment_name')
+    .select('id, onboarding_submitted, first_name, apartment_name, plan')
     .eq('onboarding_token', token)
     .single()
 
@@ -26,6 +27,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     submitted: order.onboarding_submitted,
     first_name: order.first_name,
     apartment_name: order.apartment_name,
+    plan: order.plan,
   })
 }
 
@@ -49,28 +51,58 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const body = await request.json() as {
     ob_description?: string
+    ob_tagline?: string
+    ob_address?: string
+    ob_bedrooms?: number
+    ob_bathrooms?: number
+    ob_sqm?: number
+    ob_photos_link?: string
+    ob_video_link?: string
     ob_price_per_night?: number
+    ob_currency?: 'pln' | 'eur'
     ob_max_guests?: number
+    ob_seasons?: string
     ob_checkin_time?: string
     ob_checkout_time?: string
     ob_amenities?: string
     ob_rules?: string
-    ob_seasons?: string
-    ob_photos_link?: string
+    ob_contact_email?: string
+    ob_contact_phone?: string
+    ob_domain?: string
+    ob_instagram?: string
+    ob_facebook?: string
+    ob_color?: string
+    ob_sms_phone?: string
+    ob_checkin_fields?: string
   }
 
   const { error: updateError } = await supabase
     .from('orders')
     .update({
       ob_description: body.ob_description?.trim() || null,
+      ob_tagline: body.ob_tagline?.trim() || null,
+      ob_address: body.ob_address?.trim() || null,
+      ob_bedrooms: body.ob_bedrooms || null,
+      ob_bathrooms: body.ob_bathrooms || null,
+      ob_sqm: body.ob_sqm || null,
+      ob_photos_link: body.ob_photos_link?.trim() || null,
+      ob_video_link: body.ob_video_link?.trim() || null,
       ob_price_per_night: body.ob_price_per_night || null,
+      ob_currency: body.ob_currency || null,
       ob_max_guests: body.ob_max_guests || null,
+      ob_seasons: body.ob_seasons || null,
       ob_checkin_time: body.ob_checkin_time?.trim() || null,
       ob_checkout_time: body.ob_checkout_time?.trim() || null,
       ob_amenities: body.ob_amenities?.trim() || null,
       ob_rules: body.ob_rules?.trim() || null,
-      ob_seasons: body.ob_seasons || null,
-      ob_photos_link: body.ob_photos_link?.trim() || null,
+      ob_contact_email: body.ob_contact_email?.trim() || null,
+      ob_contact_phone: body.ob_contact_phone?.trim() || null,
+      ob_domain: body.ob_domain?.trim() || null,
+      ob_instagram: body.ob_instagram?.trim() || null,
+      ob_facebook: body.ob_facebook?.trim() || null,
+      ob_color: body.ob_color?.trim() || null,
+      ob_sms_phone: body.ob_sms_phone?.trim() || null,
+      ob_checkin_fields: body.ob_checkin_fields?.trim() || null,
       onboarding_submitted: true,
     })
     .eq('id', order.id)
@@ -84,6 +116,32 @@ export async function POST(request: NextRequest, { params }: Params) {
   sendOnboardingSubmittedNotification(order as Order).catch(err =>
     console.error('[onboarding] notification error:', err)
   )
+
+  // Generate site config via AI (non-blocking — kicks off in background)
+  const supabaseForUpdate = createServiceClient()
+  ;(async () => {
+    try {
+      const updatedOrder = { ...order, ...Object.fromEntries(
+        Object.entries(body).map(([k, v]) => [k, v ?? null])
+      ) } as Order
+
+      const config = await generateSiteConfig(updatedOrder)
+      const slug = toSlug(order.apartment_name)
+
+      await supabaseForUpdate
+        .from('orders')
+        .update({
+          site_slug: slug,
+          generated_config: JSON.stringify(config),
+          site_generated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+
+      await sendSiteReadyEmail(updatedOrder, slug)
+    } catch (err) {
+      console.error('[onboarding] site generation error:', err)
+    }
+  })()
 
   return NextResponse.json({ success: true })
 }

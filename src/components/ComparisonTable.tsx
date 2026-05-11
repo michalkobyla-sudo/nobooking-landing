@@ -12,12 +12,42 @@ export default function ComparisonTable() {
   const t = TR[lang]
 
   const rows = [
-    { feature: t.compCommission, nb: <><span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>0%</span></>, bk: CROSS, ab: CROSS },
-    { feature: t.compDomain, nb: CHECK, bk: CROSS, ab: CROSS },
-    { feature: t.compPayments, nb: CHECK, bk: PARTIAL(lang === 'pl' ? 'Po 30+ dniach' : '30+ days delay'), ab: PARTIAL(lang === 'pl' ? 'Po 24h' : 'After 24h') },
-    { feature: t.compAdmin, nb: CHECK, bk: PARTIAL(lang === 'pl' ? 'Ograniczony' : 'Limited'), ab: PARTIAL(lang === 'pl' ? 'Ograniczony' : 'Limited') },
-    { feature: t.compEmail, nb: CHECK, bk: CHECK, ab: CHECK },
-    { feature: t.compPrice, nb: <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{lang === 'pl' ? '799 zł / 2 lata' : '€199 / 2 years'}</span>, bk: CROSS, ab: CROSS },
+    {
+      feature: t.compCommission,
+      nb: <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>0%</span>,
+      bk: <span style={{ color: 'var(--color-pain)', fontWeight: 700 }}>~15%</span>,
+      ab: <span style={{ color: 'var(--color-pain)', fontWeight: 700 }}>3–17%</span>,
+    },
+    {
+      feature: t.compDomain,
+      nb: CHECK,
+      bk: CROSS,
+      ab: CROSS,
+    },
+    {
+      feature: t.compPayments,
+      nb: PARTIAL(lang === 'pl' ? 'Natychmiast (Stripe)' : 'Instant (Stripe)'),
+      bk: PARTIAL(lang === 'pl' ? 'Po 30+ dniach' : '30+ days delay'),
+      ab: PARTIAL(lang === 'pl' ? 'Po zameldowaniu' : 'After check-in'),
+    },
+    {
+      feature: t.compEmail,
+      nb: CHECK,
+      bk: CROSS,
+      ab: CROSS,
+    },
+    {
+      feature: t.compAdmin,
+      nb: CHECK,
+      bk: PARTIAL(lang === 'pl' ? 'Ograniczony' : 'Limited'),
+      ab: PARTIAL(lang === 'pl' ? 'Ograniczony' : 'Limited'),
+    },
+    {
+      feature: t.compPrice,
+      nb: <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{lang === 'pl' ? '799 zł jednorazowo' : '€199 one-time'}</span>,
+      bk: <span style={{ color: 'var(--color-pain)', fontSize: '0.8rem', fontWeight: 600 }}>{lang === 'pl' ? '0 zł + prowizja od każdej rezerwacji' : '€0 + commission per booking'}</span>,
+      ab: <span style={{ color: 'var(--color-pain)', fontSize: '0.8rem', fontWeight: 600 }}>{lang === 'pl' ? '0 zł + prowizja od każdej rezerwacji' : '€0 + commission per booking'}</span>,
+    },
   ]
 
   return (

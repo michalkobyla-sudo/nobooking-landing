@@ -6,7 +6,7 @@ import { TR } from '@/lib/translations'
 export default function DemoCTA() {
   const { lang } = useLang()
   const t = TR[lang]
-  const demoUrl = process.env.NEXT_PUBLIC_DEMO_URL || 'https://demo.nobooking.eu'
+  const demoUrl = '/demo'
 
   function scrollToPricing() {
     document.getElementById('cennik')?.scrollIntoView({ behavior: 'smooth' })
@@ -34,7 +34,7 @@ export default function DemoCTA() {
           }}>
             {lang === 'pl' ? 'Zamów stronę — od 799 zł →' : 'Order site — from €199 →'}
           </button>
-          <a href={demoUrl} target="_blank" rel="noopener noreferrer" style={{
+          <a href={demoUrl} style={{
             border: '2px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.8)',
             borderRadius: 'var(--radius-pill)', padding: '0.825rem 1.875rem',
             fontSize: '1rem', fontWeight: 600, textDecoration: 'none',

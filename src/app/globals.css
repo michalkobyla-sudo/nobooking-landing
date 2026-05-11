@@ -162,6 +162,20 @@ body {
 @media (max-width: 767px) {
   .hide-mobile { display: none !important; }
   .btn-primary, .btn-outline, .btn-dark { width: 100%; justify-content: center; }
+
+  /* Section spacing */
+  .section-wrap { padding: 2.5rem 1rem !important; }
+  .section-title { font-size: clamp(1.5rem, 6vw, 1.9rem) !important; }
+  .section-sub { margin-bottom: 2rem !important; }
+
+  /* Responsive grids */
+  .grid-hero    { grid-template-columns: 1fr !important; }
+  .grid-3col    { grid-template-columns: 1fr !important; }
+  .grid-2col    { grid-template-columns: 1fr !important; }
+  .grid-howit   { grid-template-columns: 1fr !important; }
+
+  /* Header on mobile */
+  .header-demo-link { display: none !important; }
 }
 
 /* ── number input ── */

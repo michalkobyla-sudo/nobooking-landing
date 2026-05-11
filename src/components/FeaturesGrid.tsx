@@ -32,7 +32,7 @@ export default function FeaturesGrid() {
           {lang === 'pl' ? 'Kompletny system rezerwacji — nie musisz znać się na technologii.' : 'Complete booking system — no tech skills needed.'}
         </p>
 
-        <div style={{
+        <div className="grid-3col" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '1.5rem',

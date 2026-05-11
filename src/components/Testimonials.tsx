@@ -13,7 +13,7 @@ export default function Testimonials() {
         <div className="section-label">{lang === 'pl' ? 'Opinie klientów' : 'Customer reviews'}</div>
         <h2 className="section-title">{t.testimonialsTitle}</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
           {t.testimonials.map((item, i) => (
             <div key={i} style={{
               background: 'white',

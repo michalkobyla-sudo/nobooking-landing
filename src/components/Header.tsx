@@ -90,6 +90,16 @@ export default function Header() {
             ))}
           </div>
 
+          {/* Demo link */}
+          <a href="/demo" className="header-demo-link" style={{
+            border: '1px solid var(--color-border-light)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 600,
+            color: 'var(--color-text-muted)', textDecoration: 'none', whiteSpace: 'nowrap',
+          }}>
+            {lang === 'pl' ? '👁 Zobacz demo' : '👁 View demo'}
+          </a>
+
           {/* CTA */}
           <button onClick={() => scrollTo('cennik')} style={{
             background: 'var(--color-dark)', color: 'white',
