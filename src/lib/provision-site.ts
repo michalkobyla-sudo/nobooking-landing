@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase'
 import { createConnectAccount } from '@/lib/stripe-connect'
+import { hashPassword } from '@/lib/ownerAuth'
 import type { Order } from '@/lib/types'
 
 const TEMP_PASSWORD_LENGTH = 12
@@ -36,6 +37,7 @@ export async function provisionSite(
 
   // ── 1. Create Supabase Auth user ────────────────────────────────────────────
   const tempPassword = generateTempPassword()
+  const adminPasswordHash = hashPassword(tempPassword)
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: ownerEmail,
@@ -83,6 +85,7 @@ export async function provisionSite(
         owner_user_id: ownerUserId,
         stripe_account_id: stripeAccountId || null,
         stripe_onboarded: false,
+        admin_password_hash: adminPasswordHash,
       },
       { onConflict: 'slug' },
     )
