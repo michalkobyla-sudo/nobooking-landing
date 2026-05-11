@@ -249,48 +249,122 @@ export async function sendStatusUpdateEmail(order: Order, status: string) {
   )
 }
 
-/** Email 4: Notify client that their site preview is ready */
-export async function sendSiteReadyEmail(order: Order, slug: string) {
+/** Email 4: Notify client that their site preview is ready (with revision link) */
+export async function sendSiteReadyEmail(
+  order: Order,
+  slug: string,
+  revisionsDone = 0,
+  revisionsLeft = 4,
+) {
   const siteUrl = `${SITE_URL}/sites/${slug}`
+  const revisionUrl = `${SITE_URL}/poprawki/${order.revision_token}`
+  const isFirstVersion = revisionsDone === 0
+  const roundLabel = revisionsDone + 1
+
+  const subject = isFirstVersion
+    ? `Nobooking — Twoja strona jest gotowa do podglądu! 🎉`
+    : `Nobooking — poprawki wdrożone! Wersja ${roundLabel} gotowa 🔄`
+
+  const intro = isFirstVersion
+    ? `Przygotowaliśmy pierwszą wersję strony Twojego apartamentu. Możesz już ją obejrzeć — to wstępny podgląd, który dopracujemy razem.`
+    : `Wdrożyliśmy Twoje poprawki. Sprawdź nową wersję strony i powiedz nam co jeszcze zmienić.`
 
   await sendEmail(
     order.email,
-    `Nobooking — Twoja strona jest gotowa do podglądu! 🎉`,
+    subject,
     wrapEmail(`
-      ${renderHeader('Twoja strona jest gotowa!')}
+      ${renderHeader(isFirstVersion ? 'Twoja strona jest gotowa!' : `Wersja ${roundLabel} gotowa`)}
 
       <div style="padding: 2rem;">
-        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">🎉</p>
+        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">${isFirstVersion ? '🎉' : '🔄'}</p>
         <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1rem; line-height: 1.7;">
-          Przygotowaliśmy pierwszą wersję strony Twojego apartamentu na podstawie przesłanego formularza.
-          Możesz już ją obejrzeć — to wstępny podgląd, który dopracujemy razem.
-        </p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">${intro}</p>
 
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.75rem;">
+          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem;">
             🏠 <strong>${escapeHtml(order.apartment_name)}</strong> · Plan ${order.plan === 'pro' ? 'Pro' : 'Basic'}
           </div>
           <div style="font-size: 0.8rem; color: #6b7280;">
-            Strona działa pod adresem:<br/>
             <a href="${siteUrl}" style="color: #059669; font-weight: 600; word-break: break-all;">${siteUrl}</a>
           </div>
         </div>
 
-        <div style="text-align: center; margin: 2rem 0;">
+        <div style="text-align: center; margin: 1.5rem 0;">
           <a href="${siteUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
             Zobacz swoją stronę →
           </a>
         </div>
 
-        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7;">
-          Co dalej? Przejrzyj stronę i napisz mi co chcesz zmienić — opisy, kolory, układ.
-          Następnie podmienię zdjęcia na Twoje (wyślij mi je na kontakt@nobooking.eu lub przez WeTransfer).
+        ${revisionsLeft > 0 ? `
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1.5rem;">
+          <div style="font-size: 0.875rem; font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">
+            ✏️ Masz uwagi? Zostało Ci jeszcze ${revisionsLeft} ${revisionsLeft === 1 ? 'runda' : revisionsLeft < 5 ? 'rundy' : 'rund'} poprawek
+          </div>
+          <div style="font-size: 0.8rem; color: #78350f; margin-bottom: 1rem; line-height: 1.6;">
+            Przejrzyj stronę i powiedz nam co zmienić — tekst, kolory, ceny, układ, cokolwiek.
+          </div>
+          <a href="${revisionUrl}" style="display: inline-block; background: #d97706; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
+            Wyślij poprawki →
+          </a>
+        </div>
+        ` : `
+        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7; margin-top: 1.5rem;">
+          To była ostatnia runda poprawek. Jeśli potrzebujesz dalszych zmian, napisz do nas na kontakt@nobooking.eu.
         </p>
+        `}
 
         <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
         <p style="color: #374151; margin: 0;">W razie pytań odpowiedz na tego emaila.<br/>
         <strong>Michał · Nobooking</strong></p>
+      </div>
+
+      ${renderFooter()}
+    `)
+  )
+}
+
+/** Email 5: Final revision complete — no more rounds */
+export async function sendRevisionCompleteEmail(order: Order, slug: string) {
+  const siteUrl = `${SITE_URL}/sites/${slug}`
+
+  await sendEmail(
+    order.email,
+    `Nobooking — Twoja strona jest ostatecznie gotowa! ✅`,
+    wrapEmail(`
+      ${renderHeader('Gotowe! Wszystkie poprawki wdrożone')}
+
+      <div style="padding: 2rem;">
+        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">✅</p>
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>!</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Wdrożyliśmy wszystkie Twoje poprawki. Twoja strona apartamentu jest gotowa!
+        </p>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem;">
+            🏠 <strong>${escapeHtml(order.apartment_name)}</strong>
+          </div>
+          <div style="font-size: 0.8rem; color: #6b7280;">
+            <a href="${siteUrl}" style="color: #059669; font-weight: 600; word-break: break-all;">${siteUrl}</a>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 1.5rem 0;">
+          <a href="${siteUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
+            Otwórz swoją stronę →
+          </a>
+        </div>
+
+        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7;">
+          Jeśli potrzebujesz jeszcze czegoś — dodatkowych poprawek, podłączenia własnej domeny,
+          wgrania zdjęć — odpowiedz na tego emaila. Chętnie pomogę!
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
+        <p style="color: #374151; margin: 0;">
+          Dziękujemy za zaufanie 🙏<br/>
+          <strong>Michał · Nobooking</strong>
+        </p>
       </div>
 
       ${renderFooter()}

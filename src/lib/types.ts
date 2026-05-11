@@ -61,4 +61,9 @@ export interface Order {
   site_slug: string | null
   generated_config: string | null  // JSON: ApartmentConfig
   site_generated_at: string | null
+
+  // ─── Runda poprawek (max 4) ───────────────────────────────────────────────────
+  revision_token: string
+  revision_count: number           // 0–4
+  revision_notes: string | null    // ostatnie uwagi klienta
 }

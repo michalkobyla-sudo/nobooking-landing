@@ -114,7 +114,12 @@ INSTRUCTIONS:
 6. map.nearby: Generate 4–5 realistic nearby attractions/services for this location with accurate distances.
 7. contact: Use ob_contact fields. Omit instagram/facebook keys entirely if "(nie podano)".
 8. theme.primary: Use the preferred primary color exactly. theme.accent: Choose a warm complementary accent (orange/amber/coral tones work well).
-9. reviews/bookedDates/photos: Always output exactly [], [], and { "score": 5.0, "count": 0, "items": [] }.`
+9. reviews/bookedDates/photos: Always output exactly [], [], and { "score": 5.0, "count": 0, "items": [] }.${order.revision_notes ? `
+
+REVISION REQUEST (apply these changes to the previous version):
+${order.revision_notes}
+
+IMPORTANT: Apply ALL requested changes precisely. Do not change anything that was not mentioned.` : ''}`
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
