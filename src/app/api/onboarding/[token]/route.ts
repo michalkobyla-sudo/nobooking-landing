@@ -1,9 +1,6 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { sendOnboardingSubmittedNotification, sendSiteReadyEmail, sendOwnerWelcomeEmail } from '@/lib/email'
-import { generateSiteConfig, toSlug } from '@/lib/generate-site'
-import { provisionSite } from '@/lib/provision-site'
-import { createOnboardingLink } from '@/lib/stripe-connect'
+import { sendOnboardingSubmittedNotification } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
 interface Params {
@@ -114,73 +111,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
   }
 
-  // Snapshot data needed for background work before responding
-  const orderSnapshot = order as Order
-  const bodySnapshot = body
+  // Notify Michał (fast, non-blocking)
+  sendOnboardingSubmittedNotification(order as Order).catch(err =>
+    console.error('[onboarding] notification error:', err)
+  )
 
-  // after() keeps the Vercel function alive after the response is sent
-  after(async () => {
-    // Notify Michał
-    try {
-      await sendOnboardingSubmittedNotification(orderSnapshot)
-    } catch (err) {
-      console.error('[onboarding] notification error:', err)
-    }
-
-    // Generate site config + provision
-    try {
-      const updatedOrder = { ...orderSnapshot, ...Object.fromEntries(
-        Object.entries(bodySnapshot).map(([k, v]) => [k, v ?? null])
-      ) } as Order
-
-      // 1. Generate AI config
-      const config = await generateSiteConfig(updatedOrder)
-      const slug = toSlug(orderSnapshot.apartment_name)
-      const configJson = JSON.stringify(config)
-
-      // 2. Update orders table
-      const supabasePost = createServiceClient()
-      await supabasePost
-        .from('orders')
-        .update({
-          site_slug: slug,
-          generated_config: configJson,
-          site_generated_at: new Date().toISOString(),
-        })
-        .eq('id', orderSnapshot.id)
-
-      // 3. Provision site (creates sites record + auth user + Stripe Connect account)
-      const { tempPassword, stripeAccountId } = await provisionSite(updatedOrder, slug, configJson)
-
-      // 4. Generate Stripe Connect onboarding URL
-      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-      let stripeOnboardUrl = `${siteUrl}/api/connect/onboard?slug=${slug}`
-      if (stripeAccountId) {
-        try {
-          stripeOnboardUrl = await createOnboardingLink(stripeAccountId, slug)
-        } catch {
-          // fallback to redirect route
-        }
-      }
-
-      // 5. Send welcome email with credentials + Stripe Connect link
-      await sendOwnerWelcomeEmail({
-        email: (updatedOrder.ob_contact_email ?? updatedOrder.email).toLowerCase().trim(),
-        first_name: updatedOrder.first_name,
-        apartment_name: updatedOrder.apartment_name,
-        slug,
-        temp_password: tempPassword,
-        stripe_onboard_url: stripeOnboardUrl,
-        plan: updatedOrder.plan,
-      })
-
-      // 6. Send site-ready email with revision link
-      await sendSiteReadyEmail(updatedOrder, slug, 0, 4)
-
-    } catch (err) {
-      console.error('[onboarding] provision error:', err)
-    }
-  })
+  // Site generation + provisioning is handled by /api/cron/provision-sites (runs every minute)
 
   return NextResponse.json({ success: true })
 }
