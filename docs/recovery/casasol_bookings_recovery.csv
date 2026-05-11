@@ -1,0 +1,10 @@
+status,guest_name,email,phone,check_in,check_out,nights,stripe_amount,stripe_currency,notes
+confirmed,Joanna Borkowska,jborkowska555@gmail.com,+48531893989,2026-04-18,2026-04-24,6,342,PLN,Potwierdzona - email dostarczony
+confirmed,Lidia Kobylińska,lidiakobylinska@wp.pl,+48608557870,2026-05-19,2026-05-31,12,684,PLN,Potwierdzona - email dostarczony
+confirmed,Anna BEYM,annabeym@interia.pl,+48514682333,2026-06-19,2026-06-29,10,690,PLN,Potwierdzona - email BOUNCED (zły adres?) + płatność Stripe live
+confirmed,Agnieszka Linkowska,linkowska.a@hotmail.com,+32496404043,2026-07-21,2026-07-31,10,,PLN,Potwierdzona - email dostarczony
+confirmed,Amanda Roszak,amandaroszak2@wp.pl,+48697457472,2026-08-02,2026-08-09,7,,PLN,Potwierdzona - email dostarczony
+confirmed,Marcin Kraus,kacza120@gmail.com,+447702095462,2026-08-10,2026-08-20,10,,PLN,Potwierdzona - email dostarczony
+confirmed,Karolina Zalewska,zalewska.karolina@interia.pl,+48508206899,2026-08-27,2026-09-06,10,,PLN,Potwierdzona - email BOUNCED (zły adres?)
+pending,Waldemar Bożętka,wald84@wp.pl,+48693829982,2026-11-05,2026-11-09,4,,PLN,Rezerwacja przyjęta (nie potwierdzona) - brak płatności
+pending,Andrzej Głowacki,andrzejglowacki88@gmail.com,+48669264395,2026-08-05,2026-08-26,21,,PLN,Rezerwacja przyjęta (nie potwierdzona) - brak płatności
