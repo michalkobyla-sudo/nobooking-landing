@@ -820,30 +820,98 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
   const [form, setForm] = useState({ arrival: '', departure: '', guests: '2', name: '', email: '', phone: '', message: '', discount: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [discountValid, setDiscountValid] = useState<boolean | null>(null)
+  const [discountPct, setDiscountPct] = useState(0)
+  const [checkingDiscount, setCheckingDiscount] = useState(false)
 
   function set(k: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setForm(f => ({ ...f, [k]: e.target.value }))
-      if (k === 'discount') setDiscountValid(null)
+      if (k === 'discount') { setDiscountValid(null); setDiscountPct(0) }
     }
   }
 
-  function checkDiscount() {
-    if (form.discount.trim().toUpperCase() === 'DEMO10') {
-      setDiscountValid(true)
-    } else if (form.discount.trim()) {
+  // Calculate estimated price for display
+  function calcPrice() {
+    if (!form.arrival || !form.departure) return null
+    const nights = Math.round((new Date(form.departure).getTime() - new Date(form.arrival).getTime()) / (1000 * 60 * 60 * 24))
+    if (nights <= 0) return null
+    const month = new Date(form.arrival).getMonth() + 1
+    const tier = [7,8,9].includes(month) ? 'high' : [5,6,10].includes(month) ? 'mid' : 'low'
+    const pricePerNight = config.pricing.tiers[tier].pricePerNight
+    const base = nights * pricePerNight + config.pricing.cleaningFee
+    const discount = Math.round(base * discountPct / 100)
+    return { nights, total: base - discount, currency: config.pricing.currency, discount }
+  }
+
+  async function checkDiscount() {
+    if (!form.discount.trim() || !slug) return
+    setCheckingDiscount(true)
+    try {
+      const res = await fetch(`/api/sites/${slug}/discount`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: form.discount }),
+      })
+      const data = await res.json() as { valid: boolean; discount_pct: number }
+      setDiscountValid(data.valid)
+      setDiscountPct(data.valid ? data.discount_pct : 0)
+    } catch {
       setDiscountValid(false)
+    } finally {
+      setCheckingDiscount(false)
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!slug) return
     setSending(true)
-    await new Promise(r => setTimeout(r, 900))
-    setSent(true)
-    setSending(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/sites/${slug}/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          check_in: form.arrival,
+          check_out: form.departure,
+          guests_count: parseInt(form.guests),
+          guest_name: form.name,
+          guest_email: form.email,
+          guest_phone: form.phone,
+          notes: form.message || undefined,
+          discount_code: discountValid && form.discount ? form.discount : undefined,
+        }),
+      })
+      const data = await res.json() as { checkoutUrl?: string; error?: string; minNights?: number }
+
+      if (!res.ok) {
+        const msgs: Record<string, string> = {
+          invalid_dates: 'Nieprawidłowe daty. Sprawdź czy data wyjazdu jest późniejsza niż przyjazdu.',
+          dates_unavailable: 'Niestety wybrane daty są już zajęte. Wybierz inne terminy.',
+          min_nights: `Minimalny pobyt w tym sezonie to ${data.minNights ?? '?'} nocy.`,
+          missing_guest_info: 'Uzupełnij imię i email.',
+          payment_error: 'Błąd płatności. Spróbuj ponownie.',
+        }
+        setError(msgs[data.error ?? ''] ?? 'Coś poszło nie tak. Spróbuj ponownie.')
+        return
+      }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        setSent(true)
+      }
+    } catch {
+      setError('Błąd połączenia. Sprawdź internet i spróbuj ponownie.')
+    } finally {
+      setSending(false)
+    }
   }
+
+  const pricePreview = calcPrice()
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.75rem 1rem', border: '1.5px solid #D1D5DB',
@@ -877,17 +945,17 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.875rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem' }}>{ui.bookArrival}</label>
-                <input type="date" value={form.arrival} onChange={set('arrival')} style={inputStyle} required />
+                <input type="date" value={form.arrival} onChange={set('arrival')} style={inputStyle} required min={new Date().toISOString().slice(0,10)} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem' }}>{ui.bookDeparture}</label>
-                <input type="date" value={form.departure} onChange={set('departure')} style={inputStyle} required />
+                <input type="date" value={form.departure} onChange={set('departure')} style={inputStyle} required min={form.arrival || new Date().toISOString().slice(0,10)} />
               </div>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem' }}>{ui.bookGuests}</label>
               <select value={form.guests} onChange={set('guests')} style={inputStyle}>
-                {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n}</option>)}
+                {Array.from({ length: config.specs.guests }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
             <div>
@@ -914,17 +982,37 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem' }}>🏷️ {ui.bookDiscount}</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input type="text" value={form.discount} onChange={set('discount')} placeholder="np. WIOSNA10" style={{ ...inputStyle, flex: 1, textTransform: 'uppercase', borderColor: discountValid === true ? '#16A34A' : discountValid === false ? '#DC2626' : '#D1D5DB' }} />
-                <button type="button" onClick={checkDiscount} style={{ background: '#F3F4F6', border: '1.5px solid #D1D5DB', borderRadius: 10, padding: '0 1rem', fontFamily: 'inherit', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap' }}>
-                  Sprawdź
+                <button type="button" onClick={checkDiscount} disabled={checkingDiscount} style={{ background: '#F3F4F6', border: '1.5px solid #D1D5DB', borderRadius: 10, padding: '0 1rem', fontFamily: 'inherit', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap' }}>
+                  {checkingDiscount ? '...' : 'Sprawdź'}
                 </button>
               </div>
-              {discountValid === true && <p style={{ fontSize: '0.78rem', color: '#16A34A', marginTop: '0.3rem' }}>✓ Kod rabatowy aktywny — 10% zniżki</p>}
+              {discountValid === true && <p style={{ fontSize: '0.78rem', color: '#16A34A', marginTop: '0.3rem' }}>✓ Kod aktywny — {discountPct}% zniżki</p>}
               {discountValid === false && <p style={{ fontSize: '0.78rem', color: '#DC2626', marginTop: '0.3rem' }}>✗ Nieprawidłowy kod rabatowy</p>}
-              {discountValid === null && form.discount === '' && <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.3rem' }}>Demo: wpisz DEMO10 aby przetestować</p>}
             </div>
 
+            {/* Live price preview */}
+            {pricePreview && (
+              <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: 12, padding: '1rem 1.25rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1D4ED8', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Szacunkowy koszt</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#374151', marginBottom: '0.2rem' }}>
+                  <span>{pricePreview.nights} nocy + sprzątanie</span>
+                  {pricePreview.discount > 0 && <span style={{ color: '#16A34A' }}>-{pricePreview.discount} {pricePreview.currency}</span>}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.1rem' }}>
+                  <span>Łącznie</span>
+                  <span style={{ color: primary }}>{pricePreview.total} {pricePreview.currency}</span>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#DC2626' }}>
+                ⚠️ {error}
+              </div>
+            )}
+
             <button type="submit" disabled={sending} style={{ background: primary, color: 'white', border: 'none', borderRadius: 12, padding: '0.95rem', fontSize: '1rem', fontWeight: 800, cursor: sending ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.75 : 1, marginTop: '0.25rem' }}>
-              {sending ? '⏳ Wysyłanie...' : ui.bookSubmit}
+              {sending ? '⏳ Przekierowanie do płatności...' : `💳 ${ui.bookSubmit}`}
             </button>
 
             <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
