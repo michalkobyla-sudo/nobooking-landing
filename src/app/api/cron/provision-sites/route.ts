@@ -16,11 +16,11 @@ export async function GET(_request: NextRequest) {
   const supabase = createServiceClient()
 
   // Find orders: onboarding submitted but site not yet generated
+  // Note: stripe_paid not required — onboarding token is only sent after payment
   const { data: orders, error } = await supabase
     .from('orders')
     .select('*')
     .eq('onboarding_submitted', true)
-    .eq('stripe_paid', true)
     .is('site_slug', null)
     .limit(3) // process up to 3 at a time to stay within timeout
 
