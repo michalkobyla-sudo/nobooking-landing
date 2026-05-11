@@ -504,3 +504,144 @@ export async function sendOnboardingSubmittedNotification(order: Order) {
     `)
   )
 }
+
+// ─── Booking emails ───────────────────────────────────────────────────────────
+
+function fmtDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+export interface BookingEmailData {
+  id: string
+  guest_name: string
+  guest_email: string
+  site_id: string
+  check_in: string    // YYYY-MM-DD
+  check_out: string   // YYYY-MM-DD
+  total_price: number
+  currency: string
+  discount_code: string | null
+}
+
+/** Email: Guest booking confirmation */
+export async function sendBookingConfirmation(booking: BookingEmailData) {
+  const nights = Math.round(
+    (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  await sendEmail(
+    booking.guest_email,
+    `✅ Rezerwacja potwierdzona — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
+    wrapEmail(`
+      ${renderHeader('Rezerwacja potwierdzona!')}
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>! 🎉</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Twoja rezerwacja została potwierdzona. Płatność przyjęta — czekamy na Ciebie!
+        </p>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280; width: 40%;">📅 Przyjazd</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_in)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Wyjazd</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_out)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🌙 Liczba nocy</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${nights}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">💳 Kwota</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700; color: #059669;">${booking.total_price} ${booking.currency}</td>
+            </tr>
+            ${booking.discount_code ? `
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🏷️ Kod rabatowy</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${escapeHtml(booking.discount_code)}</td>
+            </tr>
+            ` : ''}
+          </table>
+        </div>
+
+        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7; margin-bottom: 1.5rem;">
+          Szczegóły rezerwacji, instrukcje dojazdu i kody dostępu znajdziesz w portalu gościa.
+          Link wyślemy osobno przed przyjazdem.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
+        <p style="color: #374151; margin: 0; font-size: 0.875rem; line-height: 1.7;">
+          Do zobaczenia! 🏖️<br/>
+          <strong>Nobooking</strong>
+        </p>
+      </div>
+      ${renderFooter()}
+    `)
+  )
+}
+
+/** Email: Owner notification about new booking */
+export async function sendOwnerBookingNotification(booking: BookingEmailData) {
+  const nights = Math.round(
+    (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  // Get owner email from sites table via REST (avoids circular dependency with supabase client)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const res = await fetch(`${supabaseUrl}/rest/v1/sites?id=eq.${booking.site_id}&select=owner_email`, {
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
+  })
+  const sites = await res.json() as Array<{ owner_email: string }>
+  const ownerEmail = sites[0]?.owner_email
+  if (!ownerEmail) return
+
+  await sendEmail(
+    ownerEmail,
+    `🎉 Nowa rezerwacja! ${escapeHtml(booking.guest_name)} · ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
+    wrapEmail(`
+      ${renderHeader('Nowa rezerwacja!')}
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1.5rem;">Masz nową potwierdzoną rezerwację! 🎉</p>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280; width: 40%;">👤 Gość</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${escapeHtml(booking.guest_name)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">✉️ Email</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem;">${escapeHtml(booking.guest_email)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Przyjazd</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_in)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Wyjazd</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_out)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🌙 Noce</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${nights}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">💳 Kwota</td>
+              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700; color: #059669;">${booking.total_price} ${booking.currency}</td>
+            </tr>
+          </table>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
+        <p style="color: #374151; margin: 0; font-size: 0.875rem;">
+          <strong>Nobooking</strong>
+        </p>
+      </div>
+      ${renderFooter()}
+    `)
+  )
+}

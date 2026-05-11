@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRequire } from 'module'
 import { createServiceClient } from '@/lib/supabase'
+import { sendBookingConfirmation, sendOwnerBookingNotification, type BookingEmailData } from '@/lib/email'
 
 const _require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +46,52 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('[webhook] Supabase update error:', error)
+      }
+    }
+
+    // ── Booking payment ────────────────────────────────────────────────────────
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const bookingId = session.metadata?.booking_id as string | undefined
+    if (bookingId) {
+      const supabase = createServiceClient()
+
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, guest_email, guest_name, site_id, check_in, check_out, total_price, currency, discount_code')
+        .eq('id', bookingId)
+        .single()
+
+      if (booking) {
+        await supabase
+          .from('bookings')
+          .update({
+            stripe_paid: true,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            stripe_session_id: session.id as string,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            stripe_payment_id: session.payment_intent as string | null,
+            status: 'confirmed',
+          })
+          .eq('id', bookingId)
+
+        // Increment discount code usage if applicable
+        if (booking.discount_code) {
+          try {
+            await supabase.rpc('increment_discount_usage', {
+              p_site_id: booking.site_id,
+              p_code: booking.discount_code,
+            })
+          } catch { /* ignore if RPC not set up */ }
+        }
+
+        // Send confirmation emails (non-fatal)
+        try {
+          const emailData = booking as BookingEmailData
+          await sendBookingConfirmation(emailData)
+          await sendOwnerBookingNotification(emailData)
+        } catch (emailErr) {
+          console.error('[webhook] booking email error:', emailErr)
+        }
       }
     }
   }
