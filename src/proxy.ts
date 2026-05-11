@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'nobooking.eu'
 
-  // Only protect /admin/* (except /admin/login) and /api/admin/*
+export async function proxy(request: NextRequest) {
+  const host = request.headers.get('host') ?? ''
+  const { pathname } = request.nextUrl
+  const hostname = host.replace(/:\d+$/, '')
+
+  // ── 1. Subdomain routing ───────────────────────────────────────────────────
+  // slug.nobooking.eu → /sites/slug
+  // demo.nobooking.eu → /demo
+  const isMainDomain =
+    hostname === ROOT_DOMAIN ||
+    hostname === 'www.' + ROOT_DOMAIN ||
+    hostname === 'localhost'
+
+  if (!isMainDomain) {
+    const subdomain = hostname.replace(`.${ROOT_DOMAIN}`, '')
+
+    if (subdomain && subdomain !== hostname) {
+      const url = request.nextUrl.clone()
+
+      if (subdomain === 'demo') {
+        url.pathname = `/demo${pathname === '/' ? '' : pathname}`
+      } else {
+        url.pathname = `/sites/${subdomain}${pathname === '/' ? '' : pathname}`
+      }
+
+      return NextResponse.rewrite(url)
+    }
+  }
+
+  // ── 2. Admin auth protection ───────────────────────────────────────────────
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
   const isLoginPage = pathname === '/admin/login'
 
@@ -12,9 +40,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // If env vars missing, redirect to login rather than crash
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
   if (!supabaseUrl || !supabaseAnonKey) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -51,7 +79,6 @@ export async function proxy(request: NextRequest) {
     return response
   } catch (err) {
     console.error('[proxy] auth check failed:', err)
-    // On any error, redirect to login rather than 500
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
     }
@@ -60,5 +87,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }
