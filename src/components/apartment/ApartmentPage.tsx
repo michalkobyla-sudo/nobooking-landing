@@ -558,8 +558,20 @@ function CalendarPricer({ config, lang, ui, primary, isMobile, slug }: {
   const [month, setMonth] = useState(today.getMonth())
   const [nights, setNights] = useState(7)
   const [season, setSeason] = useState<'low' | 'mid' | 'high'>('high')
+  const [liveBookedDates, setLiveBookedDates] = useState<string[]>(config.bookedDates ?? [])
 
-  const bookedSet = new Set(config.bookedDates)
+  // Fetch live availability on mount
+  useEffect(() => {
+    if (!slug) return
+    fetch(`/api/sites/${slug}/availability`)
+      .then(r => r.json())
+      .then((data: { bookedDates: string[] }) => {
+        if (data.bookedDates) setLiveBookedDates(data.bookedDates)
+      })
+      .catch(() => { /* fallback to config.bookedDates */ })
+  }, [slug])
+
+  const bookedSet = new Set(liveBookedDates)
   const tier = config.pricing.tiers[season]
   const total = nights * tier.pricePerNight + config.pricing.cleaningFee
   const curr = config.pricing.currency
