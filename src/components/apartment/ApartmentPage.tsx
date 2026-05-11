@@ -560,16 +560,18 @@ function CalendarPricer({ config, lang, ui, primary, isMobile, slug }: {
   const [season, setSeason] = useState<'low' | 'mid' | 'high'>('high')
   const [liveBookedDates, setLiveBookedDates] = useState<string[]>(config.bookedDates ?? [])
 
-  // Fetch live availability on mount
+  // Fetch live availability on mount — merge with static config.bookedDates
   useEffect(() => {
     if (!slug) return
     fetch(`/api/sites/${slug}/availability`)
       .then(r => r.json())
       .then((data: { bookedDates: string[] }) => {
-        if (data.bookedDates) setLiveBookedDates(data.bookedDates)
+        // Merge: static config dates (e.g. from onboarding) + live bookings from DB
+        const merged = new Set([...(config.bookedDates ?? []), ...(data.bookedDates ?? [])])
+        setLiveBookedDates(Array.from(merged))
       })
-      .catch(() => { /* fallback to config.bookedDates */ })
-  }, [slug])
+      .catch(() => { /* fallback to config.bookedDates already in state */ })
+  }, [slug, config.bookedDates])
 
   const bookedSet = new Set(liveBookedDates)
   const tier = config.pricing.tiers[season]
