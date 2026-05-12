@@ -106,16 +106,28 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', marginBottom: '1rem', marginTop: 0 }}>{children}</h2>
 }
 
+// ─── Sidebar nav SVG icons ────────────────────────────────────────
+const NAV_ICONS: Record<Tab, React.ReactNode> = {
+  dashboard: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>,
+  bookings:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  guests:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  cennik:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  kalendarz: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" strokeWidth="3"/><line x1="12" y1="14" x2="12" y2="14" strokeWidth="3"/><line x1="16" y1="14" x2="16" y2="14" strokeWidth="3"/></svg>,
+  opinie:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  analityka: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  ustawienia:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+}
+
 // ─── Sidebar ──────────────────────────────────────────────────────
-const NAV_ITEMS: Array<{ id: Tab; icon: string; label: string; pro?: boolean }> = [
-  { id: 'dashboard',  icon: '🏠', label: 'Dashboard' },
-  { id: 'bookings',   icon: '📅', label: 'Rezerwacje' },
-  { id: 'guests',     icon: '👥', label: 'Goście' },
-  { id: 'cennik',     icon: '💰', label: 'Cennik' },
-  { id: 'kalendarz',  icon: '🗓️', label: 'Kalendarz' },
-  { id: 'opinie',     icon: '⭐', label: 'Opinie' },
-  { id: 'analityka',  icon: '📊', label: 'Analityka', pro: true },
-  { id: 'ustawienia', icon: '⚙️', label: 'Ustawienia' },
+const NAV_ITEMS: Array<{ id: Tab; label: string; pro?: boolean }> = [
+  { id: 'dashboard',  label: 'Dashboard' },
+  { id: 'bookings',   label: 'Rezerwacje' },
+  { id: 'guests',     label: 'Goście' },
+  { id: 'cennik',     label: 'Cennik' },
+  { id: 'kalendarz',  label: 'Kalendarz' },
+  { id: 'opinie',     label: 'Opinie' },
+  { id: 'analityka',  label: 'Analityka', pro: true },
+  { id: 'ustawienia', label: 'Ustawienia' },
 ]
 
 function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEmail, slug }: {
@@ -156,16 +168,19 @@ function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEm
           return (
             <button key={item.id} onClick={() => setTab(item.id)} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-              padding: collapsed ? '0.7rem 0' : '0.7rem 1.25rem',
+              padding: collapsed ? '0.7rem 0' : '0.625rem 1.25rem',
               justifyContent: collapsed ? 'center' : 'flex-start',
               background: active ? '#1F2937' : 'none',
               border: 'none', borderLeft: active ? `3px solid ${GOLD}` : '3px solid transparent',
               cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
+              color: active ? 'white' : '#6B7280',
             }}>
-              <span style={{ fontSize: '1rem', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                {NAV_ICONS[item.id]}
+              </span>
               {!collapsed && (
                 <>
-                  <span style={{ fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: active ? 'white' : '#9CA3AF' }}>{item.label}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: active ? 'white' : '#9CA3AF', flex: 1 }}>{item.label}</span>
                   {item.pro && <ProBadge />}
                 </>
               )}
@@ -211,21 +226,62 @@ function DashboardView({
   const displayCurrency = settings?.currency ?? stats?.revenue_currency ?? 'EUR'
 
   const statCards = [
-    { icon: '📅', label: `Rezerwacje (${monthName})`,    value: stats ? String(stats.bookings_this_month) : '…' },
-    { icon: '💰', label: `Przychód (${monthName})`,       value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${displayCurrency}` : '…' },
-    { icon: '📊', label: 'Nadchodzące rezerwacje',         value: stats ? String(stats.upcoming_count) : '…' },
-    { icon: '⭐', label: 'Średnia ocena',                 value: stats?.avg_rating != null ? `${stats.avg_rating} / 5` : '—' },
+    {
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      ),
+      iconBg: '#EEF2FF', iconColor: '#6366F1',
+      label: `Rezerwacje (${monthName})`,
+      value: stats ? String(stats.bookings_this_month) : '…',
+    },
+    {
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      ),
+      iconBg: '#F0FDF4', iconColor: '#16A34A',
+      label: `Przychód (${monthName})`,
+      value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${displayCurrency}` : '…',
+    },
+    {
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      ),
+      iconBg: '#FFF7ED', iconColor: '#EA580C',
+      label: 'Nadchodzące rezerwacje',
+      value: stats ? String(stats.upcoming_count) : '…',
+    },
+    {
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" strokeWidth="1">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+        </svg>
+      ),
+      iconBg: '#FEFCE8', iconColor: '#CA8A04',
+      label: 'Średnia ocena',
+      value: stats?.avg_rating != null ? `${stats.avg_rating} / 5` : '—',
+    },
   ]
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Dashboard</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>Dashboard</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {statCards.map(s => (
-          <Card key={s.label}>
-            <div style={{ fontSize: '1.4rem', marginBottom: '0.3rem' }}>{s.icon}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.03em' }}>{s.value}</div>
-            <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.2rem' }}>{s.label}</div>
+          <Card key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: s.iconBg, color: s.iconColor,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '0.875rem', flexShrink: 0,
+            }}>{s.icon}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.04em', lineHeight: 1.1 }}>{s.value}</div>
+            <div style={{ fontSize: '0.73rem', color: '#9CA3AF', marginTop: '0.35rem', lineHeight: 1.3 }}>{s.label}</div>
           </Card>
         ))}
       </div>
@@ -249,19 +305,46 @@ function DashboardView({
         <Card>
           <SectionTitle>Szybkie akcje</SectionTitle>
           {[
-            { icon: '📅', label: 'Zarządzaj kalendarzem', href: '' as string | null, tab: 'cennik' as Tab | null },
-            { icon: '📋', label: 'Lista rezerwacji',       href: null, tab: 'bookings' as Tab },
-            { icon: '👥', label: 'Baza gości',             href: null, tab: 'guests' as Tab },
-            { icon: '⭐', label: 'Moderuj opinie',         href: null, tab: 'opinie' as Tab },
+            {
+              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+              iconBg: '#EEF2FF', iconColor: '#6366F1',
+              label: 'Zarządzaj kalendarzem', tab: 'cennik' as Tab,
+            },
+            {
+              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+              iconBg: '#F0F9FF', iconColor: '#0284C7',
+              label: 'Lista rezerwacji', tab: 'bookings' as Tab,
+            },
+            {
+              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+              iconBg: '#FDF4FF', iconColor: '#9333EA',
+              label: 'Baza gości', tab: 'guests' as Tab,
+            },
+            {
+              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>,
+              iconBg: '#FEFCE8', iconColor: '#CA8A04',
+              label: 'Moderuj opinie', tab: 'opinie' as Tab,
+            },
           ].map(a => (
-            <button key={a.label} onClick={() => a.tab && setTab(a.tab)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: '0.7rem',
-              background: '#F9FAFB', border: `1px solid ${CARD_BD}`, borderRadius: 10,
-              padding: '0.65rem 0.9rem', marginBottom: '0.5rem', cursor: 'pointer',
+            <button key={a.label} onClick={() => setTab(a.tab)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+              background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 10,
+              padding: '0.7rem 0.875rem', marginBottom: '0.5rem', cursor: 'pointer',
               fontFamily: 'inherit', textAlign: 'left',
-            }}>
-              <span style={{ fontSize: '1rem', flexShrink: 0 }}>{a.icon}</span>
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = CARD_BD; e.currentTarget.style.boxShadow = 'none'; }}>
+              <span style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: a.iconBg, color: a.iconColor,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>{a.icon}</span>
               <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#374151', flex: 1 }}>{a.label}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
             </button>
           ))}
         </Card>
@@ -1251,11 +1334,35 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   const selectedBooking = showDetail ? bookings.find(b => b.id === selectedBookingId) ?? null : null
 
   if (loading) {
+    const pulse: React.CSSProperties = { animation: 'skeletonPulse 1.4s ease-in-out infinite' }
     return (
-      <div style={{ minHeight: '100vh', background: PAGE_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-        <div style={{ textAlign: 'center', color: '#9CA3AF' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏠</div>
-          <div style={{ fontSize: '0.9rem' }}>Ładowanie panelu…</div>
+      <div style={{ minHeight: '100vh', background: PAGE_BG, display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+        {/* Skeleton sidebar */}
+        <div style={{ width: 230, background: SIDEBAR, flexShrink: 0, padding: '1.5rem 1.25rem' }}>
+          <div style={{ height: 20, borderRadius: 6, background: '#1F2937', marginBottom: '0.5rem', width: '70%', ...pulse }}/>
+          <div style={{ height: 12, borderRadius: 4, background: '#1F2937', marginBottom: '2rem', width: '50%', ...pulse }}/>
+          {[80, 90, 75, 85, 80, 70, 90, 80].map((w, i) => (
+            <div key={i} style={{ height: 16, borderRadius: 6, background: '#1F2937', marginBottom: '0.75rem', width: `${w}%`, opacity: 0.6, ...pulse, animationDelay: `${i * 0.08}s` }}/>
+          ))}
+        </div>
+        {/* Skeleton content */}
+        <div style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ height: 28, borderRadius: 8, background: '#E5E7EB', width: 200, ...pulse }}/>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{ background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 14, padding: '1.25rem 1.5rem' }}>
+                <div style={{ height: 20, borderRadius: 6, background: '#F3F4F6', width: '30%', marginBottom: '0.5rem', ...pulse }}/>
+                <div style={{ height: 28, borderRadius: 8, background: '#F3F4F6', width: '60%', marginBottom: '0.5rem', ...pulse, animationDelay: '0.1s' }}/>
+                <div style={{ height: 12, borderRadius: 4, background: '#F3F4F6', width: '80%', ...pulse, animationDelay: '0.2s' }}/>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 14, padding: '1.25rem 1.5rem' }}>
+            <div style={{ height: 18, borderRadius: 6, background: '#F3F4F6', width: 160, marginBottom: '1rem', ...pulse }}/>
+            {[90, 75, 85, 70].map((w, i) => (
+              <div key={i} style={{ height: 14, borderRadius: 4, background: '#F9FAFB', marginBottom: '0.875rem', width: `${w}%`, ...pulse, animationDelay: `${i * 0.1}s` }}/>
+            ))}
+          </div>
         </div>
       </div>
     )
