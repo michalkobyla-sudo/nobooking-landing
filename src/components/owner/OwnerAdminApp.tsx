@@ -783,6 +783,91 @@ function AnalitykaView() {
   )
 }
 
+// ─── Zmiana hasła ────────────────────────────────────────────────
+function PasswordCard({ slug }: { slug: string }) {
+  const [current,  setCurrent]  = useState('')
+  const [next,     setNext]     = useState('')
+  const [confirm,  setConfirm]  = useState('')
+  const [saving,   setSaving]   = useState(false)
+  const [msg,      setMsg]      = useState<{ ok: boolean; text: string } | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setMsg(null)
+    if (next.length < 8) {
+      setMsg({ ok: false, text: 'Nowe hasło musi mieć co najmniej 8 znaków.' })
+      return
+    }
+    if (next !== confirm) {
+      setMsg({ ok: false, text: 'Hasła nie są identyczne.' })
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/sites/${slug}/owner/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: current, new_password: next }),
+      })
+      if (res.ok) {
+        setMsg({ ok: true, text: '✓ Hasło zostało zmienione.' })
+        setCurrent(''); setNext(''); setConfirm('')
+      } else {
+        const data = await res.json() as { error: string }
+        const errMap: Record<string, string> = {
+          wrong_password:   'Obecne hasło jest nieprawidłowe.',
+          password_too_short: 'Nowe hasło musi mieć co najmniej 8 znaków.',
+          missing_fields:   'Wypełnij wszystkie pola.',
+        }
+        setMsg({ ok: false, text: errMap[data.error] ?? 'Wystąpił błąd. Spróbuj ponownie.' })
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8,
+    padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit',
+    outline: 'none', boxSizing: 'border-box',
+  }
+
+  return (
+    <Card style={{ marginTop: '1.5rem' }}>
+      <SectionTitle>🔐 Zmiana hasła</SectionTitle>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
+        {[
+          { label: 'Obecne hasło',       value: current,  set: setCurrent },
+          { label: 'Nowe hasło',          value: next,     set: setNext },
+          { label: 'Powtórz nowe hasło',  value: confirm,  set: setConfirm },
+        ].map(f => (
+          <div key={f.label} style={{ marginBottom: '0.75rem' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#9CA3AF', marginBottom: '0.3rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {f.label}
+            </label>
+            <input
+              type="password"
+              value={f.value}
+              onChange={e => f.set(e.target.value)}
+              required
+              style={inputStyle}
+              autoComplete="off"
+            />
+          </div>
+        ))}
+        {msg && (
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, padding: '0.5rem 0.75rem', borderRadius: 8, marginBottom: '0.75rem', background: msg.ok ? '#F0FDF4' : '#FEF2F2', color: msg.ok ? '#15803D' : '#DC2626' }}>
+            {msg.text}
+          </div>
+        )}
+        <button type="submit" disabled={saving} style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+          {saving ? 'Zapisywanie…' : 'Zmień hasło'}
+        </button>
+      </form>
+    </Card>
+  )
+}
+
 // ─── Ustawienia ───────────────────────────────────────────────────
 function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | null; slug: string; onSaved: (s: Partial<SiteSettings>) => void }) {
   const isMobile = useIsMobile()
@@ -898,12 +983,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
         </Card>
       </div>
 
-      <Card style={{ marginTop: '1.5rem' }}>
-        <SectionTitle>Hasło i bezpieczeństwo</SectionTitle>
-        <p style={{ fontSize: '0.83rem', color: '#9CA3AF', margin: 0 }}>
-          Aby zmienić hasło do panelu, skontaktuj się z <a href="mailto:hello@nobooking.eu" style={{ color: PRIMARY }}>hello@nobooking.eu</a>.
-        </p>
-      </Card>
+      <PasswordCard slug={slug} />
     </div>
   )
 }
