@@ -12,7 +12,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: `/sites/${slug}/admin`,
+    path: '/',
     maxAge: 0,
   })
   return res
