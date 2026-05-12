@@ -47,8 +47,11 @@ export async function GET(request: NextRequest, { params }: Params) {
       .gte('check_in', today),
   ])
 
+  const configCurrency = ((site.config as Record<string, unknown>)?.pricing as Record<string, unknown> | undefined)?.currency as string | undefined
+
   const revenueRows = revenueRes.data ?? []
-  const revenueCurrency = revenueRows[0]?.currency ?? 'EUR'
+  // Use currency from config as fallback (not hardcoded EUR)
+  const revenueCurrency = revenueRows[0]?.currency ?? configCurrency ?? 'EUR'
   const revenueTotal = revenueRows.reduce((sum, r) => sum + (r.total_price ?? 0), 0)
 
   const scores = (ratingsRes.data ?? []).map(r => r.score as number)

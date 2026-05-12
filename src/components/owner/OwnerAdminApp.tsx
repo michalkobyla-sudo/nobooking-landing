@@ -191,10 +191,11 @@ function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEm
 
 // ─── Dashboard ────────────────────────────────────────────────────
 function DashboardView({
-  bookings, stats, setTab, setBookingId,
+  bookings, stats, settings, setTab, setBookingId,
 }: {
   bookings: Booking[]
   stats: Stats | null
+  settings: SiteSettings | null
   setTab: (t: Tab) => void
   setBookingId: (id: string) => void
 }) {
@@ -204,9 +205,12 @@ function DashboardView({
 
   const upcoming = bookings.filter(b => ['pending', 'confirmed'].includes(b.status) && b.check_in >= now.toISOString().slice(0, 10))
 
+  // Currency: prefer config currency (always up to date), fall back to stats currency
+  const displayCurrency = settings?.currency ?? stats?.revenue_currency ?? 'EUR'
+
   const statCards = [
     { icon: '📅', label: `Rezerwacje (${monthName})`,    value: stats ? String(stats.bookings_this_month) : '…' },
-    { icon: '💰', label: `Przychód (${monthName})`,       value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${stats.revenue_currency}` : '…' },
+    { icon: '💰', label: `Przychód (${monthName})`,       value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${displayCurrency}` : '…' },
     { icon: '📊', label: 'Nadchodzące rezerwacje',         value: stats ? String(stats.upcoming_count) : '…' },
     { icon: '⭐', label: 'Średnia ocena',                 value: stats?.avg_rating != null ? `${stats.avg_rating} / 5` : '—' },
   ]
@@ -871,9 +875,16 @@ function PasswordCard({ slug }: { slug: string }) {
 // ─── Ustawienia ───────────────────────────────────────────────────
 function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | null; slug: string; onSaved: (s: Partial<SiteSettings>) => void }) {
   const isMobile = useIsMobile()
-  const [email,    setEmail]    = useState(settings?.owner_email    ?? '')
-  const [phone,    setPhone]    = useState(settings?.contact_phone  ?? '')
-  const [currency, setCurrency] = useState(settings?.currency       ?? 'EUR')
+  const [email,    setEmail]    = useState(settings?.owner_email   ?? '')
+  const [phone,    setPhone]    = useState(settings?.contact_phone ?? '')
+  const [currency, setCurrency] = useState(settings?.currency      ?? 'EUR')
+
+  // Sync when settings load (in case component mounted before fetch completed)
+  useEffect(() => {
+    if (settings?.owner_email)   setEmail(settings.owner_email)
+    if (settings?.contact_phone) setPhone(settings.contact_phone)
+    if (settings?.currency)      setCurrency(settings.currency)
+  }, [settings?.owner_email, settings?.contact_phone, settings?.currency])
   const [saving,   setSaving]   = useState(false)
   const [saved,    setSaved]    = useState(false)
 
@@ -1168,6 +1179,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
               <DashboardView
                 bookings={bookings}
                 stats={stats}
+                settings={settings}
                 setTab={setTab}
                 setBookingId={handleSelectBooking}
               />
