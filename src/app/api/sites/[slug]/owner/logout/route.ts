@@ -5,7 +5,7 @@ interface Params {
   params: Promise<{ slug: string }>
 }
 
-export async function POST(_request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: Params) {
   const { slug } = await params
   const res = NextResponse.redirect(new URL(`/sites/${slug}/admin/login`, request.url))
   res.cookies.set(cookieName(slug), '', {
