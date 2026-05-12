@@ -7,7 +7,11 @@ import type { Site } from '@/lib/types'
 const COOKIE_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 dni
 
 function jwtSecret(): string {
-  return process.env.OWNER_JWT_SECRET || process.env.CRON_SECRET || 'nobooking-owner-dev-secret'
+  const secret = process.env.OWNER_JWT_SECRET
+    || (process.env.CRON_SECRET?.trim() || undefined)   // ignore empty string
+    || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)       // always present on Vercel
+    || 'nobooking-owner-dev-secret'
+  return secret
 }
 
 // ─── Hashowanie hasła (crypto.scryptSync — zero nowych zależności) ────────────

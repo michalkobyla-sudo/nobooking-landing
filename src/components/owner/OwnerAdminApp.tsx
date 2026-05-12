@@ -34,6 +34,18 @@ const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: stri
   completed: { label: 'Zakończona',     bg: '#F3F4F6', color: '#374151' },
 }
 
+const CURRENCIES: Array<{ value: string; label: string }> = [
+  { value: 'EUR', label: 'EUR — Euro (€)' },
+  { value: 'PLN', label: 'PLN — Złoty polski (zł)' },
+  { value: 'GBP', label: 'GBP — Funt brytyjski (£)' },
+  { value: 'USD', label: 'USD — Dolar amerykański ($)' },
+  { value: 'CHF', label: 'CHF — Frank szwajcarski' },
+  { value: 'CZK', label: 'CZK — Korona czeska' },
+  { value: 'SEK', label: 'SEK — Korona szwedzka' },
+  { value: 'NOK', label: 'NOK — Korona norweska' },
+  { value: 'DKK', label: 'DKK — Korona duńska' },
+]
+
 interface SiteSettings {
   name:          string
   location:      string
@@ -41,6 +53,7 @@ interface SiteSettings {
   plan:          'basic' | 'pro'
   contact_email: string
   contact_phone: string
+  currency:      string
   pricing: {
     currency:    string
     cleaningFee: number
@@ -773,10 +786,11 @@ function AnalitykaView() {
 // ─── Ustawienia ───────────────────────────────────────────────────
 function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | null; slug: string; onSaved: (s: Partial<SiteSettings>) => void }) {
   const isMobile = useIsMobile()
-  const [email, setEmail]   = useState(settings?.owner_email ?? '')
-  const [phone, setPhone]   = useState(settings?.contact_phone ?? '')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved]   = useState(false)
+  const [email,    setEmail]    = useState(settings?.owner_email    ?? '')
+  const [phone,    setPhone]    = useState(settings?.contact_phone  ?? '')
+  const [currency, setCurrency] = useState(settings?.currency       ?? 'EUR')
+  const [saving,   setSaving]   = useState(false)
+  const [saved,    setSaved]    = useState(false)
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -785,10 +799,10 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
       const res = await fetch(`/api/sites/${slug}/owner/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ owner_email: email, contact_phone: phone }),
+        body: JSON.stringify({ owner_email: email, contact_phone: phone, currency }),
       })
       if (res.ok) {
-        onSaved({ owner_email: email, contact_phone: phone })
+        onSaved({ owner_email: email, contact_phone: phone, currency })
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
       } else {
@@ -823,6 +837,21 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
             <div style={{ marginBottom: '0.9rem' }}>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#9CA3AF', marginBottom: '0.3rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Telefon</label>
               <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#9CA3AF', marginBottom: '0.3rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Waluta rozliczeń</label>
+              <select
+                value={currency}
+                onChange={e => setCurrency(e.target.value)}
+                style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: 'white', color: '#111827' }}
+              >
+                {CURRENCIES.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+              <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginTop: '0.3rem' }}>
+                Dotyczy cen na stronie, formularza rezerwacji i płatności Stripe.
+              </div>
             </div>
             <button type="submit" disabled={saving} style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Zapisywanie…' : saved ? '✓ Zapisano!' : 'Zapisz zmiany'}

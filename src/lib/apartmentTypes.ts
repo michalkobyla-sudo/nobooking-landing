@@ -65,7 +65,7 @@ export interface ApartmentConfig {
   amenities: ApartmentAmenity[]
 
   pricing: {
-    currency: 'EUR' | 'PLN'
+    currency: 'EUR' | 'PLN' | 'GBP' | 'USD' | 'CHF' | 'CZK' | 'SEK' | 'NOK' | 'DKK'
     cleaningFee: number
     tiers: {
       low: ApartmentPriceTier

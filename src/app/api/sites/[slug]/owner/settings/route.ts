@@ -15,13 +15,14 @@ export async function GET(request: NextRequest, { params }: Params) {
   const config = site.config as Partial<ApartmentConfig>
 
   return NextResponse.json({
-    name:          config.name          ?? slug,
-    location:      config.location      ?? '',
+    name:          config.name                   ?? slug,
+    location:      config.location               ?? '',
     owner_email:   site.owner_email,
     plan:          site.plan,
-    contact_email: config.contact?.email ?? '',
-    contact_phone: config.contact?.phone ?? '',
-    pricing:       config.pricing        ?? null,
+    contact_email: config.contact?.email         ?? '',
+    contact_phone: config.contact?.phone         ?? '',
+    currency:      config.pricing?.currency      ?? 'EUR',
+    pricing:       config.pricing                ?? null,
     slug:          site.slug,
   })
 }
@@ -31,10 +32,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const site = await verifyOwnerSession(slug, request.headers.get('cookie'))
   if (!site) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
+  const VALID_CURRENCIES = ['EUR', 'PLN', 'GBP', 'USD', 'CHF', 'CZK', 'SEK', 'NOK', 'DKK']
+
   const body = await request.json().catch(() => ({})) as {
     owner_email?:   string
     contact_email?: string
     contact_phone?: string
+    currency?:      string
   }
 
   const supabase = createServiceClient()
@@ -44,17 +48,24 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     updates.owner_email = body.owner_email
   }
 
+  const configUpdates: Record<string, unknown> = {}
+
   if (body.contact_email !== undefined || body.contact_phone !== undefined) {
-    const currentConfig = (site.config ?? {}) as Record<string, unknown>
-    const currentContact = (currentConfig.contact ?? {}) as Record<string, unknown>
-    updates.config = {
-      ...currentConfig,
-      contact: {
-        ...currentContact,
-        ...(body.contact_email !== undefined ? { email: body.contact_email } : {}),
-        ...(body.contact_phone !== undefined ? { phone: body.contact_phone } : {}),
-      },
+    const currentContact = ((site.config as Record<string, unknown>)?.contact ?? {}) as Record<string, unknown>
+    configUpdates.contact = {
+      ...currentContact,
+      ...(body.contact_email !== undefined ? { email: body.contact_email } : {}),
+      ...(body.contact_phone !== undefined ? { phone: body.contact_phone } : {}),
     }
+  }
+
+  if (body.currency && VALID_CURRENCIES.includes(body.currency)) {
+    const currentPricing = ((site.config as Record<string, unknown>)?.pricing ?? {}) as Record<string, unknown>
+    configUpdates.pricing = { ...currentPricing, currency: body.currency }
+  }
+
+  if (Object.keys(configUpdates).length > 0) {
+    updates.config = { ...(site.config as Record<string, unknown>), ...configUpdates }
   }
 
   if (Object.keys(updates).length === 0) {

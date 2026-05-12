@@ -29,7 +29,7 @@ export default function OwnerLoginPage() {
       return
     }
 
-    router.push(`/sites/${slug}/admin/rezerwacje`)
+    router.push(`/sites/${slug}/admin`)
     router.refresh()
   }
 
