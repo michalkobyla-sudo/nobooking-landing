@@ -67,23 +67,21 @@ function MonthCalendar({
   onToggle: (date: string, info: DayInfo) => void
   loadingDates: Set<string>
 }) {
-  const firstDow   = new Date(year, month, 1).getDay() // 0=Nd
-  const startOffset = firstDow === 0 ? 6 : firstDow - 1 // Monday-first
+  const firstDow    = new Date(year, month, 1).getDay()
+  const startOffset = firstDow === 0 ? 6 : firstDow - 1
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
   const cells: Array<{ date: string; day: number } | null> = []
   for (let i = 0; i < startOffset; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push({ date: isoDate(year, month, d), day: d })
 
-  function cellStyle(info: DayInfo | undefined, isLoading: boolean): React.CSSProperties {
+  function cellBg(info: DayInfo | undefined): React.CSSProperties {
+    if (!info) return {}
     const base: React.CSSProperties = {
-      width: '36px', height: '36px',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
-      transition: 'opacity 0.1s',
-      opacity: isLoading ? 0.4 : 1,
+      borderRadius: '8px', fontWeight: 600, fontSize: '0.82rem',
+      aspectRatio: '1',
     }
-    if (!info) return base
     switch (info.state) {
       case 'past':             return { ...base, color: '#D1D5DB', cursor: 'default' }
       case 'available':        return { ...base, color: '#374151', background: '#F3F4F6', border: '1px solid #E5E7EB', cursor: 'pointer' }
@@ -95,28 +93,36 @@ function MonthCalendar({
   }
 
   return (
-    <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', marginBottom: '1rem' }}>
-      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.875rem' }}>
+    <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1.25rem' }}>
+      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.75rem' }}>
         {MONTH_NAMES[month]} {year}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 36px)', gap: '4px' }}>
+      {/* Header row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '4px' }}>
         {DAY_NAMES.map(d => (
-          <div key={d} style={{ width: '36px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF' }}>
+          <div key={d} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, color: '#9CA3AF', padding: '0.15rem 0' }}>
             {d}
           </div>
         ))}
+      </div>
+      {/* Day cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} style={{ width: '36px', height: '36px' }} />
-          const info = dayMap.get(cell.date)
-          const isLoading = loadingDates.has(cell.date)
-          const canClick = info && (info.state === 'available' || info.state === 'blocked')
+          if (!cell) return <div key={`empty-${i}`} style={{ aspectRatio: '1' }} />
+          const info       = dayMap.get(cell.date)
+          const isLoading  = loadingDates.has(cell.date)
+          const canClick   = info && (info.state === 'available' || info.state === 'blocked')
           return (
             <div
               key={cell.date}
-              style={cellStyle(info, isLoading)}
+              style={{
+                ...cellBg(info),
+                opacity: isLoading ? 0.4 : 1,
+                transition: 'opacity 0.1s',
+              }}
               title={
-                info?.bookingName ? `${info.bookingName}` :
-                info?.state === 'blocked' ? 'Zablokowane — kliknij by odblokować' :
+                info?.bookingName     ? info.bookingName :
+                info?.state === 'blocked'   ? 'Zablokowane — kliknij by odblokować' :
                 info?.state === 'available' ? 'Kliknij by zablokować' : ''
               }
               onClick={() => canClick && !isLoading && info && onToggle(cell.date, info)}
@@ -131,17 +137,17 @@ function MonthCalendar({
 }
 
 export default function KalendarzPage() {
-  const router = useRouter()
-  const params = useParams()
-  const slug = params.slug as string
+  const router     = useRouter()
+  const params     = useParams()
+  const slug       = params.slug as string
 
   const now = new Date()
-  const [viewYear,  setViewYear]  = useState(now.getFullYear())
-  const [viewMonth, setViewMonth] = useState(now.getMonth())
-  const [bookings,  setBookings]  = useState<Booking[]>([])
-  const [blocked,   setBlocked]   = useState<BlockedDate[]>([])
-  const [dataLoading,   setDataLoading]   = useState(true)
-  const [loadingDates,  setLoadingDates]  = useState<Set<string>>(new Set())
+  const [viewYear,     setViewYear]     = useState(now.getFullYear())
+  const [viewMonth,    setViewMonth]    = useState(now.getMonth())
+  const [bookings,     setBookings]     = useState<Booking[]>([])
+  const [blocked,      setBlocked]      = useState<BlockedDate[]>([])
+  const [dataLoading,  setDataLoading]  = useState(true)
+  const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function load() {
@@ -200,13 +206,23 @@ export default function KalendarzPage() {
   })
 
   if (dataLoading) {
-    return <div style={{ padding: '4rem', textAlign: 'center', color: '#9CA3AF' }}>Ładowanie kalendarza...</div>
+    return (
+      <div style={{ padding: '4rem', textAlign: 'center', color: '#9CA3AF', fontFamily: 'inherit' }}>
+        Ładowanie kalendarza…
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', margin: 0 }}>Kalendarz</h1>
+    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: '1.5rem 2rem', maxWidth: 1080, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <a href={`/sites/${slug}/admin`} style={{ fontSize: '0.8rem', color: '#6B7280', textDecoration: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.3rem 0.7rem', background: 'white' }}>
+            ← Panel
+          </a>
+          <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', margin: 0 }}>Kalendarz</h1>
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={prevMonth} style={{ padding: '0.4rem 0.875rem', border: '1.5px solid #E5E7EB', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.875rem' }}>
             ← Wcześniej
@@ -218,34 +234,37 @@ export default function KalendarzPage() {
       </div>
 
       {/* Legenda */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
         {[
-          { color: '#059669', textColor: '#fff',    label: 'Potwierdzona' },
-          { color: '#FEF3C7', textColor: '#92400E', label: 'Oczekuje' },
-          { color: '#6B7280', textColor: '#fff',    label: 'Zablokowane' },
-          { color: '#F3F4F6', textColor: '#374151', label: 'Dostępne' },
+          { bg: '#059669', label: 'Potwierdzona' },
+          { bg: '#FEF3C7', label: 'Oczekuje',    border: '1px solid #FDE68A' },
+          { bg: '#6B7280', label: 'Zablokowane' },
+          { bg: '#F3F4F6', label: 'Dostępne',    border: '1px solid #E5E7EB' },
         ].map(l => (
-          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <div style={{ width: '14px', height: '14px', borderRadius: '4px', background: l.color, border: '1px solid #E5E7EB' }} />
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ width: '14px', height: '14px', borderRadius: '4px', background: l.bg, border: l.border ?? 'none', flexShrink: 0 }} />
             <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{l.label}</span>
           </div>
         ))}
-        <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>· Kliknij dostępny dzień by go zablokować</span>
+        <span style={{ fontSize: '0.73rem', color: '#9CA3AF' }}>· Kliknij dostępny dzień by zablokować</span>
       </div>
 
-      {months.map(({ year, month }) => {
-        const dayMap = buildDayMap(bookings, blocked, year, month)
-        return (
-          <MonthCalendar
-            key={`${year}-${month}`}
-            year={year}
-            month={month}
-            dayMap={dayMap}
-            onToggle={handleToggle}
-            loadingDates={loadingDates}
-          />
-        )
-      })}
+      {/* 3 miesiące w gridzie — 1 kolumna na mobile, 3 na desktop */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+        {months.map(({ year, month }) => {
+          const dayMap = buildDayMap(bookings, blocked, year, month)
+          return (
+            <MonthCalendar
+              key={`${year}-${month}`}
+              year={year}
+              month={month}
+              dayMap={dayMap}
+              onToggle={handleToggle}
+              loadingDates={loadingDates}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
