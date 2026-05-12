@@ -609,20 +609,92 @@ function GuestsView({ bookings }: { bookings: Booking[] }) {
 }
 
 // ─── Cennik ───────────────────────────────────────────────────────
-function CennikView({ settings, slug, plan, setTab }: { settings: SiteSettings | null; slug: string; plan: 'basic' | 'pro'; setTab: (t: Tab) => void }) {
+function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
+  settings: SiteSettings | null
+  slug: string
+  plan: 'basic' | 'pro'
+  setTab: (t: Tab) => void
+  onPricingUpdated: (pricing: SiteSettings['pricing']) => void
+}) {
   const isMobile = useIsMobile()
-  const pricing = settings?.pricing
-  const tiers = pricing?.tiers
-    ? [
-        { name: tiers_label(pricing.tiers.high?.label?.pl, 'Wysoki sezon'), months: pricing.tiers.high?.months ?? '', pricePerNight: pricing.tiers.high?.pricePerNight ?? 0, minNights: pricing.tiers.high?.minNights ?? 1, currency: pricing.currency },
-        { name: tiers_label(pricing.tiers.mid?.label?.pl,  'Średni sezon'), months: pricing.tiers.mid?.months  ?? '', pricePerNight: pricing.tiers.mid?.pricePerNight  ?? 0, minNights: pricing.tiers.mid?.minNights  ?? 1, currency: pricing.currency },
-        { name: tiers_label(pricing.tiers.low?.label?.pl,  'Niski sezon'),  months: pricing.tiers.low?.months  ?? '', pricePerNight: pricing.tiers.low?.pricePerNight  ?? 0, minNights: pricing.tiers.low?.minNights  ?? 1, currency: pricing.currency },
-      ]
-    : []
+  const pricing  = settings?.pricing
+  const currency = settings?.currency ?? 'EUR'
 
-  function tiers_label(v: string | undefined, fallback: string): string {
-    return v || fallback
+  // Editable state for tiers
+  const [high, setHigh] = useState({ price: pricing?.tiers?.high?.pricePerNight ?? 0, min: pricing?.tiers?.high?.minNights ?? 1 })
+  const [mid,  setMid]  = useState({ price: pricing?.tiers?.mid?.pricePerNight  ?? 0, min: pricing?.tiers?.mid?.minNights  ?? 1 })
+  const [low,  setLow]  = useState({ price: pricing?.tiers?.low?.pricePerNight  ?? 0, min: pricing?.tiers?.low?.minNights  ?? 1 })
+  const [cleaning, setCleaning] = useState(pricing?.cleaningFee ?? 0)
+  const [saving,   setSaving]   = useState(false)
+  const [saved,    setSaved]    = useState(false)
+
+  // Sync when settings load
+  useEffect(() => {
+    if (!pricing) return
+    setHigh({ price: pricing.tiers?.high?.pricePerNight ?? 0, min: pricing.tiers?.high?.minNights ?? 1 })
+    setMid ({  price: pricing.tiers?.mid?.pricePerNight  ?? 0, min: pricing.tiers?.mid?.minNights  ?? 1 })
+    setLow ({  price: pricing.tiers?.low?.pricePerNight  ?? 0, min: pricing.tiers?.low?.minNights  ?? 1 })
+    setCleaning(pricing.cleaningFee ?? 0)
+  }, [pricing])
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/sites/${slug}/owner/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pricing: {
+            cleaningFee: cleaning,
+            tiers: {
+              high: { pricePerNight: high.price, minNights: high.min },
+              mid:  { pricePerNight: mid.price,  minNights: mid.min  },
+              low:  { pricePerNight: low.price,  minNights: low.min  },
+            },
+          },
+        }),
+      })
+      if (res.ok) {
+        const updated = pricing ? {
+          ...pricing,
+          cleaningFee: cleaning,
+          tiers: {
+            ...pricing.tiers,
+            high: { ...pricing.tiers?.high, pricePerNight: high.price, minNights: high.min },
+            mid:  { ...pricing.tiers?.mid,  pricePerNight: mid.price,  minNights: mid.min  },
+            low:  { ...pricing.tiers?.low,  pricePerNight: low.price,  minNights: low.min  },
+          },
+        } : null
+        onPricingUpdated(updated)
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      } else {
+        alert('Nie udało się zapisać cennika.')
+      }
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const numInput = (value: number, onChange: (v: number) => void, suffix?: string): React.ReactNode => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+      <input
+        type="number"
+        min={0}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width: 80, border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.4rem 0.5rem', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none', textAlign: 'right', fontWeight: 700, color: PRIMARY }}
+      />
+      {suffix && <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{suffix}</span>}
+    </div>
+  )
+
+  const TIER_ROWS = [
+    { key: 'high', label: pricing?.tiers?.high?.label?.pl ?? 'Wysoki sezon', months: pricing?.tiers?.high?.months ?? '', state: high, set: setHigh },
+    { key: 'mid',  label: pricing?.tiers?.mid?.label?.pl  ?? 'Średni sezon', months: pricing?.tiers?.mid?.months  ?? '', state: mid,  set: setMid  },
+    { key: 'low',  label: pricing?.tiers?.low?.label?.pl  ?? 'Niski sezon',  months: pricing?.tiers?.low?.months  ?? '', state: low,  set: setLow  },
+  ]
 
   return (
     <div>
@@ -631,27 +703,42 @@ function CennikView({ settings, slug, plan, setTab }: { settings: SiteSettings |
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <Card>
           <SectionTitle>Sezony cenowe</SectionTitle>
-          {tiers.length === 0 && <p style={{ fontSize: '0.83rem', color: '#9CA3AF' }}>Brak danych cennika.</p>}
-          {tiers.map(s => (
-            <div key={s.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: `1px solid #F3F4F6`, gap: '0.5rem' }}>
-              <div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827' }}>{s.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{s.months} · min. {s.minNights} nocy</div>
+          {!pricing && <p style={{ fontSize: '0.83rem', color: '#9CA3AF' }}>Brak danych cennika.</p>}
+          {pricing && (
+            <form onSubmit={handleSave}>
+              {/* Nagłówki kolumn */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sezon</div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Cena/noc</div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Min. nocy</div>
               </div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: PRIMARY, flexShrink: 0 }}>
-                {s.pricePerNight} {s.currency}<span style={{ fontSize: '0.72rem', fontWeight: 400, color: '#9CA3AF' }}>/noc</span>
+
+              {TIER_ROWS.map(row => (
+                <div key={row.key} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 0', borderBottom: `1px solid #F3F4F6` }}>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827' }}>{row.label}</div>
+                    {row.months && <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>{row.months}</div>}
+                  </div>
+                  {numInput(row.state.price, v => row.set(s => ({ ...s, price: v })), currency)}
+                  {numInput(row.state.min,   v => row.set(s => ({ ...s, min: v })))}
+                </div>
+              ))}
+
+              {/* Sprzątanie */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px', gap: '0.5rem', alignItems: 'center', padding: '0.6rem 0' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>Sprzątanie końcowe</div>
+                {numInput(cleaning, setCleaning, currency)}
+                <div />
               </div>
-            </div>
-          ))}
-          {pricing?.cleaningFee != null && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.6rem' }}>
-              <div style={{ fontSize: '0.85rem', color: '#374151' }}>Sprzątanie końcowe</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#374151' }}>{pricing.cleaningFee} {pricing.currency}</div>
-            </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={saving} style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Zapisywanie…' : 'Zapisz cennik'}
+                </button>
+                {saved && <span style={{ fontSize: '0.82rem', color: '#15803D', fontWeight: 600 }}>✓ Zapisano!</span>}
+              </div>
+            </form>
           )}
-          <div style={{ marginTop: '1rem', background: '#EFF6FF', borderRadius: 10, padding: '0.75rem', fontSize: '0.78rem', color: '#1D4ED8' }}>
-            ℹ️ Aby zmienić cennik, skontaktuj się z Nobooking.
-          </div>
         </Card>
 
         <Card>
@@ -1089,6 +1176,10 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
     setSettings(prev => prev ? { ...prev, ...updates } : prev)
   }, [])
 
+  const handlePricingUpdated = useCallback((pricing: SiteSettings['pricing']) => {
+    setSettings(prev => prev ? { ...prev, pricing, currency: pricing?.currency ?? prev.currency } : prev)
+  }, [])
+
   const siteName = settings?.name ?? initialSiteName
   const plan     = settings?.plan ?? initialPlan
   const ownerEmail = settings?.owner_email ?? ''
@@ -1196,7 +1287,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
               />
             )}
             {tab === 'guests'     && <GuestsView bookings={bookings} />}
-            {tab === 'cennik'     && <CennikView settings={settings} slug={slug} plan={plan} setTab={setTab} />}
+            {tab === 'cennik'     && <CennikView settings={settings} slug={slug} plan={plan} setTab={setTab} onPricingUpdated={handlePricingUpdated} />}
             {tab === 'kalendarz'  && (
               <KalendarzView
                 slug={slug}
