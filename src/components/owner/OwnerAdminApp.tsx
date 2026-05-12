@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { Booking, Review } from '@/lib/types'
+import type { Booking, Review, BlockedDate } from '@/lib/types'
+import { KalendarzView } from './KalendarzView'
 
 // ─── Design tokens ────────────────────────────────────────────────
 const PRIMARY = '#1A5276'
@@ -24,7 +25,7 @@ function useIsMobile(breakpoint = 768) {
 
 // ─── Types ────────────────────────────────────────────────────────
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
-type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'opinie' | 'analityka' | 'ustawienia'
+type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'kalendarz' | 'opinie' | 'analityka' | 'ustawienia'
 
 const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: string }> = {
   pending:   { label: 'Nowe zapytanie', bg: '#EFF6FF', color: '#1D4ED8' },
@@ -96,6 +97,7 @@ const NAV_ITEMS: Array<{ id: Tab; icon: string; label: string; pro?: boolean }> 
   { id: 'bookings',   icon: '📅', label: 'Rezerwacje' },
   { id: 'guests',     icon: '👥', label: 'Goście' },
   { id: 'cennik',     icon: '💰', label: 'Cennik' },
+  { id: 'kalendarz',  icon: '🗓️', label: 'Kalendarz' },
   { id: 'opinie',     icon: '⭐', label: 'Opinie' },
   { id: 'analityka',  icon: '📊', label: 'Analityka', pro: true },
   { id: 'ustawienia', icon: '⚙️', label: 'Ustawienia' },
@@ -590,7 +592,7 @@ function GuestsView({ bookings }: { bookings: Booking[] }) {
 }
 
 // ─── Cennik ───────────────────────────────────────────────────────
-function CennikView({ settings, slug, plan }: { settings: SiteSettings | null; slug: string; plan: 'basic' | 'pro' }) {
+function CennikView({ settings, slug, plan, setTab }: { settings: SiteSettings | null; slug: string; plan: 'basic' | 'pro'; setTab: (t: Tab) => void }) {
   const isMobile = useIsMobile()
   const pricing = settings?.pricing
   const tiers = pricing?.tiers
@@ -640,12 +642,12 @@ function CennikView({ settings, slug, plan }: { settings: SiteSettings | null; s
           <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '1rem', marginTop: 0 }}>
             Blokuj daty kiedy apartament jest niedostępny (własne pobyty, remonty itp.).
           </p>
-          <a
-            href={`/sites/${slug}/admin/kalendarz`}
-            style={{ display: 'block', width: '100%', textAlign: 'center', background: '#374151', color: 'white', borderRadius: 10, padding: '0.65rem', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', boxSizing: 'border-box' }}
+          <button
+            onClick={() => setTab('kalendarz')}
+            style={{ display: 'block', width: '100%', textAlign: 'center', background: '#374151', color: 'white', borderRadius: 10, padding: '0.65rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', border: 'none', boxSizing: 'border-box' }}
           >
-            📅 Otwórz kalendarz →
-          </a>
+            🗓️ Otwórz kalendarz →
+          </button>
         </Card>
       </div>
 
@@ -893,6 +895,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   const [selectedBookingId, setSelectedBookingId]  = useState<string | null>(null)
 
   const [bookings,  setBookings]  = useState<Booking[]>([])
+  const [blocked,   setBlocked]   = useState<BlockedDate[]>([])
   const [reviews,   setReviews]   = useState<Review[]>([])
   const [settings,  setSettings]  = useState<SiteSettings | null>(null)
   const [stats,     setStats]     = useState<Stats | null>(null)
@@ -900,8 +903,9 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
 
   useEffect(() => {
     async function load() {
-      const [bRes, rRes, sRes, stRes] = await Promise.all([
+      const [bRes, blRes, rRes, sRes, stRes] = await Promise.all([
         fetch(`/api/sites/${slug}/owner/bookings`),
+        fetch(`/api/sites/${slug}/owner/blocked`),
         fetch(`/api/sites/${slug}/owner/reviews`),
         fetch(`/api/sites/${slug}/owner/settings`),
         fetch(`/api/sites/${slug}/owner/stats`),
@@ -912,17 +916,19 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
         return
       }
 
-      const [bData, rData, sData, stData] = await Promise.all([
-        bRes.ok ? bRes.json() : [],
-        rRes.ok ? rRes.json() : [],
-        sRes.ok ? sRes.json() : null,
+      const [bData, blData, rData, sData, stData] = await Promise.all([
+        bRes.ok  ? bRes.json()  : [],
+        blRes.ok ? blRes.json() : [],
+        rRes.ok  ? rRes.json()  : [],
+        sRes.ok  ? sRes.json()  : null,
         stRes.ok ? stRes.json() : null,
       ])
 
-      setBookings(bData as Booking[])
-      setReviews(rData as Review[])
-      setSettings(sData as SiteSettings | null)
-      setStats(stData as Stats | null)
+      setBookings(bData  as Booking[])
+      setBlocked(blData  as BlockedDate[])
+      setReviews(rData   as Review[])
+      setSettings(sData  as SiteSettings | null)
+      setStats(stData    as Stats | null)
       setLoading(false)
     }
     load()
@@ -1069,7 +1075,15 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
               />
             )}
             {tab === 'guests'     && <GuestsView bookings={bookings} />}
-            {tab === 'cennik'     && <CennikView settings={settings} slug={slug} plan={plan} />}
+            {tab === 'cennik'     && <CennikView settings={settings} slug={slug} plan={plan} setTab={setTab} />}
+            {tab === 'kalendarz'  && (
+              <KalendarzView
+                slug={slug}
+                bookings={bookings}
+                blocked={blocked}
+                setBlocked={fn => setBlocked(fn)}
+              />
+            )}
             {tab === 'opinie'     && <OpinieView reviews={reviews} slug={slug} onToggle={handleReviewToggle} />}
             {tab === 'analityka'  && <AnalitykaView />}
             {tab === 'ustawienia' && <UstawieniaView settings={settings} slug={slug} onSaved={handleSettingsSaved} />}
