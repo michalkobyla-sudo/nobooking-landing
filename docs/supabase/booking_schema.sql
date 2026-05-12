@@ -1,16 +1,20 @@
 -- ============================================================
 -- nobooking.eu — Booking System Schema
 -- Run in: Supabase Dashboard → SQL Editor → New query → Run
--- Safe to re-run — drops conflicting tables first
+-- ⚠️  UWAGA: DROP TABLE usunięte celowo — ta baza jest
+--     współdzielona z casasol-almadelmar.com. Uruchomienie
+--     DROP TABLE CASCADE zniszczyłoby dane casasol.
+--     Jeśli musisz zresetować schemat — zrób to ręcznie
+--     i najpierw wykonaj backup danych casasol.
 -- ============================================================
 
--- Drop in reverse dependency order (if exist)
-drop table if exists checkin_forms cascade;
-drop table if exists discount_codes cascade;
-drop table if exists reviews cascade;
-drop table if exists blocked_dates cascade;
-drop table if exists bookings cascade;
-drop table if exists sites cascade;
+-- DROP TABLE usunięte — patrz ostrzeżenie powyżej
+-- drop table if exists checkin_forms cascade;
+-- drop table if exists discount_codes cascade;
+-- drop table if exists reviews cascade;
+-- drop table if exists blocked_dates cascade;
+-- drop table if exists bookings cascade;
+-- drop table if exists sites cascade;
 
 -- ─── SITES ───────────────────────────────────────────────────────────────────
 create table sites (
