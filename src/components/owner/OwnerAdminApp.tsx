@@ -1163,10 +1163,11 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
         .catch(() => null)
       setTimeout(() => setBanner(null), 6000)
     } else if (params.get('stripe_error') === '1') {
-      setBanner({ type: 'error', text: 'Nie udało się połączyć Stripe. Spróbuj ponownie.' })
+      const stripeMsg = params.get('stripe_msg')
+      setBanner({ type: 'error', text: stripeMsg ? `Błąd Stripe: ${stripeMsg}` : 'Nie udało się połączyć Stripe. Spróbuj ponownie.' })
       setTabState('ustawienia')
       window.history.replaceState({}, '', window.location.pathname)
-      setTimeout(() => setBanner(null), 6000)
+      setTimeout(() => setBanner(null), 15000)
     }
   }, [slug])
 

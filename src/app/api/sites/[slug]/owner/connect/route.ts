@@ -33,19 +33,21 @@ export async function GET(request: NextRequest, { params }: Params) {
         .update({ stripe_account_id: accountId, stripe_onboarded: false })
         .eq('id', site.id)
     } catch (err) {
-      console.error('[owner/connect] createConnectAccount error:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[owner/connect] createConnectAccount error:', msg)
       const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').replace(/\/$/, '')
-      return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1`)
+      return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1&stripe_msg=${encodeURIComponent(msg)}`)
     }
   }
 
   // Generate fresh onboarding link
   try {
-    const url = await createOnboardingLink(accountId, slug)
+    const url = await createOnboardingLink(accountId!, slug)
     return NextResponse.redirect(url)
   } catch (err) {
-    console.error('[owner/connect] createOnboardingLink error:', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[owner/connect] createOnboardingLink error:', msg)
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').replace(/\/$/, '')
-    return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1`)
+    return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1&stripe_msg=${encodeURIComponent(msg)}`)
   }
 }
