@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { createBookingCheckout, createDirectCheckout } from '@/lib/stripe-connect'
+import { createBookingCheckout } from '@/lib/stripe-connect'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
 interface Params { params: Promise<{ slug: string }> }
@@ -166,27 +166,23 @@ export async function POST(req: NextRequest, { params }: Params) {
   const description = `${config.name} · ${check_in} – ${check_out} (${nights} nocy)`
 
   // ── Stripe Checkout ───────────────────────────────────────────────────────────
-  try {
-    const hasConnect = !!site.stripe_account_id && site.stripe_onboarded === true
+  // Payments only work when owner has completed Stripe Connect onboarding.
+  // No fallback to platform account — owner must connect their own Stripe first.
+  if (!site.stripe_account_id || site.stripe_onboarded !== true) {
+    await supabase.from('bookings').delete().eq('id', bookingId)
+    return NextResponse.json({ error: 'stripe_not_connected' }, { status: 402 })
+  }
 
-    const checkoutUrl = hasConnect
-      ? await createBookingCheckout({
-          accountId: site.stripe_account_id as string,
-          amountCents,
-          currency,
-          bookingId,
-          siteSlug: slug,
-          guestEmail: guest_email.trim().toLowerCase(),
-          description,
-        })
-      : await createDirectCheckout({
-          amountCents,
-          currency,
-          bookingId,
-          siteSlug: slug,
-          guestEmail: guest_email.trim().toLowerCase(),
-          description,
-        })
+  try {
+    const checkoutUrl = await createBookingCheckout({
+      accountId: site.stripe_account_id as string,
+      amountCents,
+      currency,
+      bookingId,
+      siteSlug: slug,
+      guestEmail: guest_email.trim().toLowerCase(),
+      description,
+    })
 
     return NextResponse.json({ checkoutUrl })
 

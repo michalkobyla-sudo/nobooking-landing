@@ -549,9 +549,9 @@ function VideoSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Calendar + price calculator ─────────────────────────────────────────────
 
-function CalendarPricer({ config, lang, ui, primary, isMobile, slug }: {
+function CalendarPricer({ config, lang, ui, primary, isMobile, slug, stripeEnabled }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
-  siteId: string; slug: string
+  siteId: string; slug: string; stripeEnabled: boolean
 }) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -676,7 +676,9 @@ function CalendarPricer({ config, lang, ui, primary, isMobile, slug }: {
             <a href="#kontakt" style={{ display: 'block', textAlign: 'center', background: primary, color: 'white', padding: '0.825rem', borderRadius: 10, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               {ui.pricerBook}
             </a>
-            <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
+            {stripeEnabled && (
+              <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
+            )}
           </div>
         </div>
       </div>
@@ -814,9 +816,9 @@ function MapSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Booking form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
+function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
-  siteId: string; slug: string
+  siteId: string; slug: string; stripeEnabled: boolean
 }) {
   void lang
   const [form, setForm] = useState({ arrival: '', departure: '', guests: '2', name: '', email: '', phone: '', message: '', discount: '' })
@@ -1013,11 +1015,31 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug }: {
               </div>
             )}
 
-            <button type="submit" disabled={sending} style={{ background: primary, color: 'white', border: 'none', borderRadius: 12, padding: '0.95rem', fontSize: '1rem', fontWeight: 800, cursor: sending ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.75 : 1, marginTop: '0.25rem' }}>
-              {sending ? '⏳ Przekierowanie do płatności...' : `💳 ${ui.bookSubmit}`}
-            </button>
-
-            <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
+            {stripeEnabled ? (
+              <>
+                <button type="submit" disabled={sending} style={{ background: primary, color: 'white', border: 'none', borderRadius: 12, padding: '0.95rem', fontSize: '1rem', fontWeight: 800, cursor: sending ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.75 : 1, marginTop: '0.25rem' }}>
+                  {sending ? '⏳ Przekierowanie do płatności...' : `💳 ${ui.bookSubmit}`}
+                </button>
+                <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
+              </>
+            ) : (
+              <div style={{ background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 12, padding: '1rem 1.25rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#374151', marginBottom: '0.4rem' }}>📞 Rezerwacje przez kontakt bezpośredni</div>
+                <div style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '0.75rem' }}>Płatności online są tymczasowo niedostępne. Skontaktuj się bezpośrednio z właścicielem.</div>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {config.contact.email && (
+                    <a href={`mailto:${config.contact.email}`} style={{ display: 'inline-block', background: primary, color: 'white', borderRadius: 9, padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>
+                      ✉️ {config.contact.email}
+                    </a>
+                  )}
+                  {config.contact.phone && (
+                    <a href={`tel:${config.contact.phone}`} style={{ display: 'inline-block', background: '#374151', color: 'white', borderRadius: 9, padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>
+                      📞 {config.contact.phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         )}
       </div>
@@ -1055,11 +1077,12 @@ function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui:
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false }: {
+export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false, stripeEnabled = true }: {
   config: ApartmentConfig
   siteId?: string
   slug?: string
   showDemoBanner?: boolean
+  stripeEnabled?: boolean
 }) {
   const [lang, setLang] = useState<Lang>('pl')
   const isMobile = useIsMobile()
@@ -1093,11 +1116,11 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
       <ApartmentInfo config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <Gallery config={config} ui={ui} primary={primary} isMobile={isMobile} />
       <VideoSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <CalendarPricer config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} />
+      <CalendarPricer config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} />
       <Reviews config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <GuestPortal config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <MapSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} />
+      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} />
       <ApartmentFooter config={config} ui={ui} primary={primary} />
     </div>
   )
