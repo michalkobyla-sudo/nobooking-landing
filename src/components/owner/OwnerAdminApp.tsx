@@ -47,13 +47,13 @@ const CURRENCIES: Array<{ value: string; label: string }> = [
 ]
 
 interface SiteSettings {
-  name:          string
-  location:      string
-  owner_email:   string
-  plan:          'basic' | 'pro'
-  contact_email: string
-  contact_phone: string
-  currency:      string
+  name:              string
+  location:          string
+  owner_email:       string
+  plan:              'basic' | 'pro'
+  contact_email:     string
+  contact_phone:     string
+  currency:          string
   pricing: {
     currency:    string
     cleaningFee: number
@@ -63,7 +63,9 @@ interface SiteSettings {
       high: { pricePerNight: number; minNights: number; label: { pl: string }; months: string }
     }
   } | null
-  slug: string
+  slug:              string
+  stripe_account_id: string | null
+  stripe_onboarded:  boolean
 }
 
 interface Stats {
@@ -959,6 +961,50 @@ function PasswordCard({ slug }: { slug: string }) {
   )
 }
 
+// ─── Stripe Connect card ──────────────────────────────────────────
+function StripeConnectCard({ slug, settings }: { slug: string; settings: SiteSettings | null }) {
+  const onboarded = settings?.stripe_onboarded === true
+  const hasAccount = !!settings?.stripe_account_id
+
+  if (onboarded) {
+    return (
+      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, padding: '0.75rem', marginTop: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#15803D', marginBottom: '0.2rem' }}>✓ Stripe połączony</div>
+            <div style={{ fontSize: '0.73rem', color: '#374151' }}>Płatności od gości trafiają bezpośrednio na Twoje konto Stripe.</div>
+          </div>
+          <a
+            href={`/api/sites/${slug}/owner/connect`}
+            style={{ display: 'inline-block', background: '#15803D', color: 'white', borderRadius: 7, padding: '0.35rem 0.75rem', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}
+          >
+            Zarządzaj kontem ↗
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '0.75rem', marginTop: '0.75rem' }}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#C2410C', marginBottom: '0.25rem' }}>
+        {hasAccount ? '⚠️ Stripe — konfiguracja niekompletna' : '💳 Integracja z Stripe'}
+      </div>
+      <div style={{ fontSize: '0.73rem', color: '#374151', marginBottom: '0.5rem' }}>
+        {hasAccount
+          ? 'Konto Stripe zostało założone, ale wymaga dokończenia konfiguracji. Kliknij poniżej, aby kontynuować.'
+          : 'Połącz konto Stripe, aby przyjmować zaliczki i pełne płatności online bezpośrednio na Twój rachunek.'}
+      </div>
+      <a
+        href={`/api/sites/${slug}/owner/connect`}
+        style={{ display: 'inline-block', background: GOLD, color: 'white', borderRadius: 7, padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none' }}
+      >
+        {hasAccount ? 'Dokończ konfigurację →' : 'Połącz Stripe →'}
+      </a>
+    </div>
+  )
+}
+
 // ─── Ustawienia ───────────────────────────────────────────────────
 function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | null; slug: string; onSaved: (s: Partial<SiteSettings>) => void }) {
   const isMobile = useIsMobile()
@@ -1064,13 +1110,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
             <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginBottom: '0.5rem' }}>Goście otrzymują indywidualny link z informacjami o pobycie, kodem Wi-Fi i przewodnikiem lokalu.</div>
           </div>
 
-          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '0.75rem', marginTop: '0.75rem' }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#C2410C', marginBottom: '0.25rem' }}>Integracja z Stripe</div>
-            <div style={{ fontSize: '0.75rem', color: '#374151', marginBottom: '0.5rem' }}>Połącz konto Stripe, aby przyjmować zaliczki i pełne płatności online bezpośrednio na Twój rachunek.</div>
-            <a href="https://www.nobooking.eu" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: GOLD, color: 'white', border: 'none', borderRadius: 7, padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
-              Skonfiguruj Stripe
-            </a>
-          </div>
+          <StripeConnectCard slug={slug} settings={settings} />
 
           <div style={{ marginTop: '1rem', borderTop: `1px solid #F3F4F6`, paddingTop: '1rem' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.3rem' }}>Plan: <span style={{ color: PRIMARY }}>{settings?.plan === 'pro' ? 'PRO' : 'Basic'}</span></div>
@@ -1100,6 +1140,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   const [sidebarCollapsed,  setSidebarCollapsed]   = useState(false)
   const [mobileMenuOpen,    setMobileMenuOpen]     = useState(false)
   const [selectedBookingId, setSelectedBookingId]  = useState<string | null>(null)
+  const [banner,            setBanner]             = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const [bookings,  setBookings]  = useState<Booking[]>([])
   const [blocked,   setBlocked]   = useState<BlockedDate[]>([])
@@ -1107,6 +1148,27 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   const [settings,  setSettings]  = useState<SiteSettings | null>(null)
   const [stats,     setStats]     = useState<Stats | null>(null)
   const [loading,   setLoading]   = useState(true)
+
+  // Handle ?stripe_connected=1 / ?stripe_error=1 from Stripe Connect callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('stripe_connected') === '1') {
+      setBanner({ type: 'success', text: '✓ Stripe połączony! Płatności będą trafiać bezpośrednio na Twoje konto.' })
+      setTabState('ustawienia')
+      window.history.replaceState({}, '', window.location.pathname)
+      // Refresh settings to reflect stripe_onboarded: true
+      fetch(`/api/sites/${slug}/owner/settings`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setSettings(data as SiteSettings) })
+        .catch(() => null)
+      setTimeout(() => setBanner(null), 6000)
+    } else if (params.get('stripe_error') === '1') {
+      setBanner({ type: 'error', text: 'Nie udało się połączyć Stripe. Spróbuj ponownie.' })
+      setTabState('ustawienia')
+      window.history.replaceState({}, '', window.location.pathname)
+      setTimeout(() => setBanner(null), 6000)
+    }
+  }, [slug])
 
   useEffect(() => {
     async function load() {
@@ -1263,6 +1325,21 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
               )}
             </div>
           </div>
+
+          {/* Banner */}
+          {banner && (
+            <div style={{
+              padding: '0.65rem 1.25rem',
+              background: banner.type === 'success' ? '#F0FDF4' : '#FEF2F2',
+              borderBottom: `1px solid ${banner.type === 'success' ? '#BBF7D0' : '#FECACA'}`,
+              color: banner.type === 'success' ? '#15803D' : '#DC2626',
+              fontSize: '0.83rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
+            }}>
+              <span>{banner.text}</span>
+              <button onClick={() => setBanner(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem', lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+          )}
 
           {/* Content */}
           <div style={{ flex: 1, padding: isMobile ? '1rem' : '2rem', maxWidth: 1080, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
