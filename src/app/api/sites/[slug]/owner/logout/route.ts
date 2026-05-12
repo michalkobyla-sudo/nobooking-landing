@@ -7,7 +7,7 @@ interface Params {
 
 export async function POST(_request: NextRequest, { params }: Params) {
   const { slug } = await params
-  const res = NextResponse.json({ ok: true })
+  const res = NextResponse.redirect(new URL(`/sites/${slug}/admin/login`, request.url))
   res.cookies.set(cookieName(slug), '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
