@@ -8,9 +8,15 @@ const COOKIE_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 dni
 
 function jwtSecret(): string {
   const secret = process.env.OWNER_JWT_SECRET
-    || (process.env.CRON_SECRET?.trim() || undefined)   // ignore empty string
-    || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)       // always present on Vercel
-    || 'nobooking-owner-dev-secret'
+  if (!secret) {
+    // Hard fail in production — never fall back to a public or weak key.
+    // Set OWNER_JWT_SECRET env var on Vercel (32+ random bytes).
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('OWNER_JWT_SECRET is not set. Cannot sign owner tokens.')
+    }
+    // Dev-only fallback — never reaches production
+    return 'nobooking-owner-dev-secret-DO-NOT-USE-IN-PROD'
+  }
   return secret
 }
 
