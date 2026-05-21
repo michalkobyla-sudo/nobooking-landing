@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRequire } from 'module'
 import { createServiceClient } from '@/lib/supabase'
-import { sendBookingConfirmation, sendOwnerBookingNotification, type BookingEmailData } from '@/lib/email'
+import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, type BookingEmailData } from '@/lib/email'
+import type { Order } from '@/lib/types'
 
 const _require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,6 +40,8 @@ export async function POST(request: NextRequest) {
 
     if (orderId) {
       const supabase = createServiceClient()
+
+      // Mark order as paid
       const { error } = await supabase
         .from('orders')
         .update({ stripe_paid: true, stripe_session_id: sessionId })
@@ -46,6 +49,30 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('[webhook] Supabase update error:', error)
+      } else {
+        // Automatically send onboarding email so the client
+        // can fill in their apartment details without any manual admin step.
+        try {
+          const { data: order } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', orderId)
+            .single()
+
+          // Only send if email hasn't been sent yet (status is still new/contacted)
+          const alreadySent = ['onboarding_sent', 'building', 'completed'].includes(order.status)
+          if (order && !alreadySent) {
+            await sendOnboardingEmail(order as Order)
+            await supabase
+              .from('orders')
+              .update({ status: 'onboarding_sent' })
+              .eq('id', orderId)
+            console.log('[webhook] onboarding email sent for order', orderId)
+          }
+        } catch (emailErr) {
+          // Non-fatal — log and continue. Admin can still send manually.
+          console.error('[webhook] onboarding email error:', emailErr)
+        }
       }
     }
 
