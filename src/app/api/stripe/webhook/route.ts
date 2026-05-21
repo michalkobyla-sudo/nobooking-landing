@@ -41,6 +41,19 @@ export async function POST(request: NextRequest) {
     if (orderId) {
       const supabase = createServiceClient()
 
+      // Idempotency guard — Stripe may deliver the same event more than once.
+      // If stripe_session_id is already set on this order, we already processed it.
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('stripe_session_id, status')
+        .eq('id', orderId)
+        .single()
+
+      if (existing?.stripe_session_id === sessionId) {
+        console.log('[webhook] duplicate order event, skipping', sessionId)
+        return NextResponse.json({ received: true })
+      }
+
       // Mark order as paid
       const { error } = await supabase
         .from('orders')
@@ -84,9 +97,15 @@ export async function POST(request: NextRequest) {
 
       const { data: booking } = await supabase
         .from('bookings')
-        .select('id, guest_email, guest_name, site_id, check_in, check_out, total_price, currency, discount_code')
+        .select('id, guest_email, guest_name, site_id, check_in, check_out, total_price, currency, discount_code, stripe_session_id')
         .eq('id', bookingId)
         .single()
+
+      // Idempotency guard — skip if already processed
+      if (booking?.stripe_session_id === sessionId) {
+        console.log('[webhook] duplicate booking event, skipping', sessionId)
+        return NextResponse.json({ received: true })
+      }
 
       if (booking) {
         await supabase

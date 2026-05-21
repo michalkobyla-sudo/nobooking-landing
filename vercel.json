@@ -5,6 +5,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/cleanup-pending-bookings",
+      "schedule": "*/30 * * * *"
+    },
+    {
       "path": "/api/cron/review-requests",
       "schedule": "0 10 * * *"
     },
