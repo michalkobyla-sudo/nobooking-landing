@@ -2,6 +2,8 @@ import { createServiceClient } from '@/lib/supabase'
 import ApartmentPage from '@/components/apartment/ApartmentPage'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
+export const revalidate = 300 // ISR: odświeżaj co 5 minut
+
 interface Props {
   params: Promise<{ slug: string }>
 }
