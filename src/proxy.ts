@@ -65,6 +65,23 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hostname = host.replace(/:\d+$/, '')
 
+  const isMainDomainEarly =
+    hostname === ROOT_DOMAIN ||
+    hostname === 'www.' + ROOT_DOMAIN ||
+    hostname === 'localhost'
+
+  // ── Fast path: public GET pages on main domain — skip middleware entirely
+  // so Next.js ISR cache headers are preserved (middleware forces no-store).
+  // Rate limiting and admin auth are not needed for these public routes.
+  if (
+    isMainDomainEarly &&
+    request.method === 'GET' &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/admin')
+  ) {
+    return NextResponse.next()
+  }
+
   // ── 0. Rate limiting ───────────────────────────────────────────────────────
   const rateLimitResponse = applyRateLimit(request)
   if (rateLimitResponse) return rateLimitResponse
@@ -72,10 +89,7 @@ export async function proxy(request: NextRequest) {
   // ── 1. Subdomain routing ───────────────────────────────────────────────────
   // slug.nobooking.eu → /sites/slug
   // demo.nobooking.eu → /demo
-  const isMainDomain =
-    hostname === ROOT_DOMAIN ||
-    hostname === 'www.' + ROOT_DOMAIN ||
-    hostname === 'localhost'
+  const isMainDomain = isMainDomainEarly
 
   if (!isMainDomain) {
     const subdomain = hostname.replace(`.${ROOT_DOMAIN}`, '')
