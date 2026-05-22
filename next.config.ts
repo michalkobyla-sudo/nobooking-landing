@@ -22,8 +22,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  org: 'michal-kobylinski',
+  project: 'nobooking-landing',
 
   // Only upload source maps when SENTRY_AUTH_TOKEN is set (i.e. in CI/Vercel)
   silent: !process.env.CI,
