@@ -25,7 +25,7 @@ function useIsMobile(breakpoint = 768) {
 
 // ─── Types ────────────────────────────────────────────────────────
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
-type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'kalendarz' | 'opinie' | 'analityka' | 'ustawienia'
+type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'kalendarz' | 'opinie' | 'analityka' | 'ustawienia' | 'subskrypcja'
 
 const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: string }> = {
   pending:   { label: 'Nowe zapytanie', bg: '#EFF6FF', color: '#1D4ED8' },
@@ -115,7 +115,8 @@ const NAV_ICONS: Record<Tab, React.ReactNode> = {
   kalendarz: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" strokeWidth="3"/><line x1="12" y1="14" x2="12" y2="14" strokeWidth="3"/><line x1="16" y1="14" x2="16" y2="14" strokeWidth="3"/></svg>,
   opinie:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   analityka: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  ustawienia:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+  ustawienia:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+  subskrypcja: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────
@@ -126,8 +127,9 @@ const NAV_ITEMS: Array<{ id: Tab; label: string; pro?: boolean }> = [
   { id: 'cennik',     label: 'Cennik' },
   { id: 'kalendarz',  label: 'Kalendarz' },
   { id: 'opinie',     label: 'Opinie' },
-  { id: 'analityka',  label: 'Analityka', pro: true },
-  { id: 'ustawienia', label: 'Ustawienia' },
+  { id: 'analityka',   label: 'Analityka', pro: true },
+  { id: 'ustawienia',  label: 'Ustawienia' },
+  { id: 'subskrypcja', label: 'Subskrypcja' },
 ]
 
 function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEmail, slug }: {
@@ -1088,6 +1090,120 @@ function StripeConnectCard({ slug, settings }: { slug: string; settings: SiteSet
   )
 }
 
+// ─── Subskrypcja ─────────────────────────────────────────────────
+function SubskrypcjaView({ slug }: { slug: string }) {
+  const [info, setInfo] = useState<{
+    plan: string; active: boolean; expires_at: string | null;
+    renewal_price_pln: number | null; renewal_price_eur: number | null; renewal_currency: string | null
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [renewing, setRenewing] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/sites/${slug}/owner/info`)
+      .then(r => r.json())
+      .then(d => { setInfo(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [slug])
+
+  async function handleRenew() {
+    setRenewing(true)
+    const res = await fetch(`/api/sites/${slug}/owner/renew`, { method: 'POST' })
+    const d = await res.json() as { checkoutUrl?: string; error?: string }
+    if (d.checkoutUrl) window.location.href = d.checkoutUrl
+    else { alert('Błąd: ' + (d.error ?? 'nieznany')); setRenewing(false) }
+  }
+
+  if (loading) return <div style={{ padding: '3rem', textAlign: 'center', color: '#9CA3AF' }}>Ładowanie...</div>
+  if (!info) return null
+
+  const daysLeft = info.expires_at
+    ? Math.round((new Date(info.expires_at).getTime() - Date.now()) / 86400000)
+    : null
+  const isExpired = daysLeft !== null && daysLeft < 0
+  const isUrgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 14
+  const statusColor = isExpired ? '#DC2626' : isUrgent ? '#D97706' : '#059669'
+  const statusBg = isExpired ? '#FEF2F2' : isUrgent ? '#FEF3C7' : '#F0FDF4'
+  const price = info.renewal_currency === 'eur' && info.renewal_price_eur
+    ? `${(info.renewal_price_eur / 100).toFixed(0)} €`
+    : info.renewal_price_pln ? `${(info.renewal_price_pln / 100).toFixed(0)} zł` : '—'
+
+  const expiryLabel = info.expires_at
+    ? new Date(info.expires_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—'
+
+  const statusLabel = isExpired ? '❌ Wygasła'
+    : daysLeft !== null && daysLeft <= 1 ? '🚨 Wygasa jutro'
+    : daysLeft !== null && daysLeft <= 7 ? `⚠️ Wygasa za ${daysLeft} dni`
+    : daysLeft !== null && daysLeft <= 30 ? `⏳ ${daysLeft} dni do odnowienia`
+    : `✅ Aktywna — ${daysLeft ?? '?'} dni`
+
+  const card: React.CSSProperties = { background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1rem' }
+
+  return (
+    <div style={{ maxWidth: 560 }}>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', marginBottom: '1.25rem' }}>Subskrypcja</h2>
+
+      <div style={{ ...card, background: statusBg, borderColor: statusColor + '55' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+          <div>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</p>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: statusColor }}>{statusLabel}</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: '#9CA3AF', marginBottom: 2 }}>Wygasa</p>
+            <p style={{ margin: 0, fontWeight: 700, color: '#111827' }}>{expiryLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={card}>
+        <p style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Twój plan</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111827' }}>
+              Nobooking {info.plan === 'pro' ? 'Pro' : 'Basic'} · 2 lata
+            </p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em' }}>{price}</p>
+            <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: '#9CA3AF' }}>zablokowana cena — nie wzrośnie</p>
+          </div>
+        </div>
+      </div>
+
+      {daysLeft !== null && daysLeft <= 90 && (
+        <div style={card}>
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>
+            {isExpired ? 'Przywróć dostęp' : 'Odnów teraz'}
+          </p>
+          <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.6 }}>
+            {isExpired
+              ? 'Strona jest wyłączona. Opłać odnowienie — dostęp zostanie przywrócony natychmiast.'
+              : `Przedłuż o 2 lata za ${price}. Bezproblemowa ciągłość — bez przerwy w działaniu.`}
+          </p>
+          <button onClick={handleRenew} disabled={renewing} style={{
+            background: isExpired ? '#DC2626' : '#059669', color: 'white', border: 'none',
+            borderRadius: '8px', padding: '0.75rem 1.5rem', fontSize: '0.9rem', fontWeight: 700,
+            fontFamily: 'inherit', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1,
+          }}>
+            {renewing ? 'Przekierowuję...' : `${isExpired ? 'Przywróć' : 'Odnów'} — ${price} →`}
+          </button>
+        </div>
+      )}
+
+      {daysLeft !== null && daysLeft > 90 && (
+        <div style={{ ...card, background: '#F9FAFB' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.65 }}>
+            Otrzymasz email na <strong>90, 30, 14, 7 i 1 dzień</strong> przed wygaśnięciem.
+            Cena odnowienia jest zablokowana i nie zmieni się.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Ustawienia ───────────────────────────────────────────────────
 function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | null; slug: string; onSaved: (s: Partial<SiteSettings>) => void }) {
   const isMobile = useIsMobile()
@@ -1483,7 +1599,8 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
             )}
             {tab === 'opinie'     && <OpinieView reviews={reviews} slug={slug} onToggle={handleReviewToggle} />}
             {tab === 'analityka'  && <AnalitykaView />}
-            {tab === 'ustawienia' && <UstawieniaView settings={settings} slug={slug} onSaved={handleSettingsSaved} />}
+            {tab === 'ustawienia'  && <UstawieniaView settings={settings} slug={slug} onSaved={handleSettingsSaved} />}
+            {tab === 'subskrypcja' && <SubskrypcjaView slug={slug} />}
           </div>
         </div>
       </div>

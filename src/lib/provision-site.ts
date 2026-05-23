@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase'
 import { createConnectAccount } from '@/lib/stripe-connect'
 import { hashPassword } from '@/lib/ownerAuth'
+import { PRICES } from '@/lib/prices'
 import type { Order } from '@/lib/types'
 
 const TEMP_PASSWORD_LENGTH = 12
@@ -72,6 +73,13 @@ export async function provisionSite(
   }
 
   // ── 3. Upsert site record ────────────────────────────────────────────────
+  // Lock renewal price at current prices — client keeps this price forever
+  const plan = order.plan as 'basic' | 'pro'
+  const currency = (order.currency ?? 'pln') as 'pln' | 'eur'
+  const renewalPricePln = PRICES[plan].pln
+  const renewalPriceEur = PRICES[plan].eur
+  const expiresAt = new Date(Date.now() + 2 * 365.25 * 24 * 60 * 60 * 1000).toISOString()
+
   const { data: site, error: siteError } = await supabase
     .from('sites')
     .upsert(
@@ -86,6 +94,10 @@ export async function provisionSite(
         stripe_account_id: stripeAccountId || null,
         stripe_onboarded: false,
         admin_password_hash: adminPasswordHash,
+        expires_at: expiresAt,
+        renewal_price_pln: renewalPricePln,
+        renewal_price_eur: renewalPriceEur,
+        renewal_currency: currency,
       },
       { onConflict: 'slug' },
     )

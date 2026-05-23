@@ -82,6 +82,10 @@ export interface Site {
   owner_user_id: string | null
   stripe_account_id: string | null
   stripe_onboarded: boolean
+  expires_at: string | null
+  renewal_price_pln: number | null
+  renewal_price_eur: number | null
+  renewal_currency: 'pln' | 'eur' | null
 }
 
 // ─── BOOKING ──────────────────────────────────────────────────────────────────

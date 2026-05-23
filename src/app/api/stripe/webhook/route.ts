@@ -89,6 +89,48 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Renewal payment ───────────────────────────────────────────────────────
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const renewalType = session.metadata?.type as string | undefined
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const renewalSiteId = session.metadata?.site_id as string | undefined
+
+    if (renewalType === 'renewal' && renewalSiteId) {
+      const supabase = createServiceClient()
+
+      const { data: site } = await supabase
+        .from('sites')
+        .select('id, expires_at, slug')
+        .eq('id', renewalSiteId)
+        .single()
+
+      if (site) {
+        // Extend from current expires_at (not now) so early renewals aren't penalised
+        const currentExpiry = site.expires_at
+          ? new Date(site.expires_at as string)
+          : new Date()
+        const newExpiry = new Date(currentExpiry.getTime() + 2 * 365.25 * 24 * 60 * 60 * 1000)
+
+        await supabase
+          .from('sites')
+          .update({
+            expires_at: newExpiry.toISOString(),
+            active: true, // Re-activate if was deactivated after grace period
+          })
+          .eq('id', renewalSiteId)
+
+        // Clear sent reminders so the cycle starts fresh for the new period
+        await supabase
+          .from('renewal_reminders')
+          .delete()
+          .eq('site_id', renewalSiteId)
+
+        console.log(`[webhook] renewal processed for site ${site.slug}, new expiry: ${newExpiry.toISOString()}`)
+      }
+
+      return NextResponse.json({ received: true })
+    }
+
     // ── Booking payment ────────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const bookingId = session.metadata?.booking_id as string | undefined
