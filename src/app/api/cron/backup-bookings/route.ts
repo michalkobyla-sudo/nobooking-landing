@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { requireCron } from '@/lib/cronAuth'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
-  // Vercel Cron sends Authorization: Bearer <CRON_SECRET>
-  const authHeader = request.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const unauthorized = requireCron(request)
+  if (unauthorized) return unauthorized
 
   const db = createServiceClient()
   const today = new Date().toISOString().slice(0, 10)

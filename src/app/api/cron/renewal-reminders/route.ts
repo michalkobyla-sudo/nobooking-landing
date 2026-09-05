@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { requireCron } from '@/lib/cronAuth'
 import { sendRenewalEmail } from '@/lib/sendRenewalEmail'
 
 // Reminder thresholds in days before expiry.
@@ -17,14 +18,8 @@ const GRACE_PERIOD_DAYS = 14
  *   3. If site expired > GRACE_PERIOD_DAYS ago → deactivate site + notify owner
  */
 export async function GET(request: NextRequest) {
-  // Auth: Vercel Cron sends CRON_SECRET in Authorization header
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-    }
-  }
+  const unauthorized = requireCron(request)
+  if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
   const now = new Date()

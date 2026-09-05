@@ -5,6 +5,13 @@ import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
 interface Params { params: Promise<{ slug: string }> }
 
+/** Górny limit długości pobytu. Chroni expandRange przed budowaniem
+ *  milionów dat, gdy ktoś poda check_out w roku 9999. */
+const MAX_NIGHTS = 365
+
+/** Postgres: naruszenie constraintu wykluczającego (bookings_no_overlap). */
+const PG_EXCLUSION_VIOLATION = '23P01'
+
 // Determine season tier based on check_in month
 function getTier(checkIn: string, config: ApartmentConfig): 'low' | 'mid' | 'high' {
   const month = new Date(checkIn).getMonth() + 1 // 1-12
@@ -48,9 +55,22 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // ── Validate inputs ─────────────────────────────────────────────────────────
   const today = new Date().toISOString().slice(0, 10)
-  if (!check_in || !check_out || check_in >= check_out || check_in < today) {
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+  if (!check_in || !check_out || !ISO_DATE.test(check_in) || !ISO_DATE.test(check_out)) {
     return NextResponse.json({ error: 'invalid_dates' }, { status: 400 })
   }
+  if (check_in >= check_out || check_in < today) {
+    return NextResponse.json({ error: 'invalid_dates' }, { status: 400 })
+  }
+
+  // Limit sprawdzany PRZED expandRange — inaczej check_out w odległej
+  // przyszłości każe pętli zbudować miliony stringów, zanim cokolwiek
+  // innego zdąży się wykonać.
+  if (countNights(check_in, check_out) > MAX_NIGHTS) {
+    return NextResponse.json({ error: 'stay_too_long', maxNights: MAX_NIGHTS }, { status: 400 })
+  }
+
   if (!guest_name?.trim() || !guest_email?.trim()) {
     return NextResponse.json({ error: 'missing_guest_info' }, { status: 400 })
   }
@@ -158,6 +178,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (bookingError || !booking) {
+    // Constraint bookings_no_overlap odrzucił wstawienie: między naszym
+    // sprawdzeniem dostępności a insertem ktoś zarezerwował te same daty.
+    // To poprawne zachowanie bazy, nie awaria — gość ma zobaczyć 409.
+    if (bookingError?.code === PG_EXCLUSION_VIOLATION) {
+      return NextResponse.json({ error: 'dates_unavailable' }, { status: 409 })
+    }
     console.error('[book] insert error:', bookingError)
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
   }
