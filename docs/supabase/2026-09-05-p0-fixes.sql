@@ -11,10 +11,27 @@
 -- kontrolne. Jeśli którekolwiek zwróci wiersze — NIE dodawaj constraintu,
 -- dopóki nie rozwiążesz problemu ręcznie.
 --
--- ⚠️  UWAGA — WSPÓŁDZIELONA BAZA
--- .env.local nobookinga wskazuje na ten sam projekt Supabase, którego używa
--- casa-sol (ejteazvuaufaltmhcrwi). Izolacja do nobooking-prod jest opisana
--- w MIGRATION-GUIDE.md, ale nie wygląda na przeprowadzoną.
+-- ╔══════════════════════════════════════════════════════════════════════╗
+-- ║  ⚠️  SPRAWDŹ, W KTÓRYM PROJEKCIE JESTEŚ, ZANIM URUCHOMISZ            ║
+-- ║                                                                      ║
+-- ║  Ta migracja należy do NOBOOKING-PROD, nie do projektu casa-sol.     ║
+-- ║                                                                      ║
+-- ║  Weryfikacja 2026-09-05: produkcja nobooking.eu czyta INNY projekt   ║
+-- ║  Supabase niż ten wskazany w .env.local. Kalendarz casa-sol na       ║
+-- ║  produkcji nobookinga zwraca 111 dat (do 2026-10-25), a wspólna      ║
+-- ║  baza ejteazvuaufaltmhcrwi dałaby 107 (do 2026-09-23).               ║
+-- ║  Plik .env.local jest nieaktualny — nie sugeruj się nim.             ║
+-- ║                                                                      ║
+-- ║  Uruchomienie tego skryptu na projekcie casa-sol dołoży constrainty  ║
+-- ║  do bazy działającej strony z prawdziwymi rezerwacjami gości.        ║
+-- ║                                                                      ║
+-- ║  Sprawdź adres projektu w Supabase Dashboard i porównaj z tym,       ║
+-- ║  co ma Vercel → nobooking-landing → Environment Variables.           ║
+-- ╚══════════════════════════════════════════════════════════════════════╝
+--
+-- Poniższe uwagi opisują sytuację, w której obie aplikacje dzielą jedną bazę.
+-- Dla nobooking-prod są nieaktualne (nie ma tam danych casa-sol z site_id
+-- NULL), ale zostawione, gdyby migracja szła jednak na wspólny projekt.
 --
 -- Co to znaczy dla tej migracji:
 --   • Tabela `bookings` jest wspólna dla obu aplikacji. Casa-sol zapisuje
