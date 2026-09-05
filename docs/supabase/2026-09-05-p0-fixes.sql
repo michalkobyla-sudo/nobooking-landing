@@ -17,12 +17,16 @@
 -- w MIGRATION-GUIDE.md, ale nie wygląda na przeprowadzoną.
 --
 -- Co to znaczy dla tej migracji:
---   • Tabela `bookings` jest wspólna dla obu aplikacji. Wiersze casa-sol mają
---     site_id NULL (patrz fix_casasol_compatibility.sql).
---   • Constraint z sekcji 1b ich NIE zablokuje — przy site_id NULL porównanie
---     `=` zwraca NULL, więc taki wiersz nigdy nie wchodzi w konflikt.
---     Casa-sol nie zostanie zepsuty, ale też nie zyska ochrony przed
---     podwójną rezerwacją.
+--   • Tabela `bookings` jest wspólna dla obu aplikacji. Casa-sol zapisuje
+--     swoje rezerwacje z site_id = '300fabbf-25c4-407e-a783-6461f2ac0bbf'
+--     (stała CASASOL_SITE_ID w kodzie casa-sol), więc constraint z sekcji 1b
+--     OBEJMIE także jego dane — to dobrze, bo casa-sol zyska ochronę przed
+--     podwójną rezerwacją, ale znaczy też, że zapytania kontrolne z sekcji 1a
+--     muszą wyjść czysto również dla jego wierszy. Nie filtruj ich po site_id.
+--   • Starsze wiersze casa-sol mogą mieć site_id NULL (fix_casasol_compatibility
+--     .sql rozluźnił tę kolumnę, a odzyskiwanie z STEP 4 nie ustawiało site_id).
+--     Takie wiersze constraint pomija — przy NULL porównanie `=` nie zwraca
+--     prawdy. Nie zostaną zepsute, ale nie zyskają ochrony.
 --   • `stripe_webhook_events` to nowa tabela, a `orders` nie jest używana
 --     przez casa-sol — te dwie zmiany są bezpieczne.
 --
