@@ -69,46 +69,23 @@ export async function isConnectAccountReady(accountId: string): Promise<boolean>
 }
 
 /**
- * Create a Stripe Checkout session that charges directly to the platform account.
- * Used when the owner has no Connect account yet.
- */
-export async function createDirectCheckout(params: {
-  amountCents: number
-  currency: string
-  bookingId: string
-  siteSlug: string
-  guestEmail: string
-  description: string
-}): Promise<string> {
-  const stripe = getStripe()
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card', 'blik', 'p24'],
-    customer_email: params.guestEmail,
-    line_items: [{
-      price_data: {
-        currency: params.currency,
-        unit_amount: params.amountCents,
-        product_data: { name: params.description },
-      },
-      quantity: 1,
-    }],
-    success_url: `${siteUrl}/sites/${params.siteSlug}/guest/${params.bookingId}?paid=1`,
-    cancel_url:  `${siteUrl}/sites/${params.siteSlug}?cancelled=1`,
-    metadata: { booking_id: params.bookingId, site_slug: params.siteSlug },
-  })
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  return session.url as string
-}
-
-/**
- * Create a Stripe Checkout session with destination charge to owner's Connect account.
- * Used when a guest books an apartment.
- * Each client has their own Stripe Connect account — funds go directly to them.
+ * Sesja Stripe Checkout za rezerwację apartamentu — DIRECT CHARGE.
+ *
+ * Płatność powstaje bezpośrednio na koncie właściciela (`stripeAccount`), więc:
+ *   - właściciel jest merchant of record,
+ *   - prowizję Stripe płaci właściciel, nie platforma,
+ *   - chargebacki i zwroty obciążają właściciela,
+ *   - gość widzi na wyciągu firmę właściciela, nie Nobooking.
+ *
+ * Wcześniej był tu destination charge (`payment_intent_data.transfer_data`)
+ * bez `application_fee_amount`. Przy takim ustawieniu merchant of record była
+ * platforma: Nobooking płacił prowizję Stripe od każdej rezerwacji swoich
+ * klientów, przekazywał im 100% kwoty i odpowiadał za ich chargebacki.
+ *
+ * Nie podajemy `payment_method_types` — przy direct charge Stripe pokazuje
+ * metody włączone na koncie właściciela. Sztywna lista ['card','blik','p24']
+ * powodowała błąd tworzenia sesji dla kont, które nie mają blik/p24 (czyli
+ * praktycznie każdego właściciela spoza Polski).
  */
 export async function createBookingCheckout(params: {
   accountId: string
@@ -123,25 +100,24 @@ export async function createBookingCheckout(params: {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card', 'blik', 'p24'],
-    customer_email: params.guestEmail,
-    line_items: [{
-      price_data: {
-        currency: params.currency,
-        unit_amount: params.amountCents,
-        product_data: { name: params.description },
-      },
-      quantity: 1,
-    }],
-    success_url: `${siteUrl}/sites/${params.siteSlug}/guest/${params.bookingId}?paid=1`,
-    cancel_url:  `${siteUrl}/sites/${params.siteSlug}?cancelled=1`,
-    metadata: { booking_id: params.bookingId, site_slug: params.siteSlug },
-    payment_intent_data: {
-      transfer_data: { destination: params.accountId },
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      customer_email: params.guestEmail,
+      line_items: [{
+        price_data: {
+          currency: params.currency,
+          unit_amount: params.amountCents,
+          product_data: { name: params.description },
+        },
+        quantity: 1,
+      }],
+      success_url: `${siteUrl}/sites/${params.siteSlug}/guest/${params.bookingId}?paid=1`,
+      cancel_url:  `${siteUrl}/sites/${params.siteSlug}?cancelled=1`,
+      metadata: { booking_id: params.bookingId, site_slug: params.siteSlug },
     },
-  })
+    { stripeAccount: params.accountId },
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   return session.url as string

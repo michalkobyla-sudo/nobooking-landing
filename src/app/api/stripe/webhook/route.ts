@@ -71,6 +71,14 @@ export async function POST(request: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const eventType = event.type as string
 
+  // Przy direct charges płatność za rezerwację powstaje na koncie właściciela,
+  // więc jej zdarzenie przychodzi z ustawionym event.account (acct_xxx).
+  // Zdarzenia własne platformy (zamówienie strony, odnowienie subskrypcji)
+  // nie mają tego pola. Wymaga to zarejestrowania w Stripe endpointu typu
+  // "Connect" — bez tego zdarzenia rezerwacji w ogóle nie dotrą.
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const connectedAccountId = (event.account as string | undefined) ?? null
+
   if (eventType !== 'checkout.session.completed') {
     return NextResponse.json({ received: true })
   }
@@ -110,6 +118,23 @@ export async function POST(request: NextRequest) {
     const orderId = session.metadata?.order_id as string | undefined
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const sessionId = session.id as string
+
+    // Zamówienie strony i odnowienie subskrypcji to przychód platformy —
+    // ich sesje tworzymy na koncie platformy, więc zdarzenie MUSI przyjść
+    // bez event.account. Właściciel ma pełną kontrolę nad swoim kontem
+    // połączonym i mógłby inaczej wystawić sobie sesję z metadanymi
+    // {type: 'renewal'} na dowolną kwotę i przedłużyć subskrypcję za darmo.
+    const platformOnly = orderId
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      || (session.metadata?.type as string | undefined) === 'renewal'
+
+    if (platformOnly && connectedAccountId) {
+      console.error(
+        `[webhook] odrzucam ${eventId}: zdarzenie platformowe przyszło ` +
+        `z konta połączonego ${connectedAccountId}`
+      )
+      return NextResponse.json({ received: true, rejected: 'connected_account_not_allowed' })
+    }
 
     if (orderId) {
       const { error } = await supabase
@@ -208,6 +233,24 @@ export async function POST(request: NextRequest) {
       if (!booking) {
         console.error('[webhook] nie znaleziono rezerwacji', bookingId)
         return NextResponse.json({ received: true })
+      }
+
+      // Zdarzenie musi pochodzić z konta Stripe tej właśnie strony. Bez tego
+      // sprawdzenia właściciel jednego apartamentu mógłby — wysyłając zdarzenie
+      // ze swojego konta z cudzym booking_id w metadanych — potwierdzić
+      // rezerwację u kogoś innego.
+      const { data: bookingSite } = await supabase
+        .from('sites')
+        .select('stripe_account_id, slug')
+        .eq('id', booking.site_id)
+        .single()
+
+      if (bookingSite?.stripe_account_id !== connectedAccountId) {
+        console.error(
+          `[webhook] odrzucam ${eventId}: konto ${connectedAccountId ?? 'platforma'} ` +
+          `nie jest kontem strony ${bookingSite?.slug as string ?? booking.site_id}`
+        )
+        return NextResponse.json({ received: true, rejected: 'account_mismatch' })
       }
 
       // Kwota pobrana musi zgadzać się z ceną rezerwacji. Rozbieżność oznacza
