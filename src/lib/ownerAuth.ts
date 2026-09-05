@@ -49,13 +49,24 @@ interface TokenPayload {
   siteId: string
   slug: string
   exp: number
+  /** Wersja sesji. Zmiana hasła podbija sites.token_version, co unieważnia
+   *  wszystkie wcześniej wydane tokeny. Brak pola = 0 (tokeny sprzed
+   *  wprowadzenia tego mechanizmu). */
+  v?: number
 }
 
-export function createOwnerToken(siteId: string, slug: string): string {
+/** Odczyt wersji sesji z wiersza site, odporny na brak kolumny w bazie. */
+export function siteTokenVersion(site: { token_version?: unknown } | null): number {
+  const v = site?.token_version
+  return typeof v === 'number' ? v : 0
+}
+
+export function createOwnerToken(siteId: string, slug: string, version = 0): string {
   const payload: TokenPayload = {
     siteId,
     slug,
     exp: Math.floor(Date.now() / 1000) + COOKIE_TTL_SECONDS,
+    v: version,
   }
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const sig = crypto.createHmac('sha256', jwtSecret()).update(payloadB64).digest('hex')
@@ -115,7 +126,14 @@ export async function verifyOwnerSession(
     .eq('slug', slug)
     .single()
 
-  return site as Site | null
+  if (!site) return null
+
+  // Token wydany przed ostatnią zmianą hasła jest nieważny. Wcześniej zmiana
+  // hasła nie ruszała istniejących sesji, więc właściciel zmieniający je po
+  // włamaniu nie wyrzucał włamywacza — jego cookie działało jeszcze 7 dni.
+  if ((payload.v ?? 0) !== siteTokenVersion(site)) return null
+
+  return site as Site
 }
 
 /**
@@ -139,5 +157,6 @@ export async function requireOwnerPage(slug: string): Promise<Site> {
     .single()
 
   if (!site) redirect(`/sites/${slug}/admin/login`)
+  if ((payload.v ?? 0) !== siteTokenVersion(site)) redirect(`/sites/${slug}/admin/login`)
   return site as Site
 }
