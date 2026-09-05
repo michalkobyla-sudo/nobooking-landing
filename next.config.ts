@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from '@sentry/nextjs';
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -70,6 +70,12 @@ export default withSentryConfig(nextConfig, {
   // Upload source maps so stack traces show real code, not minified
   widenClientFileUpload: true,
 
+  // TODO(sentry): oba poniższe zgłaszają deprecation. Następcy —
+  // webpack.treeshake.removeDebugLogging i webpack.automaticVercelMonitors —
+  // są opcjami webpacka, a ten build idzie przez Turbopack (Next 16), więc
+  // przeniesienie ich pod `webpack` nic tu nie da. Zostawione bez zmiany do
+  // czasu, aż Sentry udostępni odpowiedniki dla Turbopacka; wtedy albo migracja,
+  // albo usunięcie, jeśli okaże się, że i tak nie działają.
   // Hide Sentry logs during build
   disableLogger: true,
 
