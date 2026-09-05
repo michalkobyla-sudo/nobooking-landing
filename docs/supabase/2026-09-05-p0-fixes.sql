@@ -7,9 +7,26 @@
 --   2. Tabelę idempotencji zdarzeń Stripe            (audyt P0 #5, P1 #6)
 --   3. Blokadę na równoległy provisioning            (audyt P1 #9)
 --
--- KOLEJNOŚĆ MA ZNACZENIE: sekcja 1 najpierw uruchamia zapytanie
--- kontrolne. Jeśli zwróci wiersze — NIE dodawaj constraintu, dopóki
--- nie rozwiążesz nakładających się rezerwacji ręcznie.
+-- KOLEJNOŚĆ MA ZNACZENIE: sekcja 1 najpierw uruchamia dwa zapytania
+-- kontrolne. Jeśli którekolwiek zwróci wiersze — NIE dodawaj constraintu,
+-- dopóki nie rozwiążesz problemu ręcznie.
+--
+-- ⚠️  UWAGA — WSPÓŁDZIELONA BAZA
+-- .env.local nobookinga wskazuje na ten sam projekt Supabase, którego używa
+-- casa-sol (ejteazvuaufaltmhcrwi). Izolacja do nobooking-prod jest opisana
+-- w MIGRATION-GUIDE.md, ale nie wygląda na przeprowadzoną.
+--
+-- Co to znaczy dla tej migracji:
+--   • Tabela `bookings` jest wspólna dla obu aplikacji. Wiersze casa-sol mają
+--     site_id NULL (patrz fix_casasol_compatibility.sql).
+--   • Constraint z sekcji 1b ich NIE zablokuje — przy site_id NULL porównanie
+--     `=` zwraca NULL, więc taki wiersz nigdy nie wchodzi w konflikt.
+--     Casa-sol nie zostanie zepsuty, ale też nie zyska ochrony przed
+--     podwójną rezerwacją.
+--   • `stripe_webhook_events` to nowa tabela, a `orders` nie jest używana
+--     przez casa-sol — te dwie zmiany są bezpieczne.
+--
+-- Sprawdź w Supabase, czy to na pewno właściwy projekt, zanim uruchomisz.
 -- ============================================================
 
 
@@ -30,6 +47,18 @@ JOIN bookings b
  AND daterange(a.check_in, a.check_out, '[)') && daterange(b.check_in, b.check_out, '[)')
 WHERE a.status IN ('pending', 'confirmed')
   AND b.status IN ('pending', 'confirmed');
+
+
+-- 1a-bis. DRUGA KONTROLA — odwrócone lub puste daty.
+--     daterange(check_in, check_out) rzuca błędem, gdy check_out < check_in,
+--     więc taki wiersz wywróci ALTER TABLE niżej. Wiersze casa-sol mają
+--     część kolumn nullowalnych, więc warto sprawdzić i NULL-e.
+--     Pusty wynik = można kontynuować.
+SELECT id, site_id, check_in, check_out, status
+FROM bookings
+WHERE check_in IS NULL
+   OR check_out IS NULL
+   OR check_out < check_in;
 
 
 -- 1b. Constraint. Wymaga btree_gist, żeby porównywać uuid (=) obok zakresu (&&).
