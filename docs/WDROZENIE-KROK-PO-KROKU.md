@@ -105,9 +105,15 @@ rezerwacje nie będą się potwierdzać mimo pobranych pieniędzy.
 4. W sekcji wyboru zaznacz, że nasłuchujesz zdarzeń **z kont połączonych**
    (*Listen to events on Connected accounts* / typ **Connect**)
 5. Zdarzenie: `checkout.session.completed`
-6. Po utworzeniu skopiuj **Signing secret** (`whsec_...`)
+6. Po utworzeniu skopiuj **Signing secret** (`whsec_...`) **nowego** endpointu
 7. Vercel → `nobooking-landing` → Settings → Environment Variables →
-   dodaj/zaktualizuj `STRIPE_WEBHOOK_SECRET`
+   **Add New** → `STRIPE_CONNECT_WEBHOOK_SECRET` (Production, Sensitive)
+
+> **Nie ruszaj `STRIPE_WEBHOOK_SECRET`.** Każdy endpoint ma własny sekret
+> podpisu. `STRIPE_WEBHOOK_SECRET` należy do istniejącego endpointu Account
+> (zamówienia, odnowienia) — po nadpisaniu go sekretem Connect przestałyby
+> przechodzić zamówienia stron. Webhook sprawdza podpis kolejno oboma
+> sekretami (`src/lib/stripeWebhook.ts`).
 
 > Istniejący endpoint typu *Account* **zostaw** — obsługuje zamówienia stron
 > i odnowienia subskrypcji. Potrzebne są oba.

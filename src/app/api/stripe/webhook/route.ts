@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRequire } from 'module'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase'
+import { verifyStripeEvent, webhookSecrets, type StripeWebhooks } from '@/lib/stripeWebhook'
 import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, type BookingEmailData } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
@@ -47,7 +48,7 @@ async function releaseEvent(supabase: SupabaseClient, eventId: string): Promise<
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
-  const sig = request.headers.get('stripe-signature')!
+  const sig = request.headers.get('stripe-signature')
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   const stripe = new StripeLib(
@@ -58,8 +59,9 @@ export async function POST(request: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let event: any
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    // Dwa endpointy (Account i Connect) mają osobne sekrety podpisu —
+    // patrz src/lib/stripeWebhook.ts.
+    event = verifyStripeEvent(stripe as StripeWebhooks, body, sig, webhookSecrets())
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'invalid signature'
     console.error('[webhook] signature error:', message)
