@@ -101,6 +101,23 @@ rezerwacje nie będą się potwierdzać mimo pobranych pieniędzy.
 
 Dopiero po C i D.
 
+> **⚠️ WARUNEK: `CRON_SECRET` musi być ustawiony w Vercelu (Production).**
+>
+> Po tym wdrożeniu wszystkie pięć cronów odrzuca wywołania bez poprawnego
+> sekretu. Dziś tylko `cleanup-pending-bookings` tak robi — i objawy wskazują,
+> że od maja każde jego wywołanie kończy się 401 (rezerwacja `pending`
+> z 2026-05-22 nigdy nie została anulowana, choć cron uruchamia się co 30 min
+> i jego zapytanie ją znajduje). Pozostałe crony działają dziś tylko dlatego,
+> że przy braku sekretu przepuszczają każde żądanie.
+>
+> Jeśli wdrożysz bez `CRON_SECRET`, przestaną działać provisioning nowych
+> klientów, backup i przypomnienia o odnowieniu.
+>
+> 1. Vercel → `nobooking-landing` → Settings → Environment Variables → szukaj `CRON_SECRET`
+> 2. Jeśli go nie ma: **Add** → nazwa `CRON_SECRET`, wartość: długi losowy ciąg, np. wynik
+>    `openssl rand -hex 32` → środowisko Production → oznacz jako Sensitive
+> 3. Vercel sam dołącza go do wywołań cronów — nic więcej nie trzeba konfigurować
+
 ```bash
 cd "nobooking-landing"
 git checkout main
