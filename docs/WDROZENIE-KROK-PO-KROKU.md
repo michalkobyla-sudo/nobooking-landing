@@ -9,7 +9,10 @@ Czas łącznie: ok. 45 minut.
 
 ---
 
-## ETAP A — Zatrzymaj bieżące ryzyko (5 min) 🔴 NAJPILNIEJSZE
+## ETAP A — Zatrzymaj bieżące ryzyko (5 min) ✅ ZROBIONE 2026-09-18
+
+> `.env.local` wskazuje teraz `cgsfhvgddtwppmqvdecz` — wszystkie trzy wartości
+> (URL, anon, service_role) zweryfikowane jako należące do tego samego projektu.
 
 Dziś `nobooking-landing/.env.local` wskazuje projekt Supabase, na którym stoi
 **działająca strona Casa Sol**. Każde `npm run dev` w nobookingu operuje na
@@ -36,7 +39,11 @@ zatrzymaj się tutaj i daj znać, bo cała reszta planu wymaga przemyślenia.
 
 ---
 
-## ETAP B — Potwierdzenie (2 min)
+## ETAP B — Potwierdzenie (2 min) ✅ ZROBIONE 2026-09-18
+
+> Produkcja Nobookinga = projekt **`cgsfhvgddtwppmqvdecz`**. Potwierdzone:
+> kalendarz Casa Sol liczony z tej bazy daje 111 dat do 2026-10-25, dokładnie
+> tyle co `nobooking.eu`.
 
 Podeślij mi **sam adres** projektu z kroku A2 — `https://xxxxx.supabase.co`.
 To nie jest sekret (siedzi w zmiennej `NEXT_PUBLIC_`), a pozwoli mi zamienić
@@ -142,6 +149,12 @@ curl -s -H "Authorization: Bearer <CRON_SECRET>" \
 
 5. **Otwórz powstały plik** w Storage → `backups/` i sprawdź, czy liczby
    wierszy się zgadzają. Nie polegaj na tym, że endpoint zwrócił `ok`
+6. **Sprawdź pozostałe crony.** Vercel → `nobooking-landing` → Settings →
+   Cron Jobs → przy każdym zadaniu zakładka logów. Jest dowód, że
+   `cleanup-pending-bookings` nie działa: w bazie wisi rezerwacja `pending`
+   z 2026-05-22 (Jan K., 15–26 paź), a cron powinien ją anulować po 2 godzinach.
+   Możliwa przyczyna: plan Vercel Hobby dopuszcza tylko crony raz dziennie,
+   a tu są zadania co minutę i co 30 minut
 
 ---
 

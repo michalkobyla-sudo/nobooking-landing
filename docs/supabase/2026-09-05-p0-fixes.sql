@@ -14,7 +14,8 @@
 -- ╔══════════════════════════════════════════════════════════════════════╗
 -- ║  ⚠️  SPRAWDŹ, W KTÓRYM PROJEKCIE JESTEŚ, ZANIM URUCHOMISZ            ║
 -- ║                                                                      ║
--- ║  Ta migracja należy do NOBOOKING-PROD, nie do projektu casa-sol.     ║
+-- ║  Ta migracja należy do NOBOOKING-PROD: cgsfhvgddtwppmqvdecz          ║
+-- ║  NIE do projektu casa-sol: ejteazvuaufaltmhcrwi                      ║
 -- ║                                                                      ║
 -- ║  Weryfikacja 2026-09-05: produkcja nobooking.eu czyta INNY projekt   ║
 -- ║  Supabase niż ten wskazany w .env.local. Kalendarz casa-sol na       ║
