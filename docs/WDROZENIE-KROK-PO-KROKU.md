@@ -60,6 +60,23 @@ Wykonać na **nobooking-prod** (tym z etapu A), **nie** na projekcie Casa Sol.
 1. Supabase Dashboard → wybierz właściwy projekt → sprawdź w **Settings → API**,
    czy Project URL zgadza się z tym z etapu A
 2. **SQL Editor → New query**
+
+> **⚠️ NAJPIERW: `docs/supabase/renewal-migration.sql`** — cały plik, jednym Run.
+>
+> Logi Vercela z 2026-09-18: cron `renewal-reminders` kończy się błędem
+> `column sites.expires_at does not exist`. Sprawdzenie bazy potwierdziło, że
+> na `cgsfhvgddtwppmqvdecz` brakuje kolumn `expires_at`, `renewal_price_pln`,
+> `renewal_price_eur`, `renewal_currency` i tabeli `renewal_reminders`.
+> System odnowień jest w kodzie, ale jego migracja nigdy nie trafiła na produkcję.
+>
+> Skutek pilniejszy niż niedziałające przypomnienia: **provisioning każdego
+> nowego klienta zapisuje te kolumny, więc dziś się wywraca.** Następny płacący
+> klient zapłaci i nie dostanie strony. Obecne dwa zamówienia są obsłużone,
+> więc nikt jeszcze nie utknął.
+>
+> Po uruchomieniu sprawdź wynik zapytania z końca pliku — `expires_at` powinno
+> być wypełnione dla obu stron (data utworzenia + 2 lata).
+
 3. Wklej **sekcję 1a** z `docs/supabase/2026-09-05-p0-fixes.sql` (zapytanie
    o nakładające się rezerwacje) → **Run**
    - **pusty wynik** → dalej
