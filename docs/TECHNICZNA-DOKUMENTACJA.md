@@ -498,3 +498,87 @@ src/
     ├── apartmentTypes.ts              ← ApartmentConfig interface
     └── email.ts                       ← Wysyłka emaili przez Brevo
 ```
+
+---
+
+# UZUPEŁNIENIE 2026-09-25
+
+Audyt wykazał, że dokumentacja opisywała mniej niż połowę systemu. Poniżej
+brakujące części. Reguły, które muszą być prawdziwe zawsze, są w osobnym
+dokumencie: `SPECYFIKACJA-OPERACYJNA.md`.
+
+## 15. Ścieżka klienta — od zamówienia do działającej strony
+
+```
+/zamow  →  POST /api/orders           zapis w `orders`, e-mail do Michała
+        →  POST /api/stripe/checkout  sesja płatności (konto platformy)
+        →  webhook checkout.session.completed
+              stripe_paid = true, status = onboarding_sent
+              e-mail z linkiem onboardingowym (token w `orders.onboarding_token`)
+        →  /onboarding/[token]        klient opisuje apartament
+              onboarding_submitted = true
+        →  cron provision-sites (co minutę)
+              generuje config przez Claude, tworzy konto Auth,
+              konto Stripe Connect i wiersz w `sites`
+              e-mail powitalny (hasło + link do Connect) i „strona gotowa"
+        →  /poprawki/[token]          do 4 rund poprawek (MAX_REVISIONS)
+```
+
+Zamówienie jest „zaklepywane" kolumną `orders.provisioning_started_at`, więc
+dwa nakładające się uruchomienia crona nie utworzą dwóch kont.
+
+## 16. Crony
+
+| Ścieżka | Harmonogram | Co robi | Gdy padnie |
+|---|---|---|---|
+| `provision-sites` | co minutę | generuje strony z gotowych zamówień | klient nie dostaje strony — zgłasza agent zdrowia |
+| `cleanup-pending-bookings` | co 30 min | anuluje `pending` starsze niż 2 h | terminy zostają zablokowane |
+| `review-requests` | 10:00 | prośba o opinię 3 dni po uruchomieniu strony | brak opinii |
+| `backup-bookings` | 02:00 | kopia do `app-data/backups` | brak kopii — zgłasza agent zdrowia |
+| `renewal-reminders` | 09:00 | przypomnienia D-90/30/14/7/1 i wyłączenie po 14 dniach karencji | klient nie wie o wygaśnięciu |
+| `health` | 06:00 | raport stanu systemu | — |
+
+Wszystkie wymagają `CRON_SECRET` (`src/lib/cronAuth.ts`) i zawodzą „na zamknięto".
+
+## 17. Odnowienia subskrypcji
+
+`sites.expires_at` + `renewal_price_pln/eur` (cena **zamrożona w chwili zakupu**).
+Panel właściciela → `/api/sites/[slug]/owner/renew` tworzy sesję na koncie
+platformy z metadanymi `{type:'renewal', site_id}`. Webhook przedłuża `expires_at`
+o 2 lata **od dotychczasowej daty**, nie od dziś, i czyści `renewal_reminders`.
+
+## 18. Bot Facebooka
+
+`/api/facebook/webhook` — weryfikacja podpisu Meta, potem:
+- **deduplikacja** po `message.mid` w `bot_processed_messages` (Meta ponawia przy
+  wolnej odpowiedzi; bez tego gość dostawał dwie odpowiedzi),
+- **limit** 20 wiadomości / 10 min per użytkownik, liczony w tej samej tabeli,
+- odpowiedź z `claude-sonnet-5`, baza wiedzy w cache promptu, kształt odpowiedzi
+  wymuszony przez structured outputs,
+- treść od użytkownika wchodzi w oznaczonej ramce jako dane niezaufane.
+
+Pod komentarzami bot nigdy nie zapisuje leada — tylko zaprasza do wiadomości prywatnej.
+
+## 19. Pozostałe tabele
+
+| Tabela | Do czego |
+|---|---|
+| `orders` | zamówienia stron, onboarding, tokeny, licznik poprawek |
+| `discount_codes` | kody rabatowe (plan pro), `uses_count`, `max_uses`, `valid_until` |
+| `renewal_reminders` | które przypomnienia już wysłano (`site_id` + `days_before`) |
+| `stripe_webhook_events` | idempotencja webhooka — klucz główny na `event_id` |
+| `bot_processed_messages` | deduplikacja i limit bota |
+| `bot_knowledge`, `bot_settings`, `bot_conversations`, `bot_leads` | baza wiedzy, wyłącznik, historia rozmów, leady |
+| `checkin_forms` | check-in online |
+
+## 20. Ograniczanie ruchu i RODO
+
+**Rate limiting** — `src/proxy.ts`, w pamięci instancji (świadome uproszczenie,
+do wymiany na Redis przy większej skali). Objęte: logowanie i zmiana hasła
+właściciela, rezerwacje, zamówienia, poprawki, checkout, kody rabatowe, tokeny
+onboardingu. Webhook Meta celowo pominięty — limit działa tam per użytkownik.
+
+**RODO** — `DELETE /api/admin/guests/[email]` anonimizuje dane gościa we
+wszystkich rezerwacjach i zamówieniach, zachowując historię finansową. Adres
+zastępczy powstaje z **losowego UUID**; wcześniejszy skrót e-maila dawał się
+odwrócić, więc była to pseudonimizacja, a nie anonimizacja.
