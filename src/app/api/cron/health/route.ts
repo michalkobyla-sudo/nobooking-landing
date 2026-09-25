@@ -46,6 +46,22 @@ export async function GET(request: NextRequest) {
 
   if (najnowsza) ostatniaKopiaGodzinTemu = (teraz - najnowsza) / 3_600_000
 
+  // ── Poczta ─────────────────────────────────────────────────────────────────
+  // Każda wysyłka w aplikacji jest w try/catch, więc niedziałający klucz nie
+  // przewraca niczego — po prostu maile cicho nie wychodzą.
+  let mailDziala: boolean | null = null
+  try {
+    const klucz = (process.env.BREVO_API_KEY ?? '').trim()
+    if (klucz) {
+      const r = await fetch('https://api.brevo.com/v3/account', { headers: { 'api-key': klucz } })
+      mailDziala = r.ok
+    } else {
+      mailDziala = false
+    }
+  } catch (err) {
+    console.error('[health] nie udało się sprawdzić poczty:', err)
+  }
+
   // ── Zamówienia i rezerwacje ────────────────────────────────────────────────
   const { count: zamowieniaUtkniete } = await db
     .from('orders')
@@ -96,6 +112,7 @@ export async function GET(request: NextRequest) {
     zdarzeniaStripe7dni: zdarzeniaStripe7dni ?? 0,
     rezerwacje7dni: rezerwacje7dni ?? 0,
     brakiSchematu,
+    mailDziala,
   }
 
   const znaleziska = ocenStan(stan)

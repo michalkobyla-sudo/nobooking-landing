@@ -10,6 +10,7 @@ const zdrowy: StanSystemu = {
   zdarzeniaStripe7dni: 3,
   rezerwacje7dni: 2,
   brakiSchematu: [],
+  mailDziala: true,
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -25,6 +26,18 @@ describe('ocenStan', () => {
     expect(tytuly({ ostatniaKopiaGodzinTemu: null })).toContain('Brak jakiejkolwiek kopii zapasowej')
     expect(tytuly({ ostatniaKopiaGodzinTemu: 40 })).toContain('Kopia zapasowa nieaktualna')
     expect(tytuly({ ostatniaKopiaGodzinTemu: 30 })).toEqual([])
+  })
+
+  // Awaria, która sama siebie ukrywa: maile lecą w try/catch, więc system
+  // działa dalej, a powiadomienia po prostu nie docierają.
+  it('wykrywa niedziałającą wysyłkę e-maili', () => {
+    const z = ocenStan({ ...zdrowy, mailDziala: false })
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].tytul).toBe('Wysyłka e-maili nie działa')
+  })
+
+  it('nie alarmuje, gdy stanu poczty nie dało się sprawdzić', () => {
+    expect(tytuly({ mailDziala: null })).toEqual([])
   })
 
   it('wykrywa nieuruchomioną migrację', () => {

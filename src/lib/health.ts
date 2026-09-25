@@ -34,6 +34,8 @@ export interface StanSystemu {
   rezerwacje7dni: number
   /** Kolumny lub tabele, których zabrakło przy sprawdzeniu schematu. */
   brakiSchematu: string[]
+  /** Czy klucz API poczty jest ważny. null = nie udało się sprawdzić. */
+  mailDziala: boolean | null
 }
 
 /** Po tylu godzinach bez kopii uznajemy backup za niedziałający.
@@ -54,6 +56,16 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Kopia zapasowa nieaktualna',
       szczegol: `Ostatnia kopia powstała ${Math.round(s.ostatniaKopiaGodzinTemu)} h temu (próg: ${PROG_KOPII_GODZIN} h).`,
+    })
+  }
+
+  // Sprawdzane wprost, bo awaria poczty jest niewidoczna: każdy mail leci
+  // w try/catch, więc system działa dalej i nikt nie dostaje powiadomień.
+  if (s.mailDziala === false) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: 'Wysyłka e-maili nie działa',
+      szczegol: 'Klucz BREVO_API_KEY jest odrzucany. Nie wychodzą maile onboardingowe, potwierdzenia rezerwacji ani powitania właścicieli — łącznie z tym raportem.',
     })
   }
 
