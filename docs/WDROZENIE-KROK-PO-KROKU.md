@@ -300,3 +300,29 @@ używają `nobooking.eu/sites/<slug>`. Kod obsługi subdomen w `src/proxy.ts`
 Gdy subdomeny mają zacząć działać: przypiąć `*.nobooking.eu` do bieżącej
 produkcji w Vercelu (Settings → Domains), a nie aliasem do konkretnego
 wdrożenia — inaczej trzeba by je przypinać po każdym deployu.
+
+---
+
+## Zaległości z audytu — zrobione 2026-09-25
+
+Migracja `2026-09-25-bot-dedup.sql` uruchomiona na `nobooking-prod`, kod wdrożony
+(`dpl_29TPqxwPShqNHXf8YXETCs2bD9uP`). Zweryfikowane na produkcji: strona 200,
+kalendarz 200, cron 401 bez sekretu i 200 z sekretem, webhook Facebooka 401 przy
+złym podpisie i 403 przy złym tokenie weryfikacyjnym.
+
+| Pozycja audytu | Co zmieniono |
+|---|---|
+| P1 #18 — duplikaty odpowiedzi bota | zaklepywanie po `message.mid` przed przetworzeniem; komentarze po id komentarza |
+| P2 #21 — limit w pamięci procesu | licznik w tabeli `bot_processed_messages`, wspólny dla wszystkich instancji |
+| structured outputs | kształt odpowiedzi wymusza API (`messages.parse` + `jsonSchemaOutputFormat`); bez nowych zależności |
+
+### Co zostaje otwarte
+
+- **Etap H** — usunięcie kopii danych Casa Sol z `nobooking-prod` (czeka na decyzję).
+- **Endpoint Stripe typu Connected accounts** + onboarding Connect pierwszego
+  właściciela. Bez tego rezerwacje zwracają 402.
+- **`.github/workflows/ci.yml`** — plik czeka poza `main`, bo token OAuth nie ma
+  zakresu `workflow`. Odblokowuje to `gh auth refresh -h github.com -s workflow`.
+- **Subdomeny** — alias `*.nobooking.eu` wskazuje na nieistniejące wdrożenie.
+  Nic do nich nie linkuje, więc nie jest to pilne.
+- **Repo w iCloud** — powtarzający się problem z duplikatami plików psującymi `tsc`.
