@@ -53,7 +53,7 @@ w dokumentacji „najpewniej nobooking-prod" na fakt.
 
 ---
 
-## ETAP C — Migracja bazy (15 min)
+## ETAP C — Migracja bazy ✅ ZROBIONE 2026-09-25
 
 Wykonać na **nobooking-prod** (tym z etapu A), **nie** na projekcie Casa Sol.
 
@@ -145,7 +145,7 @@ rezerwacje nie będą się potwierdzać mimo pobranych pieniędzy.
 
 ---
 
-## ETAP E — Wdrożenie kodu (10 min)
+## ETAP E — Wdrożenie kodu ✅ ZROBIONE 2026-09-25
 
 Dopiero po C i D.
 
@@ -197,7 +197,7 @@ charges i nowego webhooka. Załóż rezerwację na `apart-sunny`, zapłać, spra
 
 ---
 
-## ETAP F — Ożyw backup Nobookinga (5 min)
+## ETAP F — Backup Nobookinga ✅ ZROBIONE 2026-09-25
 
 Backup nie działa od 2026-05-22: zwraca `Bucket not found`, bo `nobooking-prod`
 nie ma bucketu `app-data`.
@@ -267,3 +267,36 @@ repo poza iCloud usunie klasę problemów, która wraca w każdej sesji.
 | Webhook zwraca 500 przy każdym zdarzeniu | Etap C nie wykonany — brak tabeli `stripe_webhook_events` | Uruchom migrację, Stripe sam ponowi dostarczenia |
 | `/api/cron/provision-sites` nadal 200 bez autoryzacji | Deploy nie doszedł albo brak `CRON_SECRET` | Sprawdź deployment w Vercelu i zmienne |
 | Cokolwiek dziwnego z danymi Casa Sol | — | `casa-sol/docs/DIAGNOSTYKA-kalendarz.sql` (tylko odczyt) i kopia z `backups/casasol_bookings_latest.json` |
+
+
+---
+
+## Stan po wdrożeniu — zweryfikowane 2026-09-25
+
+| Sprawdzenie | Wynik |
+|---|---|
+| strona główna, strona apartamentu, kalendarz | 200 |
+| `/api/cron/*` bez `CRON_SECRET` | 401 |
+| `/api/cron/*` z `CRON_SECRET` | 200 |
+| webhook z poprawnym podpisem | 200 |
+| backup | zapisał 24 kB: 13 rezerwacji, 2 zamówienia, 2 strony |
+| cron odnowień (wcześniej 500) | 200, 0 przypomnień — daty wygaśnięcia na 2028 |
+| CSP, brak X-XSS-Protection | potwierdzone na produkcji |
+
+Sprzątanie przy pierwszym uruchomieniu anulowało widmową rezerwację `pending`
+z 2026-05-22, która wisiała cztery miesiące.
+
+### Znalezione przy weryfikacji: subdomeny nie działają
+
+`apart-sunny.nobooking.eu`, `demo.nobooking.eu` i każda inna subdomena zwracają
+`ECONNRESET`. DNS i certyfikat są poprawne — alias `*.nobooking.eu` wskazuje na
+wdrożenie sprzed 137 dni, którego już nie ma.
+
+**Nie jest to pilne i nikt tego nie zauważy:** żaden link w produkcie nie
+prowadzi na subdomenę. Wszystkie adresy stron, maile i przekierowania Stripe
+używają `nobooking.eu/sites/<slug>`. Kod obsługi subdomen w `src/proxy.ts`
+(wraz z naprawioną regułą pomijania `/api/*`) czeka nieużywany.
+
+Gdy subdomeny mają zacząć działać: przypiąć `*.nobooking.eu` do bieżącej
+produkcji w Vercelu (Settings → Domains), a nie aliasem do konkretnego
+wdrożenia — inaczej trzeba by je przypinać po każdym deployu.
