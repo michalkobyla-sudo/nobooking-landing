@@ -1,39 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createBookingCheckout } from '@/lib/stripe-connect'
+import { sprawdzDaty, rozwinZakres, wycen, MAX_NOCY } from '@/lib/bookingPricing'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
 interface Params { params: Promise<{ slug: string }> }
 
-/** Górny limit długości pobytu. Chroni expandRange przed budowaniem
- *  milionów dat, gdy ktoś poda check_out w roku 9999. */
-const MAX_NIGHTS = 365
-
 /** Postgres: naruszenie constraintu wykluczającego (bookings_no_overlap). */
 const PG_EXCLUSION_VIOLATION = '23P01'
-
-// Determine season tier based on check_in month
-function getTier(checkIn: string, config: ApartmentConfig): 'low' | 'mid' | 'high' {
-  const month = new Date(checkIn).getMonth() + 1 // 1-12
-  if ([7, 8, 9].includes(month)) return 'high'
-  if ([5, 6, 10].includes(month)) return 'mid'
-  return 'low'
-}
-
-function countNights(checkIn: string, checkOut: string): number {
-  return Math.round(
-    (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
-  )
-}
-
-function expandRange(checkIn: string, checkOut: string): string[] {
-  const dates: string[] = []
-  const end = new Date(checkOut)
-  for (const d = new Date(checkIn); d < end; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().slice(0, 10))
-  }
-  return dates
-}
 
 // POST /api/sites/[slug]/book
 // Body: { check_in, check_out, guests_count, guest_name, guest_email, guest_phone, notes?, discount_code? }
@@ -54,21 +28,13 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { check_in, check_out, guests_count, guest_name, guest_email, guest_phone, notes, discount_code } = body
 
   // ── Validate inputs ─────────────────────────────────────────────────────────
-  const today = new Date().toISOString().slice(0, 10)
-  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
-
-  if (!check_in || !check_out || !ISO_DATE.test(check_in) || !ISO_DATE.test(check_out)) {
-    return NextResponse.json({ error: 'invalid_dates' }, { status: 400 })
+  const dzis = new Date().toISOString().slice(0, 10)
+  const bladDat = sprawdzDaty(check_in, check_out, dzis)
+  if (bladDat === 'stay_too_long') {
+    return NextResponse.json({ error: 'stay_too_long', maxNights: MAX_NOCY }, { status: 400 })
   }
-  if (check_in >= check_out || check_in < today) {
-    return NextResponse.json({ error: 'invalid_dates' }, { status: 400 })
-  }
-
-  // Limit sprawdzany PRZED expandRange — inaczej check_out w odległej
-  // przyszłości każe pętli zbudować miliony stringów, zanim cokolwiek
-  // innego zdąży się wykonać.
-  if (countNights(check_in, check_out) > MAX_NIGHTS) {
-    return NextResponse.json({ error: 'stay_too_long', maxNights: MAX_NIGHTS }, { status: 400 })
+  if (bladDat) {
+    return NextResponse.json({ error: bladDat }, { status: 400 })
   }
 
   if (!guest_name?.trim() || !guest_email?.trim()) {
@@ -95,7 +61,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   // ── Check availability ────────────────────────────────────────────────────────
-  const requestedDates = new Set(expandRange(check_in, check_out))
+  const requestedDates = new Set(rozwinZakres(check_in, check_out))
 
   const { data: conflicts } = await supabase
     .from('bookings')
@@ -120,13 +86,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   // ── Calculate price ───────────────────────────────────────────────────────────
-  const nights = countNights(check_in, check_out)
-  const tier = getTier(check_in, config)
-  const pricePerNight = config.pricing.tiers[tier].pricePerNight
-  const minNights = config.pricing.tiers[tier].minNights
-
-  if (nights < minNights) {
-    return NextResponse.json({ error: 'min_nights', minNights }, { status: 400 })
+  const wstepna = wycen(check_in, check_out, config)
+  if (wstepna.noce < wstepna.minNocy) {
+    return NextResponse.json({ error: 'min_nights', minNights: wstepna.minNocy }, { status: 400 })
   }
 
   let discountPct = 0
@@ -149,11 +111,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
   }
 
-  const baseAmount = nights * pricePerNight + config.pricing.cleaningFee
-  const discountAmount = Math.round(baseAmount * discountPct / 100)
-  const totalPrice = baseAmount - discountAmount
-  const currency = config.pricing.currency.toLowerCase() // 'eur' or 'pln'
-  const amountCents = Math.round(totalPrice * 100)
+  const wycena = wycen(check_in, check_out, config, discountPct)
+  const nights = wycena.noce
+  const totalPrice = wycena.doZaplaty
+  const currency = wycena.waluta
+  const amountCents = wycena.groszy
 
   // ── Create booking record ─────────────────────────────────────────────────────
   const { data: booking, error: bookingError } = await supabase
