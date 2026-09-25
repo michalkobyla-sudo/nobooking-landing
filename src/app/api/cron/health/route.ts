@@ -62,6 +62,42 @@ export async function GET(request: NextRequest) {
     console.error('[health] nie udało się sprawdzić poczty:', err)
   }
 
+  // ── Generowanie stron i bot ────────────────────────────────────────────────
+  let modelDziala: boolean | null = null
+  try {
+    const klucz = (process.env.ANTHROPIC_API_KEY ?? '').trim()
+    if (!klucz) modelDziala = false
+    else {
+      const r = await fetch('https://api.anthropic.com/v1/models?limit=1', {
+        headers: { 'x-api-key': klucz, 'anthropic-version': '2023-06-01' },
+      })
+      modelDziala = r.ok
+    }
+  } catch (err) {
+    console.error('[health] nie udało się sprawdzić klucza Anthropic:', err)
+  }
+
+  const { data: ustawieniaBota } = await db
+    .from('bot_settings')
+    .select('enabled')
+    .eq('id', 'default')
+    .maybeSingle()
+  const botWlaczony = ustawieniaBota?.enabled === true
+
+  let botToken: boolean | null = null
+  if (botWlaczony) {
+    try {
+      const t = (process.env.FACEBOOK_PAGE_ACCESS_TOKEN ?? '').trim()
+      if (!t) botToken = false
+      else {
+        const r = await fetch(`https://graph.facebook.com/v21.0/me?fields=id&access_token=${encodeURIComponent(t)}`)
+        botToken = r.ok
+      }
+    } catch (err) {
+      console.error('[health] nie udało się sprawdzić tokenu Facebooka:', err)
+    }
+  }
+
   // ── Zamówienia i rezerwacje ────────────────────────────────────────────────
   const { count: zamowieniaUtkniete } = await db
     .from('orders')
@@ -113,6 +149,9 @@ export async function GET(request: NextRequest) {
     rezerwacje7dni: rezerwacje7dni ?? 0,
     brakiSchematu,
     mailDziala,
+    modelDziala,
+    botWlaczony,
+    botToken,
   }
 
   const znaleziska = ocenStan(stan)

@@ -36,6 +36,12 @@ export interface StanSystemu {
   brakiSchematu: string[]
   /** Czy klucz API poczty jest ważny. null = nie udało się sprawdzić. */
   mailDziala: boolean | null
+  /** Czy klucz Anthropic jest ważny — bez niego provisioning nie wygeneruje strony. */
+  modelDziala: boolean | null
+  /** Czy bot Facebooka jest włączony w ustawieniach. */
+  botWlaczony: boolean
+  /** Czy token strony Facebooka jest ważny. null = nie sprawdzono. */
+  botToken: boolean | null
 }
 
 /** Po tylu godzinach bez kopii uznajemy backup za niedziałający.
@@ -66,6 +72,23 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Wysyłka e-maili nie działa',
       szczegol: 'Klucz BREVO_API_KEY jest odrzucany. Nie wychodzą maile onboardingowe, potwierdzenia rezerwacji ani powitania właścicieli — łącznie z tym raportem.',
+    })
+  }
+
+  if (s.modelDziala === false) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: 'Generowanie stron nie działa',
+      szczegol: 'Klucz ANTHROPIC_API_KEY jest odrzucany. Zamówienia po onboardingu nie dostaną strony.',
+    })
+  }
+
+  // Ostrzegamy tylko o włączonym bocie — wyłączony z premedytacją nie jest awarią.
+  if (s.botWlaczony && s.botToken === false) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Bot Facebooka nie odpowiada',
+      szczegol: 'Token strony jest odrzucany przez Meta. Bot jest włączony, ale nie odpisuje na wiadomości ani komentarze.',
     })
   }
 

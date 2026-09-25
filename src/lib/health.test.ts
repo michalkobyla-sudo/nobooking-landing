@@ -11,6 +11,9 @@ const zdrowy: StanSystemu = {
   rezerwacje7dni: 2,
   brakiSchematu: [],
   mailDziala: true,
+  modelDziala: true,
+  botWlaczony: false,
+  botToken: null,
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -38,6 +41,17 @@ describe('ocenStan', () => {
 
   it('nie alarmuje, gdy stanu poczty nie dało się sprawdzić', () => {
     expect(tytuly({ mailDziala: null })).toEqual([])
+  })
+
+  it('wykrywa nieważny klucz do generowania stron', () => {
+    const z = ocenStan({ ...zdrowy, modelDziala: false })
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].tytul).toBe('Generowanie stron nie działa')
+  })
+
+  it('zgłasza martwy token bota tylko gdy bot jest włączony', () => {
+    expect(tytuly({ botWlaczony: true, botToken: false })).toContain('Bot Facebooka nie odpowiada')
+    expect(tytuly({ botWlaczony: false, botToken: false })).toEqual([])
   })
 
   it('wykrywa nieuruchomioną migrację', () => {
