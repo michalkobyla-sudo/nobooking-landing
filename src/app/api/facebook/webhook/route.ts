@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import { createServiceClient } from '@/lib/supabase'
 import { askClaude, getKnowledgeBase, getPurchaseUrl, isBotEnabled, BotMessage } from '@/lib/claude-bot'
 import { sendMessengerMessage, replyToComment } from '@/lib/facebook'
+import { zaklepWiadomosc, idKomentarza } from '@/lib/botLimits'
 
 // ── GET: weryfikacja webhook przez Meta ─────────────────────────────────────
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -33,33 +34,8 @@ function verifySignature(body: string, signature: string | null): boolean {
   }
 }
 
-// ── Limit per użytkownik ─────────────────────────────────────────────────────
-// Każda wiadomość to płatne wywołanie Anthropic. Limit per-IP nie ma tu sensu,
-// bo cały ruch przychodzi od Meta — liczymy więc per użytkownik Messengera.
-// Pamięć procesu (jak w proxy.ts): najlepsze przybliżenie bez dokładania stanu.
-const MAX_WIADOMOSCI = 20
-const OKNO_MS = 10 * 60_000
-const licznik = new Map<string, { count: number; resetAt: number }>()
-
-function przekroczonyLimit(userId: string): boolean {
-  const now = Date.now()
-  const wpis = licznik.get(userId)
-  if (!wpis || now > wpis.resetAt) {
-    licznik.set(userId, { count: 1, resetAt: now + OKNO_MS })
-    return false
-  }
-  if (wpis.count >= MAX_WIADOMOSCI) return true
-  wpis.count++
-  return false
-}
-
 // ── Obsługa wiadomości Messenger ─────────────────────────────────────────────
 async function handleMessage(senderId: string, text: string): Promise<void> {
-  if (przekroczonyLimit(senderId)) {
-    console.warn(`[bot] limit wiadomości przekroczony przez ${senderId}`)
-    return
-  }
-
   const supabase = createServiceClient()
 
   const { data: convRow } = await supabase
@@ -117,16 +93,7 @@ function ramkaKomentarza(commentText: string): string {
   ].join('\n')
 }
 
-async function handleComment(
-  commentId: string,
-  commentText: string,
-  authorId: string,
-): Promise<void> {
-  if (przekroczonyLimit(`comment:${authorId}`)) {
-    console.warn(`[bot] limit komentarzy przekroczony przez ${authorId}`)
-    return
-  }
-
+async function handleComment(commentId: string, commentText: string): Promise<void> {
   const [knowledge, purchaseUrl] = await Promise.all([getKnowledgeBase(), getPurchaseUrl()])
 
   const botResponse = await askClaude([], ramkaKomentarza(commentText), knowledge, purchaseUrl)
@@ -168,14 +135,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const entries = (body.entry as Array<Record<string, unknown>>) ?? []
+  const supabase = createServiceClient()
 
   for (const entry of entries) {
     // Wiadomości Messenger
     const messaging = (entry.messaging as Array<Record<string, unknown>>) ?? []
     for (const event of messaging) {
       const sender = (event.sender as { id: string })?.id
-      const messageObj = event.message as { text?: string; is_echo?: boolean } | undefined
+      const messageObj = event.message as { text?: string; is_echo?: boolean; mid?: string } | undefined
       if (!sender || !messageObj?.text || messageObj.is_echo) continue
+
+      // Bez zaklepania ponowienie Meta wywołałoby drugą odpowiedź na to samo
+      // pytanie — i drugie płatne wywołanie modelu.
+      const mid = messageObj.mid ?? `${sender}:${messageObj.text.slice(0, 64)}`
+      const { swieza, poLimicie } = await zaklepWiadomosc(supabase, mid, sender)
+      if (!swieza) { console.log('[bot] wiadomość już obsłużona, pomijam', mid); continue }
+      if (poLimicie) { console.warn(`[bot] limit przekroczony przez ${sender}`); continue }
+
       await handleMessage(sender, messageObj.text)
     }
 
@@ -191,7 +167,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const fromId = (val.from as { id: string })?.id
       const pageId = entry.id as string
       if (fromId === pageId || !commentId || !commentText) continue
-      await handleComment(commentId, commentText, fromId)
+
+      const { swieza, poLimicie } = await zaklepWiadomosc(supabase, idKomentarza(commentId), fromId)
+      if (!swieza) { console.log('[bot] komentarz już obsłużony, pomijam', commentId); continue }
+      if (poLimicie) { console.warn(`[bot] limit komentarzy przekroczony przez ${fromId}`); continue }
+
+      await handleComment(commentId, commentText)
     }
   }
 
