@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
+import { isValidEmail, toBoundedNumber, LIMITY_CENNIKA } from '@/lib/validation'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
 interface Params {
@@ -52,7 +53,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const updates: Record<string, unknown> = {}
 
   if (body.owner_email) {
-    updates.owner_email = body.owner_email
+    // Na ten adres idą powiadomienia o rezerwacjach i przypomnienia
+    // o odnowieniu — wcześniej nie było tu żadnej walidacji formatu.
+    if (!isValidEmail(body.owner_email)) {
+      return NextResponse.json({ error: 'invalid_owner_email' }, { status: 400 })
+    }
+    updates.owner_email = body.owner_email.trim()
+  }
+
+  if (body.contact_email !== undefined && body.contact_email !== '' && !isValidEmail(body.contact_email)) {
+    return NextResponse.json({ error: 'invalid_contact_email' }, { status: 400 })
   }
 
   const configUpdates: Record<string, unknown> = {}
@@ -70,24 +80,51 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const currentPricing = ((site.config as Record<string, unknown>)?.pricing ?? {}) as Record<string, unknown>
     const currentTiers   = (currentPricing.tiers ?? {}) as Record<string, Record<string, unknown>>
 
+    // Każda liczba przechodzi przez kontrolę zakresu. Wcześniej było tu samo
+    // Number(), które przepuszczało wartości ujemne, NaN i Infinity — a NaN
+    // zapisany w jsonb staje się null i wywraca kalkulację ceny rezerwacji.
     const mergedTiers = { ...currentTiers }
     if (body.pricing?.tiers) {
       for (const key of ['high', 'mid', 'low'] as const) {
         const patch = body.pricing.tiers[key]
         if (!patch) continue
-        mergedTiers[key] = {
-          ...currentTiers[key],
-          ...(patch.pricePerNight !== undefined ? { pricePerNight: Number(patch.pricePerNight) } : {}),
-          ...(patch.minNights     !== undefined ? { minNights:     Number(patch.minNights)     } : {}),
+
+        const zmiany: Record<string, number> = {}
+
+        if (patch.pricePerNight !== undefined) {
+          const cena = toBoundedNumber(patch.pricePerNight, LIMITY_CENNIKA.pricePerNight)
+          if (cena === null) {
+            return NextResponse.json({ error: 'invalid_price', tier: key }, { status: 400 })
+          }
+          zmiany.pricePerNight = cena
         }
+
+        if (patch.minNights !== undefined) {
+          const noce = toBoundedNumber(patch.minNights, LIMITY_CENNIKA.minNights)
+          if (noce === null) {
+            return NextResponse.json({ error: 'invalid_min_nights', tier: key }, { status: 400 })
+          }
+          zmiany.minNights = Math.round(noce)
+        }
+
+        mergedTiers[key] = { ...currentTiers[key], ...zmiany }
       }
+    }
+
+    let cleaningFee: number | undefined
+    if (body.pricing?.cleaningFee !== undefined) {
+      const oplata = toBoundedNumber(body.pricing.cleaningFee, LIMITY_CENNIKA.cleaningFee)
+      if (oplata === null) {
+        return NextResponse.json({ error: 'invalid_cleaning_fee' }, { status: 400 })
+      }
+      cleaningFee = oplata
     }
 
     configUpdates.pricing = {
       ...currentPricing,
       tiers: mergedTiers,
-      ...(body.currency                        ? { currency:    body.currency                        } : {}),
-      ...(body.pricing?.cleaningFee !== undefined ? { cleaningFee: Number(body.pricing.cleaningFee) } : {}),
+      ...(body.currency               ? { currency: body.currency } : {}),
+      ...(cleaningFee !== undefined   ? { cleaningFee }             : {}),
     }
   }
 

@@ -42,9 +42,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'not_found', message: 'No bookings found for this email' }, { status: 404 })
   }
 
-  // Anonymise: replace PII with non-reversible values
-  const emailHash = crypto.createHash('sha256').update(email).digest('hex').slice(0, 12)
-  const anonymisedEmail = `deleted-${emailHash}@gdpr.nobooking.eu`
+  // Anonimizacja: PII zastąpione wartościami bez związku z oryginałem.
+  //
+  // Wcześniej był tu sha256(email) obcięty do 12 znaków. Adresy e-mail mają
+  // niską entropię, więc mając listę kandydatów odtwarzało się oryginał
+  // w kilka sekund — to była pseudonimizacja, a dane pseudonimizowane nadal
+  // podlegają RODO. Losowy identyfikator nie da się cofnąć do adresu.
+  const anonymisedEmail = `deleted-${crypto.randomUUID()}@gdpr.nobooking.eu`
 
   const { error: updateError } = await supabase
     .from('bookings')

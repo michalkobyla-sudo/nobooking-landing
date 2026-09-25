@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { requireCron } from '@/lib/cronAuth'
 import type { Order } from '@/lib/types'
 
 /**
@@ -10,14 +11,8 @@ import type { Order } from '@/lib/types'
  * Auth: Vercel automatically sets Authorization: Bearer <CRON_SECRET>
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret (set CRON_SECRET in Vercel env vars)
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-    }
-  }
+  const unauthorized = requireCron(request)
+  if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
 

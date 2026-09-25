@@ -32,12 +32,34 @@ function clientIp(req: NextRequest): string {
 }
 
 // Rules: [pattern, maxRequests, windowMs, retryAfterSeconds]
+//
+// Priorytet: endpointy, na których pojedyncze żądanie kosztuje pieniądze
+// (wywołanie Anthropic, sesja Stripe, wysyłka maila) albo pozwala zgadywać
+// sekrety (kody rabatowe, tokeny).
 const RATE_RULES: Array<[RegExp, number, number, number]> = [
   [/^\/api\/sites\/[^/]+\/owner\/login$/, 10, 5 * 60_000, 300],   // 10 req / 5 min
   [/^\/api\/sites\/[^/]+\/owner\/password$/, 5, 10 * 60_000, 600], // 5 req / 10 min
   [/^\/api\/sites\/[^/]+\/book$/, 15, 10 * 60_000, 600],           // 15 req / 10 min
   [/^\/api\/orders$/, 5, 15 * 60_000, 900],                        // 5 req / 15 min
+
+  // Każdy POST uruchamia generowanie strony przez Claude — bez limitu wyciek
+  // tokenu poprawek oznaczał nieograniczony rachunek za API.
+  [/^\/api\/revisions\/[^/]+$/, 5, 15 * 60_000, 900],
+
+  // Tworzy sesję Stripe, publicznie i bez uwierzytelnienia.
+  [/^\/api\/stripe\/checkout$/, 10, 10 * 60_000, 600],
+
+  // Zgadywanie kodów rabatowych.
+  [/^\/api\/sites\/[^/]+\/discount$/, 20, 10 * 60_000, 600],
+
+  // Enumeracja tokenów onboardingu.
+  [/^\/api\/onboarding\/[^/]+$/, 20, 10 * 60_000, 600],
 ]
+
+// Uwaga: /api/facebook/webhook celowo NIE jest tu limitowany. Meta wysyła
+// zdarzenia z wielu adresów IP, więc limit per-IP i tak by nie zadziałał,
+// a mógłby odciąć prawdziwy ruch. Limit dla bota jest nałożony per
+// użytkownik Messengera w samym handlerze.
 
 function applyRateLimit(request: NextRequest): NextResponse | null {
   const path = request.nextUrl.pathname
@@ -94,7 +116,13 @@ export async function proxy(request: NextRequest) {
   if (!isMainDomain) {
     const subdomain = hostname.replace(`.${ROOT_DOMAIN}`, '')
 
-    if (subdomain && subdomain !== hostname) {
+    // Ścieżki /api/* obsługujemy bez przepisywania. Wcześniej prefiks
+    // dokładany był do wszystkiego, więc wywołanie z apartamentu na
+    // subdomenie — casa-sol.nobooking.eu/api/sites/casa-sol/book — trafiało
+    // pod /sites/casa-sol/api/sites/casa-sol/book. Taka trasa nie istnieje,
+    // więc formularz rezerwacji i kalendarz dostępności na subdomenach
+    // odpowiadały 404. Slug jest już w ścieżce, więc prefiks jest zbędny.
+    if (subdomain && subdomain !== hostname && !pathname.startsWith('/api/')) {
       const url = request.nextUrl.clone()
 
       if (subdomain === 'demo') {

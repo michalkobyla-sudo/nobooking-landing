@@ -181,15 +181,42 @@ mergedTiers[key] = {
 
 **Plik:** `src/lib/stripe-connect.ts`
 
-### Model: Platform (Destination Charges)
+### Model: Direct Charges
+
+> **Zmienione 2026-09-05.** Wcześniej były tu *destination charges*
+> (`payment_intent_data.transfer_data`) bez `application_fee_amount`. Przy takim
+> ustawieniu merchant of record była **platforma**: Nobooking płacił prowizję
+> Stripe od każdej rezerwacji swoich klientów, przekazywał im 100% kwoty
+> i odpowiadał za ich chargebacki. Dokumentacja opisywała wtedy model, który nie
+> odpowiadał kodowi. Szczegóły: `docs/AUDYT-2026-09-05.md`, P0 #4.
 
 ```
-Gość → płaci → Stripe Checkout → środki na konto właściciela (acct_xxx)
-                                  ↑
-                    Nobooking = platforma (sk_live_...)
+Gość → płaci → Stripe Checkout na koncie właściciela (acct_xxx)
+                          │
+                          └─ prowizja Stripe potrącana z tej płatności
+                             reszta → konto bankowe właściciela
+
+Nobooking = platforma: tworzy sesję w imieniu właściciela,
+            ale nie jest stroną transakcji
 ```
 
-Pieniądze trafiają **bezpośrednio** na konto bankowe właściciela. Nobooking nie widzi tych środków (chyba że zostanie ustawiona prowizja `application_fee_amount`).
+Sesja powstaje z opcją `{ stripeAccount: acct_xxx }` (`src/lib/stripe-connect.ts`), co oznacza:
+
+| | Kto |
+|---|---|
+| Merchant of record | **właściciel apartamentu** |
+| Płaci prowizję Stripe | **właściciel** |
+| Odpowiada za chargebacki i zwroty | **właściciel** |
+| Nazwa na wyciągu gościa | firma **właściciela** |
+| Przychód Nobooking z rezerwacji | **brak** — model to jednorazowa opłata za stronę |
+
+**Nie ustawiamy `payment_method_types`.** Przy direct charge Stripe pokazuje metody
+włączone na koncie właściciela. Wcześniejsza sztywna lista `['card','blik','p24']`
+wywracała tworzenie sesji dla kont bez blik/p24 — czyli praktycznie każdego
+właściciela spoza Polski.
+
+**Gdyby kiedyś wprowadzać prowizję Nobooking:** `application_fee_amount` w sesji
+plus `stripe_account` — wtedy część kwoty trafia na konto platformy. Dziś: 0.
 
 ### Krok 1 — Tworzenie subkonta
 
@@ -219,23 +246,49 @@ if (!site.stripe_account_id || site.stripe_onboarded !== true) {
   return { error: 'stripe_not_connected', status: 402 }  // płatności zablokowane
 }
 
-// Tworzy Checkout Session z destination charge:
-payment_intent_data: {
-  transfer_data: { destination: site.stripe_account_id }
-}
+// Tworzy Checkout Session jako direct charge na koncie właściciela:
+stripe.checkout.sessions.create(
+  { mode: 'payment', line_items: [...], metadata: { booking_id, site_slug } },
+  { stripeAccount: site.stripe_account_id },   // ← tu zapada model płatności
+)
 ```
 
 **Jeśli Stripe nie połączony** — strona apartamentu zamiast przycisku płatności pokazuje dane kontaktowe właściciela.
 
 ### Webhook Stripe
 
-`POST /api/stripe/webhook` — nasłuchuje zdarzenia `checkout.session.completed`:
+`POST /api/stripe/webhook` — nasłuchuje zdarzenia `checkout.session.completed`.
 
-1. Pobiera `booking_id` z metadata sesji
-2. Ustawia `stripe_paid = true`, `status = 'confirmed'`
-3. Wysyła emaile potwierdzające (do gościa i właściciela)
+**Konfiguracja w Stripe Dashboard — potrzebne DWA endpointy** pod tym samym adresem
+`https://www.nobooking.eu/api/stripe/webhook`:
 
-**WAŻNE:** Klucz `STRIPE_WEBHOOK_SECRET` musi być ustawiony. W Stripe Dashboard → Webhooks → Endpoint: `https://www.nobooking.eu/api/stripe/webhook`, zdarzenie: `checkout.session.completed`.
+| Typ endpointu | Skąd zdarzenia | Czego dotyczą |
+|---|---|---|
+| **Account** | konto platformy | zamówienia stron, odnowienia subskrypcji |
+| **Connect** | konta połączone | **rezerwacje gości** |
+
+Bez endpointu typu *Connect* rezerwacje nigdy się nie potwierdzą — przy direct
+charge płatność powstaje na koncie właściciela, więc jej zdarzenie nie trafia do
+endpointu platformowego.
+
+Przebieg:
+
+1. Weryfikacja podpisu (`STRIPE_WEBHOOK_SECRET`)
+2. **Zaklepanie zdarzenia** w `stripe_webhook_events` — powtórki są normalnym
+   elementem protokołu Stripe (at-least-once delivery), nie awarią
+3. Sprawdzenie `payment_status === 'paid'`
+4. Sprawdzenie, że kwota z Stripe zgadza się z ceną rezerwacji
+5. Sprawdzenie, że `event.account` to konto tej właśnie strony
+6. `stripe_paid = true`, `status = 'confirmed'`
+7. Emaile potwierdzające (do gościa i właściciela)
+
+Zdarzenia platformowe (zamówienie, odnowienie) są odrzucane, jeśli przyjdą
+z konta połączonego — właściciel ma pełną kontrolę nad swoim kontem Stripe
+i mógłby inaczej wystawić sobie sesję z metadanymi `{type: 'renewal'}`
+i przedłużyć subskrypcję za darmo.
+
+Przy błędzie przetwarzania zaklepanie jest zwalniane, żeby ponowienie ze strony
+Stripe mogło dokończyć pracę.
 
 ---
 

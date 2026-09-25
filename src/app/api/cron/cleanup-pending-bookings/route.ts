@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { requireCron } from '@/lib/cronAuth'
 
 // GET /api/cron/cleanup-pending-bookings
 // Runs every 30 minutes via Vercel Cron.
@@ -7,11 +8,8 @@ import { createServiceClient } from '@/lib/supabase'
 // guest started checkout but never completed payment (closed the window, etc.).
 // Without cleanup they permanently block those dates.
 export async function GET(request: NextRequest) {
-  // Verify this is called by Vercel Cron, not a random visitor
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const unauthorized = requireCron(request)
+  if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
 

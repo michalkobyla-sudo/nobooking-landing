@@ -86,6 +86,10 @@ export interface Site {
   renewal_price_pln: number | null
   renewal_price_eur: number | null
   renewal_currency: 'pln' | 'eur' | null
+  /** Wersja sesji właściciela — zmiana hasła podbija ją, unieważniając
+   *  wcześniej wydane cookie. Opcjonalna, bo kolumna dochodzi migracją
+   *  2026-09-05-p1-fixes.sql i kod działa też bez niej (brak = 0). */
+  token_version?: number
 }
 
 // ─── BOOKING ──────────────────────────────────────────────────────────────────

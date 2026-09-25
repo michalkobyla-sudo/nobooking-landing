@@ -3,8 +3,11 @@ import type { ApartmentConfig } from './apartmentTypes'
 
 // ─── Slug ────────────────────────────────────────────────────────────────────
 
+/** Używany, gdy nazwa nie zawiera ani jednego znaku, który przetrwa slugifikację. */
+export const FALLBACK_SLUG = 'apartament'
+
 export function toSlug(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '') // remove diacritics
@@ -13,7 +16,13 @@ export function toSlug(name: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') // bez myślnika na początku/końcu
     .slice(0, 60)
+    .replace(/-$/, '') // slice mógł zostawić myślnik na końcu
+
+  // Nazwy zapisane wyłącznie cyrylicą, pismem chińskim albo samymi emoji dawały
+  // pusty slug. Wszystkie takie zamówienia lądowały wtedy pod tym samym adresem.
+  return slug || FALLBACK_SLUG
 }
 
 // ─── Placeholder photos (replaced when client uploads real ones) ─────────────

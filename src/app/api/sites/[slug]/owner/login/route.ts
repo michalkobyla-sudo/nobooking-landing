@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { verifyPassword, createOwnerToken, cookieName } from '@/lib/ownerAuth'
+import { verifyPassword, createOwnerToken, cookieName, siteTokenVersion } from '@/lib/ownerAuth'
 
 interface Params {
   params: Promise<{ slug: string }>
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const supabase = createServiceClient()
   const { data: site } = await supabase
     .from('sites')
-    .select('id, slug, admin_password_hash, active')
+    .select('id, slug, admin_password_hash, active, token_version')
     .eq('slug', slug)
     .eq('active', true)
     .single()
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'invalid_password' }, { status: 401 })
   }
 
-  const token = createOwnerToken(site.id as string, slug)
+  const token = createOwnerToken(site.id as string, slug, siteTokenVersion(site))
   const res = NextResponse.json({ ok: true })
   res.cookies.set(cookieName(slug), token, {
     httpOnly: true,

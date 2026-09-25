@@ -64,12 +64,25 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'missing_notes' }, { status: 400 })
   }
 
-  // Save revision notes & increment counter
-  const newCount = order.revision_count + 1
-  await supabase
+  // Zapis uwag i inkrementacja licznika.
+  //
+  // Warunek na starą wartość licznika (compare-and-swap) sprawia, że przy
+  // równoległych żądaniach przejdzie dokładnie jedno. Wcześniej odczyt
+  // i zapis były rozdzielone, więc kilka żądań naraz przekraczało limit
+  // MAX_REVISIONS i uruchamiało tyle samo płatnych generowań przez Claude.
+  const currentCount = order.revision_count as number
+  const newCount = currentCount + 1
+
+  const { data: updated } = await supabase
     .from('orders')
     .update({ revision_notes: notes, revision_count: newCount })
     .eq('id', order.id)
+    .eq('revision_count', currentCount)
+    .select('id')
+
+  if (!updated || updated.length === 0) {
+    return NextResponse.json({ error: 'revision_in_progress' }, { status: 409 })
+  }
 
   // Regenerate site in background
   ;(async () => {
