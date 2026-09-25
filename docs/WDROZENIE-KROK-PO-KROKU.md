@@ -93,7 +93,32 @@ zmianie hasła). Kod działa bez niej, więc można później.
 
 ---
 
-## ETAP D — Stripe: endpoint dla kont połączonych (10 min)
+## ETAP D — Stripe ✅ CZĘŚCIOWO ZROBIONE 2026-09-25
+
+> **Co zrobiono:** przy okazji wyszło, że **oba** endpointy (nobooking i casa-sol)
+> miały 100% błędów — zostały kiedyś odtworzone w panelu (automatyczne nazwy
+> „elegant-excellence", „adventurous-brilliance"), dostały nowe sekrety, a zmienne
+> `STRIPE_WEBHOOK_SECRET` zostały ze starymi. Potwierdzone testem: podpis
+> wykonany sekretem z Vercela był odrzucany jako `Invalid signature`.
+>
+> Skutek dla casa-sol: zaliczka 384 zł z 2026-09-22 wpłynęła, ale aplikacja
+> nigdy się o tym nie dowiedziała (`stripe_paid: false`), więc portal gościa
+> nadal pokazywał wezwanie do zapłaty.
+>
+> Naprawione: nowe endpointy z nowymi sekretami, zmienne podmienione, casa-sol
+> przebudowany (`vercel redeploy` starego wdrożenia — bez wysyłania
+> niezacommitowanych zmian). Webhook casa-sol odpowiada teraz 200. Stare
+> endpointy wyłączone.
+>
+> **Czego NIE udało się zrobić:** endpointu typu *Connected accounts*.
+> Stripe przyjmuje parametr `connect=true` w API, ale go nie stosuje — wszystkie
+> utworzone tak endpointy pokazują „Events from: Your account". Trzeba go
+> utworzyć **w panelu**, wybierając *Connected accounts*, i wpisać jego sekret
+> do `STRIPE_CONNECT_WEBHOOK_SECRET`. Nie jest to pilne: żadna strona nie ma
+> jeszcze konta Connect (`stripe_account_id` jest puste), więc rezerwacje i tak
+> zwracają 402. Zrób to razem z onboardingiem pierwszego właściciela.
+
+### Oryginalna instrukcja (do wykonania przy pierwszym kliencie)
 
 Po zmianie na direct charges płatność gościa powstaje na koncie właściciela,
 więc jej zdarzenie **nie trafia** do dotychczasowego endpointu. Bez tego kroku
