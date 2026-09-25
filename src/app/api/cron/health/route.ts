@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { sendHealthReport } from '@/lib/email'
-import { ocenStan, wymagaUwagi, raportHtml, type StanSystemu } from '@/lib/health'
+import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 
 export const runtime = 'nodejs'
 
@@ -123,12 +123,8 @@ export async function GET(request: NextRequest) {
   // który jest ważny.
   let wyslano = false
   if (wymagaUwagi(znaleziska)) {
-    const krytyczne = znaleziska.filter(z => z.waga === 'krytyczne').length
-    const temat = krytyczne > 0
-      ? `Nobooking: ${krytyczne} problem(ów) krytycznych`
-      : `Nobooking: ${znaleziska.length} rzecz(y) do sprawdzenia`
     try {
-      await sendHealthReport(temat, raportHtml(znaleziska, data))
+      await sendHealthReport(tematRaportu(znaleziska), raportHtml(znaleziska, data))
       wyslano = true
     } catch (err) {
       console.error('[health] nie udało się wysłać raportu:', err)

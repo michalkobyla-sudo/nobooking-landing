@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ocenStan, wymagaUwagi, raportHtml, type StanSystemu } from './health'
+import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, odmien, type StanSystemu } from './health'
 
 const zdrowy: StanSystemu = {
   ostatniaKopiaGodzinTemu: 5,
@@ -97,5 +97,20 @@ describe('raportHtml', () => {
     expect(html).toContain('2026-09-25')
     expect(html).toContain('KRYTYCZNE')
     expect(html).toContain('provision-sites')
+  })
+})
+
+describe('tematRaportu i odmiana', () => {
+  it('odmienia rzeczownik przez liczbę', () => {
+    const f: [string, string, string] = ['problem', 'problemy', 'problemów']
+    expect([1, 2, 4, 5, 12, 14, 22, 25].map(n => odmien(n, f)))
+      .toEqual(['problem', 'problemy', 'problemy', 'problemów', 'problemów', 'problemów', 'problemy', 'problemów'])
+  })
+
+  it('temat wyróżnia problemy krytyczne', () => {
+    expect(tematRaportu(ocenStan({ ...zdrowy, mailDziala: false })))
+      .toBe('Nobooking: 1 problem krytyczny')
+    expect(tematRaportu(ocenStan({ ...zdrowy, rezerwacjePendingStare: 1 })))
+      .toBe('Nobooking: 1 rzecz do sprawdzenia')
   })
 })

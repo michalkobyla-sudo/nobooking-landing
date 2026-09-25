@@ -127,6 +127,28 @@ export function wymagaUwagi(znaleziska: Znalezisko[]): boolean {
   return znaleziska.some(z => z.waga !== 'info')
 }
 
+/**
+ * Odmiana rzeczownika przez liczbę: 1 problem, 2 problemy, 5 problemów.
+ * Temat maila czytany jest codziennie — „1 rzecz(y)" kłuje w oczy.
+ */
+export function odmien(n: number, formy: [jeden: string, malo: string, duzo: string]): string {
+  if (n === 1) return formy[0]
+  const dziesiatki = n % 100
+  const jednosci = n % 10
+  if (jednosci >= 2 && jednosci <= 4 && (dziesiatki < 12 || dziesiatki > 14)) return formy[1]
+  return formy[2]
+}
+
+/** Temat maila z raportem. */
+export function tematRaportu(znaleziska: Znalezisko[]): string {
+  const krytyczne = znaleziska.filter(z => z.waga === 'krytyczne').length
+  if (krytyczne > 0) {
+    return `Nobooking: ${krytyczne} ${odmien(krytyczne, ['problem krytyczny', 'problemy krytyczne', 'problemów krytycznych'])}`
+  }
+  const n = znaleziska.length
+  return `Nobooking: ${n} ${odmien(n, ['rzecz do sprawdzenia', 'rzeczy do sprawdzenia', 'rzeczy do sprawdzenia'])}`
+}
+
 export function raportHtml(znaleziska: Znalezisko[], data: string): string {
   if (znaleziska.length === 0) {
     return `<p>Raport z ${data}: nic nie wymaga uwagi.</p>`
