@@ -645,3 +645,12 @@ export async function sendOwnerBookingNotification(booking: BookingEmailData) {
     `)
   )
 }
+
+
+// ─── RAPORT STANU SYSTEMU ─────────────────────────────────────────────────────
+
+/** Raport z crona /api/cron/health. Trafia na ADMIN_EMAIL i tylko wtedy,
+ *  gdy jest o czym pisać — codzienne „wszystko OK" przestaje się czytać. */
+export async function sendHealthReport(subject: string, html: string) {
+  await sendEmail(ADMIN_EMAIL(), subject, html)
+}
