@@ -95,7 +95,11 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
     przerywa wykonanie. Trzy awarie z września (backup, webhooki, poczta) były
     niewidoczne miesiącami właśnie przez ciche `catch`.
 14. **Kopia zapasowa nigdy nie nadpisuje dobrej wersji gorszą.** Spadek liczby
-    wierszy poniżej połowy przerywa zapis.
+    wierszy poniżej połowy przerywa zapis. Strażnik nie odróżnia utraty danych
+    od świadomego usunięcia, więc po zamierzonej kasacie blokuje zapis na stałe —
+    wyjściem jest jawne `?rebaseline=1`, które odkłada dotychczasową kopię pod
+    osobną nazwą i oznacza nową znacznikiem `przebazowanie`. Bez tego wyjścia
+    alarm o nieaktualnej kopii powtarzałby się codziennie i przestałby być czytany.
 15. **Migracja poprzedza wdrożenie kodu, który jej wymaga.**
 16. **Żadna sesja Checkout nie podaje `payment_method_types`.** Stripe sam
     pokazuje metody włączone na koncie, na którym powstaje płatność. Sztywna
@@ -193,6 +197,12 @@ tożsamości właściciela platformy, a nie ankieta. `status: pending` oznacza
 weryfikację w toku — **nie wgrywaj kolejnego dokumentu**, bo każde wgranie kasuje
 trwające sprawdzenie i ustawia cię na końcu kolejki. Baner w panelu pokazuje
 wynik poprzedniej próby i nie odświeża się w trakcie bieżącej.
+
+**Backup zwraca `suspicious_drop`** → sprawdź najpierw, czy liczba rezerwacji
+w bazie faktycznie spadła i **dlaczego**. Jeśli to utrata danych — nie ruszaj
+kopii, odtwórz z niej dane. Jeśli spadek jest zamierzony (np. wyniesienie danych
+innego projektu), przebazuj punkt odniesienia:
+`curl -H "Authorization: Bearer $CRON_SECRET" "https://www.nobooking.eu/api/cron/backup-bookings?rebaseline=1"`
 
 **Cokolwiek dziwnego z danymi Casa Sol** → `casa-sol/docs/DIAGNOSTYKA-kalendarz.sql`
 (tylko odczyt) i kopia z `backups/casasol_bookings_latest.json`.

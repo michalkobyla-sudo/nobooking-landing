@@ -69,20 +69,57 @@ export async function GET(request: NextRequest) {
   // Zabezpieczenie przed skasowaniem dobrej kopii. Gdyby odczyt zwrócił pusto
   // albo drastycznie mniej niż poprzednio — nie nadpisujemy niczego.
   // To dokładnie ten scenariusz, w którym poprzednio zniknęły rezerwacje.
+  //
+  // Strażnik nie odróżnia utraty danych od świadomego usunięcia, więc po
+  // zamierzonej kasacie (np. wyniesienie danych innego projektu) blokuje zapis
+  // już na stałe: każdy kolejny przebieg widzi ten sam spadek. Wyjściem jest
+  // jawne przebazowanie — `?rebaseline=1`, chronione tym samym `CRON_SECRET`
+  // co reszta trasy. Bez niego alarm o nieaktualnej kopii powtarzałby się
+  // codziennie i przestałby być czytany.
+  const przebazowanie = request.nextUrl.searchParams.get('rebaseline') === '1'
   const poprzednio = await poprzedniaLiczbaRezerwacji(db)
-  if (poprzednio !== null && poprzednio > 0 && bookings.length < poprzednio / 2) {
+  const spadek = poprzednio !== null && poprzednio > 0 && bookings.length < poprzednio / 2
+
+  if (spadek && !przebazowanie) {
     console.error(
       `[backup-bookings] PRZERWANE — liczba rezerwacji spadła z ${poprzednio} do ` +
-      `${bookings.length}. Nie nadpisuję kopii. Sprawdź bazę.`
+      `${bookings.length}. Nie nadpisuję kopii. Sprawdź bazę. Jeśli spadek jest ` +
+      `zamierzony, uruchom ponownie z ?rebaseline=1.`
     )
     return NextResponse.json(
-      { error: 'suspicious_drop', previous: poprzednio, current: bookings.length },
+      { error: 'suspicious_drop', previous: poprzednio, current: bookings.length, hint: 'rebaseline=1' },
       { status: 500 },
+    )
+  }
+
+  if (spadek && przebazowanie) {
+    // Dotychczasowa kopia trafia pod własną nazwę, zanim cokolwiek nadpiszemy.
+    // Dzienne pliki i tak zostają, ale jawny ślad ułatwia późniejsze czytanie
+    // historii: widać, po czym nastąpiła zmiana punktu odniesienia.
+    try {
+      const { data } = await db.storage.from(BUCKET).download(LATEST)
+      if (data) {
+        await db.storage
+          .from(BUCKET)
+          .upload(`backups/nobooking_backup_przed_przebazowaniem_${today}.json`, await data.text(), {
+            contentType: 'application/json',
+            upsert: true,
+          })
+      }
+    } catch (err) {
+      console.error('[backup-bookings] nie udało się odłożyć kopii przed przebazowaniem:', err)
+    }
+    console.warn(
+      `[backup-bookings] PRZEBAZOWANIE — akceptuję spadek z ${poprzednio} do ${bookings.length} ` +
+      `na jawne żądanie. Poprzednia kopia odłożona pod nazwą z dopiskiem „przed_przebazowaniem".`
     )
   }
 
   const backup = {
     exported_at: new Date().toISOString(),
+    ...(spadek && przebazowanie
+      ? { przebazowanie: true, poprzednia_liczba_rezerwacji: poprzednio }
+      : {}),
     sites: sitesRes.data ?? [],
     bookings_count: bookings.length,
     bookings,
