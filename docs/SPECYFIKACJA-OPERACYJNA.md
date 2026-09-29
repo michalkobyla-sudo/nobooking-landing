@@ -107,7 +107,11 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
 18. **Slug strony bierze się z `orders.site_slug`, nigdy z nazwy apartamentu.**
     Przy kolizji nazw drugi klient dostaje `nazwa-2`; `toSlug(apartment_name)`
     wskazałby wtedy stronę pierwszego i nadpisał ją cudzą treścią.
-19. **Klient nie dostaje danych logowania, zanim jego strona nie przejdzie
+19. **Regeneracja strony nie cofa zmian właściciela.** `pricing` i `contact`
+    z panelu wygrywają z tym, co model wygeneruje z niezmiennych danych
+    onboardingowych. Rozstrzyga różnica względem `orders.generated_config`,
+    które musi przechowywać wersję **wygenerowaną**, nie scaloną.
+20. **Klient nie dostaje danych logowania, zanim jego strona nie przejdzie
     sprawdzenia.** Provisioning weryfikuje własną pracę: config (opis, zdjęcia,
     cennik, pojemność) i to, czy strona się otwiera. Usterka blokująca wstrzymuje
     maile i zostawia w `orders.notes` znacznik `[PROVISION-CHECK]`, po którym

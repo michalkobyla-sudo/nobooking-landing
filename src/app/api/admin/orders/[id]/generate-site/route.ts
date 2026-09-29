@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, requireAdmin } from '@/lib/supabase'
 import { generateSiteConfig } from '@/lib/generate-site'
 import { slugZamowienia, zapiszConfigStrony } from '@/lib/provision-site'
+import { parsujConfig } from '@/lib/configMerge'
 import { sendSiteReadyEmail } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
@@ -58,7 +59,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Przy pierwszym generowaniu strony jeszcze nie ma i to jest w porządku —
   // wiersz w `sites` tworzy provisioning.
   if (!updateError) {
-    await zapiszConfigStrony(supabase, slug, configJson)
+    const wynik = await zapiszConfigStrony(
+      supabase,
+      slug,
+      config as unknown as Record<string, unknown>,
+      parsujConfig((order as Order).generated_config),
+    )
+    if (wynik.zachowane.length > 0) {
+      console.log(`[generate-site] ${slug}: zachowano zmiany właściciela w ${wynik.zachowane.join(', ')}`)
+    }
   }
 
   if (updateError) {

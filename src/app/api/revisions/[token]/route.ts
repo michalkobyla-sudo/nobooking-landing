@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { generateSiteConfig } from '@/lib/generate-site'
 import { slugZamowienia, zapiszConfigStrony } from '@/lib/provision-site'
+import { parsujConfig } from '@/lib/configMerge'
 import { sendSiteReadyEmail, sendRevisionCompleteEmail } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
@@ -90,27 +91,39 @@ export async function POST(request: NextRequest, { params }: Params) {
     try {
       const orderWithNotes = { ...order, revision_notes: notes } as Order
       const config = await generateSiteConfig(orderWithNotes)
-      const configJson = JSON.stringify(config)
 
       // Slug bierzemy z zamówienia, nie z nazwy apartamentu: przy kolizji nazw
       // drugi klient dostaje `nazwa-2`, a `toSlug` wskazałby stronę pierwszego.
       const slug = slugZamowienia(orderWithNotes)
 
-      await supabase
-        .from('orders')
-        .update({
-          generated_config: configJson,
-          site_generated_at: new Date().toISOString(),
-        })
-        .eq('id', order.id)
-
       // Strona renderuje się z `sites.config`. Bez tego zapisu klient dostawał
       // mail „strona zaktualizowana", a strona zostawała bez zmian — runda
       // poprawek przepadała, rachunek za Claude i tak rósł.
-      const zapisano = await zapiszConfigStrony(supabase, slug, configJson)
-      if (!zapisano) {
+      // Poprzednia wygenerowana wersja pozwala odróżnić zmiany właściciela
+      // z panelu od tego, co model wygenerował ostatnio.
+      const wynik = await zapiszConfigStrony(
+        supabase,
+        slug,
+        config as unknown as Record<string, unknown>,
+        parsujConfig(order.generated_config),
+      )
+
+      if (!wynik.zapisano) {
         console.error(`[revisions] brak strony o slugu "${slug}" — poprawka nie trafiła na stronę`)
+      } else if (wynik.zachowane.length > 0) {
+        console.log(`[revisions] ${slug}: zachowano zmiany właściciela w ${wynik.zachowane.join(', ')}`)
       }
+
+      // Punktem odniesienia jest config **wygenerowany**, nie scalony. Gdyby
+      // zapisać tu scalony, przy następnej rundzie zmiana właściciela zrównałaby
+      // się z punktem odniesienia, wyglądała na brak zmiany i zostałaby cofnięta.
+      await supabase
+        .from('orders')
+        .update({
+          generated_config: JSON.stringify(config),
+          site_generated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
 
       const revisionsLeft = MAX_REVISIONS - newCount
 

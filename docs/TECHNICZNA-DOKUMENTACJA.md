@@ -586,6 +586,23 @@ Slug wyznacza `slugZamowienia` — z `orders.site_slug`, nigdy z nazwy apartamen
 Przy kolizji nazw `insertSiteWithFreeSlug` nadaje drugiemu klientowi `nazwa-2`,
 a `toSlug(apartment_name)` wskazałby stronę pierwszego.
 
+**Zmiany właściciela przeżywają regenerację.** Regeneracja buduje config
+z danych onboardingowych, które się nie zmieniają — bez zabezpieczenia cofałaby
+ceny i kontakt do stanu sprzed wszystkich edycji w panelu właściciela. To są
+kwoty pobierane od gości, więc cichy powrót do starych wartości jest gorszy niż
+zignorowanie prośby o zmianę ceny w treści poprawek; tę właściciel wyklika
+w dziesięć sekund.
+
+`scalPoRegeneracji` (`src/lib/configMerge.ts`) nie zgaduje: `orders.generated_config`
+trzyma **ostatnio wygenerowaną** wersję, więc różnica między nią a stanem
+bieżącym to dokładnie to, co zmieniono ręcznie. Zachowywane gałęzie:
+`pricing` i `contact` — te, które edytuje `owner/settings`.
+
+Pułapka przy zmianach w tym kodzie: punktem odniesienia musi zostać config
+**wygenerowany**, nie scalony. Zapisanie scalonego sprawia, że przy drugiej
+rundzie poprawek zmiana właściciela zrównuje się z punktem odniesienia, wygląda
+na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
+
 ### Atrybucja — skąd przyszedł klient
 
 `src/lib/attribution.ts` (czyste), `src/components/ZapiszZrodlo.tsx` (zapis),

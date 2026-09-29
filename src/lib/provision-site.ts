@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { createConnectAccount } from '@/lib/stripe-connect'
 import { hashPassword } from '@/lib/ownerAuth'
 import { toSlug } from '@/lib/generate-site'
+import { scalPoRegeneracji, parsujConfig } from '@/lib/configMerge'
 import { PRICES } from '@/lib/prices'
 import type { Order } from '@/lib/types'
 
@@ -244,17 +245,35 @@ export function slugZamowienia(order: Pick<Order, 'site_slug' | 'apartment_name'
 export async function zapiszConfigStrony(
   supabase: SupabaseClient,
   slug: string,
-  configJson: string,
-): Promise<boolean> {
-  const { data, error } = await supabase
+  nowyConfig: Record<string, unknown>,
+  poprzedniWygenerowany: Record<string, unknown> | null,
+): Promise<{ zapisano: boolean; config: Record<string, unknown>; zachowane: string[] }> {
+  const { data: strona, error: bladOdczytu } = await supabase
     .from('sites')
-    .update({ config: JSON.parse(configJson) as Record<string, unknown> })
+    .select('id, config')
     .eq('slug', slug)
-    .select('id')
+    .maybeSingle()
 
+  if (bladOdczytu) {
+    console.error('[provision-site] nie udało się odczytać strony:', bladOdczytu.message)
+    return { zapisano: false, config: nowyConfig, zachowane: [] }
+  }
+  if (!strona) {
+    // Strona jeszcze nie powstała — przy pierwszym generowaniu to normalne,
+    // wiersz w `sites` tworzy provisioning.
+    return { zapisano: false, config: nowyConfig, zachowane: [] }
+  }
+
+  const { config, zachowane } = scalPoRegeneracji(
+    nowyConfig,
+    parsujConfig(strona.config),
+    poprzedniWygenerowany,
+  )
+
+  const { error } = await supabase.from('sites').update({ config }).eq('id', strona.id)
   if (error) {
     console.error('[provision-site] nie udało się zapisać config strony:', error.message)
-    return false
+    return { zapisano: false, config, zachowane }
   }
-  return Boolean(data && data.length > 0)
+  return { zapisano: true, config, zachowane }
 }
