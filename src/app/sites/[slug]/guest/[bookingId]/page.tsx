@@ -110,6 +110,20 @@ export default async function GuestPortalPage({ params, searchParams }: Props) {
           </a>
         )}
 
+        {/* Opinia — dopiero po zakończeniu pobytu. Wcześniej byłaby o wyobrażeniu,
+            nie o doświadczeniu. */}
+        {booking.check_out <= new Date().toISOString().slice(0, 10) && booking.status !== 'cancelled' && (
+          <a
+            href={`/sites/${site.slug as string}/guest/${bookingId}/opinia`}
+            style={{ display: 'block', background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: '1.25rem 1.5rem', marginBottom: '1rem', textDecoration: 'none' }}
+          >
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: primary }}>Napisz opinię →</div>
+            <div style={{ fontSize: '0.82rem', color: '#6B7280', marginTop: '0.25rem' }}>
+              Kilka zdań pomoże kolejnym gościom przy wyborze.
+            </div>
+          </a>
+        )}
+
         {/* Contact */}
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: '1.5rem', marginBottom: '1rem' }}>
           <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '1rem', color: '#111827' }}>📞 Kontakt z właścicielem</div>

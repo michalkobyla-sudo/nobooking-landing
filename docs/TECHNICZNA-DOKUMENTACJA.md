@@ -603,6 +603,53 @@ Pułapka przy zmianach w tym kodzie: punktem odniesienia musi zostać config
 rundzie poprawek zmiana właściciela zrównuje się z punktem odniesienia, wygląda
 na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
 
+### Opinie gości
+
+Pełny obieg: e-mail dwa dni po wyjeździe → formularz gościa → moderacja
+w panelu właściciela → karuzela na stronie apartamentu.
+
+| Element | Gdzie |
+|---|---|
+| E-mail z prośbą | cron `guest-reminders`, `sendReviewRequest` |
+| Formularz | `/sites/[slug]/guest/[bookingId]/opinia` |
+| Zapis | `/api/sites/[slug]/guest/[bookingId]/opinia` |
+| Moderacja | `owner/reviews` (istniała wcześniej) |
+| Karuzela | `/sites/[slug]/page.tsx` → `ApartmentPage` |
+
+Opinia trafia do bazy **niepublikowana**. Treść jest publiczna i firmowana
+marką właściciela, więc nie może się pojawić bez jego zgody.
+
+Jedna opinia na rezerwację — zapis idzie przez `upsert` po `booking_id`, więc
+gość może poprawić swoją, ale nie dopisać drugiej. Wymaga to indeksu
+`reviews_booking_id_uniq` (migracja `2026-09-29-powiadomienia-gosci.sql`);
+bez niego zapis zwraca błąd `ON CONFLICT` i jest on widoczny w logu.
+
+Opinii **nie tłumaczymy** na cztery języki — cudza wypowiedź nie jest nasza do
+zmieniania. Ten sam tekst trafia do wszystkich wersji językowych.
+
+Karuzela bierze opinie z tabeli, a `config.reviews.items` zostaje treścią
+zastępczą dla stron, które jeszcze żadnej nie zebrały. Do 2026-09-29 karuzela
+pokazywała wyłącznie config, a do tabeli nic nie pisało — panel właściciela
+moderował zbiór, który zawsze był pusty.
+
+### Powiadomienia do gości
+
+Cron `guest-reminders` (codziennie 08:00 UTC) wysyła dwie rzeczy:
+przypomnienie siedem dni przed przyjazdem (z linkiem do check-inu, jeśli strona
+ma plan Pro) i prośbę o opinię dwa dni po wyjeździe.
+
+**Jednokrotność gwarantuje baza, nie kod.** Klucz unikalny
+`(booking_id, rodzaj)` w `guest_notifications` rozstrzyga, czy wiadomość już
+poszła; odczyt-potem-zapis miałby okno wyścigu, a Vercel potrafi powtórzyć
+wywołanie crona.
+
+Ślad zapisujemy **przed** wysyłką. Ceną jest to, że nieudany mail nie zostanie
+ponowiony automatycznie — świadomy wybór, bo gość woli nie dostać przypomnienia
+niż dostać je pięć razy.
+
+Uwaga na nazwy: cron `review-requests` pyta **właścicieli apartamentów** o opinię
+o samym Nobookingu i nie ma nic wspólnego z opiniami gości.
+
 ### Online check-in (pakiet Pro)
 
 `src/lib/checkin.ts` — walidacja bez bazy, `/api/sites/[slug]/guest/[bookingId]/checkin`

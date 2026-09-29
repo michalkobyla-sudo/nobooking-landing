@@ -41,9 +41,41 @@ export default async function SitePage({ params }: Props) {
 
   const config = site.config as unknown as ApartmentConfig
 
+  // Opinie zatwierdzone przez wlasciciela. Do 2026-09-29 karuzela pokazywala
+  // wylacznie `config.reviews.items`, czyli teksty wpisane przy generowaniu
+  // strony — prawdziwe opinie gosci nie mialy jak sie tam znalezc, bo nic nie
+  // pisalo do tabeli. Teraz wygrywaja opinie z tabeli, a config zostaje jako
+  // tresc zastepcza dla stron, ktore jeszcze zadnej nie zebraly.
+  const { data: opinie } = await supabase
+    .from('reviews')
+    .select('guest_name, score, text, created_at')
+    .eq('site_id', site.id)
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const configZOpiniami: ApartmentConfig = (opinie && opinie.length > 0)
+    ? {
+        ...config,
+        reviews: {
+          score: Math.round((opinie.reduce((a, o) => a + Number(o.score), 0) / opinie.length) * 10) / 10,
+          count: opinie.length,
+          items: opinie.map(o => ({
+            // Opinia jest w jednym jezyku — tym, w ktorym napisal ja gosc.
+            // Nie tlumaczymy jej, bo cudza wypowiedz nie jest nasza do zmieniania.
+            text: { pl: o.text as string, en: o.text as string, es: o.text as string, de: o.text as string },
+            author: o.guest_name as string,
+            location: '',
+            score: Number(o.score),
+            date: String(o.created_at).slice(0, 10),
+          })),
+        },
+      }
+    : config
+
   return (
     <ApartmentPage
-      config={config}
+      config={configZOpiniami}
       siteId={site.id as string}
       slug={slug}
       showDemoBanner={false}

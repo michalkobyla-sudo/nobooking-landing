@@ -80,8 +80,12 @@ link otwierał się pod slugiem dowolnego innego klienta.
 Zamierzony przepływ: e-mail po pobycie → formularz gościa → moderacja
 w panelu właściciela → karuzela na stronie apartamentu.
 
-Stan faktyczny opisuje dokument weryfikacyjny — w kodzie istnieją dziś wyłącznie
-trasy moderacyjne (`owner/reviews`) i karuzela renderująca `config.reviews.items`.
+Cały obieg działa od 2026-09-29. Opinia trafia do bazy niepublikowana —
+treść jest publiczna i firmowana marką właściciela, więc pojawia się dopiero
+po jego zatwierdzeniu. Jedna opinia na rezerwację; gość może ją poprawić.
+
+Karuzela bierze opinie z tabeli, a teksty z configu zostają treścią zastępczą
+dla stron, które jeszcze żadnej nie zebrały.
 
 ## 7. Powiadomienia e-mail
 

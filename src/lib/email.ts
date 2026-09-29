@@ -607,6 +607,47 @@ export async function sendPreArrivalReminder(params: {
   )
 }
 
+/**
+ * E-mail: prosba o opinie po pobycie.
+ *
+ * Idzie do **goscia** o apartamencie — w odroznieniu od crona
+ * `review-requests`, ktory pyta wlascicieli apartamentow o opinie o samym
+ * Nobookingu. To dwie rozne rzeczy o mylaco podobnych nazwach.
+ */
+export async function sendReviewRequest(params: {
+  booking: BookingEmailData
+  slug: string
+  nazwaApartamentu: string
+}) {
+  const { booking, slug, nazwaApartamentu } = params
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const link = `${siteUrl}/sites/${slug}/guest/${booking.id}/opinia`
+
+  await sendEmail(
+    booking.guest_email,
+    `Jak było w ${nazwaApartamentu}?`,
+    wrapEmail(`
+      ${renderHeader('Podziel się opinią')}
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Mamy nadzieję, że pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong> się udał.
+          Jeśli znajdziesz chwilę, napisz kilka zdań — pomoże to kolejnym gościom
+          przy wyborze.
+        </p>
+
+        <a href="${link}" style="display: block; background: #059669; color: white; text-decoration: none; border-radius: 10px; padding: 0.9rem 1.25rem; text-align: center; font-weight: 700; margin-bottom: 1.5rem;">
+          Napisz opinię →
+        </a>
+
+        <p style="color: #9ca3af; font-size: 0.82rem; margin: 0; line-height: 1.6;">
+          Zajmie minutę. Opinia pojawi się na stronie po zatwierdzeniu przez gospodarza.
+        </p>
+      </div>
+    `),
+  )
+}
+
 /** Email: Guest booking confirmation */
 export async function sendBookingConfirmation(booking: BookingEmailData) {
   const nights = Math.round(
