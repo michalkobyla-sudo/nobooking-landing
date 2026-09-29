@@ -22,6 +22,8 @@ create index if not exists guest_notifications_booking_idx
   on public.guest_notifications (booking_id);
 
 alter table public.guest_notifications enable row level security;
+-- `create policy` nie ma wariantu `if not exists`, wiec najpierw kasujemy.
+drop policy if exists "no_anon_guest_notifications" on public.guest_notifications;
 create policy "no_anon_guest_notifications"
   on public.guest_notifications for all to anon using (false);
 

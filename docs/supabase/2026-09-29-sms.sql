@@ -31,6 +31,8 @@ create index if not exists sms_log_site_created_idx
   on public.sms_log (site_id, created_at desc);
 
 alter table public.sms_log enable row level security;
+-- `create policy` nie ma wariantu `if not exists`, wiec najpierw kasujemy.
+drop policy if exists "no_anon_sms_log" on public.sms_log;
 create policy "no_anon_sms_log" on public.sms_log for all to anon using (false);
 
 comment on column public.sites.sms_phone is

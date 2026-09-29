@@ -54,6 +54,12 @@ const RATE_RULES: Array<[RegExp, number, number, number]> = [
 
   // Enumeracja tokenów onboardingu.
   [/^\/api\/onboarding\/[^/]+$/, 20, 10 * 60_000, 600],
+
+  // Portal gościa: check-in i opinia. Chroni je wyłącznie znajomość
+  // identyfikatora rezerwacji, więc enumeracja jest tu tym samym, czym
+  // zgadywanie tokenu — a obie trasy piszą do bazy.
+  [/^\/api\/sites\/[^/]+\/guest\/[^/]+\/checkin$/, 20, 10 * 60_000, 600],
+  [/^\/api\/sites\/[^/]+\/guest\/[^/]+\/opinia$/, 20, 10 * 60_000, 600],
 ]
 
 // Uwaga: /api/facebook/webhook celowo NIE jest tu limitowany. Meta wysyła

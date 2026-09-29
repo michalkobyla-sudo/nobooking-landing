@@ -64,14 +64,17 @@ export async function GET(request: NextRequest) {
   }
 
   for (const b of przyjazdy ?? []) {
-    if (!(await zaklep(b.id as string, 'przed_przyjazdem'))) continue
-
+    // Strona najpierw, zaklepanie potem. Odwrotna kolejność zostawiałaby ślad
+    // wysyłki dla rezerwacji bez strony — wiadomość nie poszłaby nigdy,
+    // a ponowienie byłoby już zablokowane.
     const { data: strona } = await db
       .from('sites')
       .select('slug, plan, config')
       .eq('id', b.site_id)
       .single()
     if (!strona) continue
+
+    if (!(await zaklep(b.id as string, 'przed_przyjazdem'))) continue
 
     const nazwa = (strona.config as { name?: string } | null)?.name ?? (strona.slug as string)
     // Link do check-inu ma sens tylko tam, gdzie check-in w ogóle istnieje.
@@ -103,14 +106,14 @@ export async function GET(request: NextRequest) {
     .eq('check_out', poWyjezdzie)
 
   for (const b of wyjazdy ?? []) {
-    if (!(await zaklep(b.id as string, 'prosba_o_opinie'))) continue
-
     const { data: strona } = await db
       .from('sites')
       .select('slug, config')
       .eq('id', b.site_id)
       .single()
     if (!strona) continue
+
+    if (!(await zaklep(b.id as string, 'prosba_o_opinie'))) continue
 
     try {
       await sendReviewRequest({

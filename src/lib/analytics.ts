@@ -129,6 +129,9 @@ export function policzAnalitykę(
   return {
     miesiace,
     przychodRok: Math.round(wRoku.reduce((a, r) => a + (Number(r.total_price) || 0), 0)),
+    // Waluta z pierwszej liczonej rezerwacji. Strona ma jedną walutę
+    // w cenniku, więc mieszanka zdarza się tylko wtedy, gdy właściciel zmienił
+    // ją w trakcie — wtedy suma i tak nie miałaby sensu, niezależnie od etykiety.
     waluta: (liczone[0]?.currency ?? 'EUR').toUpperCase(),
     sredniPobyt: dlugosci.length === 0
       ? 0
