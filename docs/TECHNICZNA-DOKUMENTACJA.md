@@ -609,12 +609,20 @@ na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
 limit), `src/lib/smsSend.ts` — wysyłka i zapis śladu.
 Migracja: `docs/supabase/2026-09-29-sms.sql`.
 
-**Dostawca: SMSAPI.** Wybrany, bo odbiorcami są właściciele apartamentów,
-w większości z polskimi numerami. Zmiana dostawcy dotyka jednej funkcji
-w `smsSend.ts`. Konfiguracja: `SMSAPI_TOKEN` (wymagany) i `SMSAPI_SENDER`
-(opcjonalna nazwa nadawcy). **Bez tokenu moduł nie robi nic i mówi o tym
-w logu** — brak konfiguracji nie udaje sukcesu, ale też nie wywraca
-potwierdzenia rezerwacji.
+**Dostawca: Twilio.** Ten sam, którego od kwietnia 2026 używa Casa Sol
+(`casa-sol/src/lib/sms.ts`) z polskim numerem nadawcy - wzorzec sprawdzony
+w boju, a jeden dostawca zamiast dwóch to jedno miejsce do pilnowania. Przy tej
+skali (kilka SMS-ów tygodniowo na właściciela) różnica w cenie wobec dostawców
+krajowych nie ma znaczenia. Zmiana dostawcy dotyka jednej funkcji w `smsSend.ts`.
+
+Konfiguracja: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`.
+**Poświadczenia muszą być osobne od Casa Sol** - własne konto albo subkonto
+Twilio. Casa Sol ma być całkowicie niezależna od Nobookinga, tak samo jak przy
+Stripe; wspólne poświadczenia oznaczałyby wspólny rachunek i wspólny numer
+nadawcy dla dwóch produktów.
+
+**Bez kompletu zmiennych moduł nie robi nic i mówi o tym w logu** - brak
+konfiguracji nie udaje sukcesu, ale też nie wywraca potwierdzenia rezerwacji.
 
 Dwie rzeczy, które odróżniają SMS od e-maila i wymusiły kształt tego kodu:
 
@@ -622,7 +630,7 @@ Dwie rzeczy, które odróżniają SMS od e-maila i wymusiły kształt tego kodu:
   liczony z `sms_log`. Gdy licznika nie da się odczytać, zawodzimy „na
   zamknięto": lepiej nie wysłać jednego SMS-a niż wysłać ich tyle, ile przyjdzie
   zdarzeń.
-- **Polski znak potraja cenę.** SMSAPI liczy wiadomość z „ł" albo „ą"
+- **Polski znak potraja cenę.** Operator liczy wiadomość z „ł" albo „ą"
   w alfabecie UCS-2, gdzie limit spada ze 160 znaków do 70. Treść przechodzi
   więc przez `bezOgonkow` i jest przycinana do 160 znaków.
 

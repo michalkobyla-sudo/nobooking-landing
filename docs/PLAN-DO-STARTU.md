@@ -128,8 +128,8 @@ Decyzja jest Twoja i determinuje zakres 1b–1c.
 
 ### 1b. Powiadomienia SMS *(jeśli budujemy)*
 
-- dostawca: **SMSAPI** przy przewadze numerów polskich, **Twilio** przy
-  międzynarodowych;
+- dostawca: **Twilio** - Casa Sol używa go od kwietnia 2026 z polskim numerem
+  nadawcy, więc wzorzec jest sprawdzony; poświadczenia osobne od Casa Sol;
 - `sites.sms_phone` (numer żyje dziś w `orders`, a wysyłka operuje na `sites`);
 - funkcja wysyłki obok `email.ts`, z awarią widoczną dla agenta zdrowia (Z4);
 - podpięcie tam, gdzie idzie `sendOwnerBookingNotification`;

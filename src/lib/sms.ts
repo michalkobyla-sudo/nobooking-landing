@@ -82,7 +82,7 @@ function przytnij(tekst: string, doIlu: number): string {
 /**
  * Treść powiadomienia o nowej rezerwacji.
  *
- * Bez polskich znaków diakrytycznych: SMSAPI liczy wiadomość z „ł" albo „ą"
+ * Bez polskich znaków diakrytycznych: operator liczy wiadomość z „ł" albo „ą"
  * w alfabecie UCS-2, gdzie limit spada ze 160 znaków do 70 — ta sama treść
  * kosztowałaby wtedy trzy razy więcej.
  */

@@ -28,8 +28,9 @@ i samej wysyłki. Szczegóły w dokumencie weryfikacyjnym.
 
 **Co trzeba dobudować** (szacunek, nie plan):
 
-- wybór dostawcy: SMSAPI (polski, tani przy krajowych numerach) albo Twilio
-  (międzynarodowy, prostsze API, droższy);
+- dostawca: **Twilio** - ten sam, którego używa Casa Sol, ale z osobnymi
+  poświadczeniami (własne konto albo subkonto), żeby oba produkty pozostały
+  niezależne;
 - `sites.sms_phone` — dziś numer siedzi w `orders`, a wysyłką zajmuje się kod
   operujący na `sites`;
 - funkcja wysyłki obok `src/lib/email.ts`, z tą samą zasadą: awaria musi być
