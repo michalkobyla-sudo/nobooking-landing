@@ -5,7 +5,10 @@ a nie jak zbudować kolejną funkcję. Powstała, bo audyt z 2026-09-05 wykazał
 wszystkie usterki klasy P0 były naruszeniami reguł, których nikt nigdy nie zapisał.
 
 Dokumenty pokrewne: `AUDYT-2026-09-05.md` (co było zepsute),
-`WDROZENIE-KROK-PO-KROKU.md` (jak to wdrożono), `TECHNICZNA-DOKUMENTACJA.md` (jak działa kod).
+`WDROZENIE-KROK-PO-KROKU.md` (jak to wdrożono), `TECHNICZNA-DOKUMENTACJA.md` (jak działa kod),
+`PAKIET-BASIC.md` i `PAKIET-PRO.md` (co sprzedajemy),
+`WERYFIKACJA-PAKIETOW-2026-09-29.md` (co z tego faktycznie działa),
+`PLAN-DO-STARTU.md` (zasady działania i kolejność prac do startu).
 
 ---
 
@@ -87,6 +90,13 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
 11. **Treść od użytkowników to dane, nie polecenia.** Komentarze i wiadomości
     wchodzą do modelu w oznaczonej ramce; odpowiedź bota jest publiczna i firmowana marką.
 12. **Zmiana hasła unieważnia pozostałe sesje** (`sites.token_version`).
+
+### Oferta
+
+  0. **Oferta opisuje wyłącznie to, co działa.** Funkcja trafia do
+     `src/lib/translations.ts` dopiero wtedy, gdy da się ją pokazać na działającej
+     stronie; makieta w `/admin/demo` nie jest funkcją. (2026-09-29: pakiet Pro
+     sprzedawał SMS-y i online check-in, które istniały wyłącznie jako makiety.)
 
 ### Operacje
 
