@@ -23,11 +23,17 @@ export default async function GuestPortalPage({ params, searchParams }: Props) {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('config, slug')
+    .select('id, config, slug')
     .eq('slug', slug)
     .single()
 
-  if (!booking || !site) {
+  // Rezerwacja musi należeć do strony z adresu (niezmiennik 3). Bez tego
+  // sprawdzenia ten sam identyfikator otwierał się pod dowolnym slugiem:
+  // gość widziałby swoją rezerwację z nazwą, adresem i kontaktem cudzego
+  // apartamentu, a dane rezerwacji wyciekały poza najemcę, do którego należą.
+  const nalezyDoStrony = booking?.site_id === site?.id
+
+  if (!booking || !site || !nalezyDoStrony) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, sans-serif' }}>
         <div style={{ textAlign: 'center' }}>

@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+// Ta sama reguła co przy zakładaniu rezerwacji — dzień wyjazdu nie jest zajęty.
+// Druga kopia tej funkcji mogłaby się z nią rozjechać, a rozjazd oznaczałby
+// podwójną rezerwację albo termin zablokowany bez powodu.
+import { rozwinZakres } from '@/lib/bookingPricing'
 
 interface Params { params: Promise<{ slug: string }> }
-
-// Expand a check_in..check_out range into individual YYYY-MM-DD strings.
-// check_out day is NOT included (guest departs that morning).
-function expandRange(checkIn: string, checkOut: string): string[] {
-  const dates: string[] = []
-  const end = new Date(checkOut)
-  for (const d = new Date(checkIn); d < end; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().slice(0, 10))
-  }
-  return dates
-}
 
 // GET /api/sites/[slug]/availability
 // Returns { bookedDates: string[] } — all occupied YYYY-MM-DD strings.
@@ -48,7 +41,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const bookedDates = new Set<string>()
 
   for (const b of bookings ?? []) {
-    for (const d of expandRange(b.check_in as string, b.check_out as string)) {
+    for (const d of rozwinZakres(b.check_in as string, b.check_out as string)) {
       bookedDates.add(d)
     }
   }

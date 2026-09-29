@@ -50,6 +50,10 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
    chińskim albo emoji dawały pusty ciąg i zlewały się w jeden wiersz.
 3. **Żadna operacja na jednym najemcy nie dotyka danych innego.** Zapytania do
    `bookings`, `blocked_dates` i `reviews` zawsze filtrują po `site_id`.
+   Dotyczy to także stron pobierających wiersz po identyfikatorze: portal gościa
+   sprawdza, że `booking.site_id` zgadza się ze stroną ze slugu (2026-09-29 ten
+   sam identyfikator otwierał się pod dowolnym slugiem). Wyjątki, świadome
+   i globalne: crony, kopia zapasowa, anonimizacja RODO i webhook Stripe.
 
 ### Pieniądze
 
