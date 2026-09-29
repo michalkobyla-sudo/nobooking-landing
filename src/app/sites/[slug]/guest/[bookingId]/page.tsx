@@ -23,7 +23,7 @@ export default async function GuestPortalPage({ params, searchParams }: Props) {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, config, slug')
+    .select('id, config, slug, plan')
     .eq('slug', slug)
     .single()
 
@@ -94,6 +94,21 @@ export default async function GuestPortalPage({ params, searchParams }: Props) {
             </tbody>
           </table>
         </div>
+
+        {/* Check-in online — pakiet Pro. Bez tego wejścia formularz byłby
+            niewidoczny: gość nie ma skąd znać jego adresu. Po wyjeździe link
+            znika, bo formularz i tak odmówi zapisu. */}
+        {site.plan === 'pro' && booking.check_out >= new Date().toISOString().slice(0, 10) && (
+          <a
+            href={`/sites/${site.slug as string}/guest/${bookingId}/checkin`}
+            style={{ display: 'block', background: 'white', borderRadius: 16, border: `1px solid ${primary}33`, padding: '1.25rem 1.5rem', marginBottom: '1rem', textDecoration: 'none' }}
+          >
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: primary }}>Check-in online →</div>
+            <div style={{ fontSize: '0.82rem', color: '#6B7280', marginTop: '0.25rem' }}>
+              Podaj dane przed przyjazdem i skróć formalności na miejscu.
+            </div>
+          </a>
+        )}
 
         {/* Contact */}
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: '1.5rem', marginBottom: '1rem' }}>

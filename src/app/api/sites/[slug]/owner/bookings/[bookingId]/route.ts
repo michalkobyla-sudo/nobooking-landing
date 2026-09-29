@@ -23,7 +23,15 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
-  return NextResponse.json(booking)
+  // Check-in online (pakiet Pro). Doklejamy do rezerwacji, zamiast robić osobne
+  // zapytanie z panelu — właściciel i tak ogląda jedno i drugie naraz.
+  const { data: checkin } = await supabase
+    .from('checkin_forms')
+    .select('guests_data, arrival_time, notes, created_at')
+    .eq('booking_id', bookingId)
+    .maybeSingle()
+
+  return NextResponse.json({ ...booking, checkin: checkin ?? null })
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {

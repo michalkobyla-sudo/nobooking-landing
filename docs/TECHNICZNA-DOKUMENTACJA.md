@@ -603,6 +603,36 @@ Pułapka przy zmianach w tym kodzie: punktem odniesienia musi zostać config
 rundzie poprawek zmiana właściciela zrównuje się z punktem odniesienia, wygląda
 na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
 
+### Online check-in (pakiet Pro)
+
+`src/lib/checkin.ts` — walidacja bez bazy, `/api/sites/[slug]/guest/[bookingId]/checkin`
+— odczyt i zapis, `/sites/[slug]/guest/[bookingId]/checkin` — formularz.
+Tabela `checkin_forms` istniała w schemacie od początku, nieużywana.
+
+Gość podaje dane osób, godzinę przyjazdu i uwagi. Wejście prowadzi z portalu
+gościa i znika po wyjeździe.
+
+**Dostępem jest znajomość identyfikatora rezerwacji** — tak samo jak w portalu
+gościa. Stąd trzy sprawdzenia po stronie serwera, z których żadnego nie wolno
+pominąć:
+
+1. rezerwacja należy do strony z adresu (niezmiennik 3),
+2. strona ma plan Pro,
+3. termin nie minął, a rezerwacja nie jest anulowana.
+
+Formularz jest publiczny, więc wszystko, co przychodzi, jest niezaufane:
+liczba osób nie może przekroczyć liczby z rezerwacji (inaczej obchodziłaby
+limit pojemności pilnowany przy rezerwacji), długości są przycinane, znaki
+sterujące usuwane, godzina sprawdzana wzorcem.
+
+Gość może poprawiać wpis do wyjazdu — stąd `upsert` po `booking_id`.
+
+**Retencja RODO.** Numer dokumentu to dane wrażliwe, więc po pobycie nie służą
+już niczemu, a ich trzymanie jest samym ryzykiem. Cron `cleanup-pending-bookings`
+kasuje formularze rezerwacji zakończonych ponad `DNI_RETENCJI` (7) temu —
+niezależnie od tego, czy akurat są wiszące rezerwacje do anulowania. Zbieramy
+też jak najmniej pól: im mniej danych, tym mniej do skasowania.
+
 ### Powiadomienia SMS (pakiet Pro)
 
 `src/lib/sms.ts` — logika bez sieci i bez bazy (normalizacja numeru, treść,

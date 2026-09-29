@@ -45,26 +45,19 @@ i samej wysyłki. Szczegóły w dokumencie weryfikacyjnym.
 **Obietnica:** gość wypełnia formularz przed przyjazdem — dane dokumentu,
 godzina przylotu, numer lotu; właściciel dostaje komplet przed przyjazdem gościa.
 
-**Co jest w kodzie:** pole `orders.ob_checkin_fields` (tekst, lista dodatkowych
-pól, których życzy sobie właściciel), zbierane w onboardingu tylko dla Pro,
-pokazywane w panelu Michała. Makieta działającego formularza istnieje
-w wersji demonstracyjnej (`/admin/demo/zamowienia`).
+**Co działa:** gość otwiera formularz z portalu gościa, podaje dane osób,
+godzinę przyjazdu i uwagi; właściciel widzi komplet przy rezerwacji w panelu.
+Wpis można poprawiać do wyjazdu.
 
-**Czego brakuje:** formularza dla gościa, miejsca na jego odpowiedzi i
-powiadomienia dla właściciela.
+Dostępem jest znajomość identyfikatora rezerwacji, tak jak w portalu gościa,
+więc serwer sprawdza trzy rzeczy: przynależność rezerwacji do strony, plan Pro
+i to, czy termin jeszcze nie minął.
 
-**Co trzeba dobudować:**
+**Retencja:** dane znikają tydzień po wyjeździe (cron `cleanup-pending-bookings`).
+Numer dokumentu to dane wrażliwe — po pobycie ich trzymanie jest samym ryzykiem.
 
-- tabela **już istnieje**: `checkin_forms` (`booking_id`, `guests_data`, `arrival_time`, `notes`, RLS odcinający anonimowych) — jest na produkcji, pusta i nieużywana przez kod;
-- trasa `/sites/[slug]/guest/[bookingId]/checkin` — dostęp tym samym
-  identyfikatorem co portal gościa, z tym samym sprawdzeniem przynależności
-  do strony (niezmiennik 3);
-- e-mail do gościa X dni przed przyjazdem z linkiem do formularza (cron,
-  wzorem `review-requests`);
-- prezentacja odpowiedzi w panelu właściciela przy rezerwacji;
-- **uwaga RODO**: dane dokumentu tożsamości to dane wrażliwe. Wymagają
-  retencji (kasowanie po pobycie) i objęcia istniejącą ścieżką anonimizacji
-  `DELETE /api/admin/guests/[email]`.
+Pole `orders.ob_checkin_fields` z onboardingu pozostaje opisem życzeń
+właściciela co do dodatkowych pól; formularz ma dziś stały zestaw.
 
 ## 3. Kody rabatowe
 
