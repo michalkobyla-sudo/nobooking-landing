@@ -123,7 +123,7 @@ export const TR: Record<Lang, {
     featuresTitle: 'Co dostajesz?',
     features: [
       { icon: '📅', title: 'Kalendarz dostępności', desc: 'Goście widzą wolne terminy w czasie rzeczywistym' },
-      { icon: '💳', title: 'Płatności Stripe', desc: 'Karta, BLIK, Przelewy24 — pieniądze prosto do Ciebie' },
+      { icon: '💳', title: 'Płatności Stripe', desc: 'Karta, BLIK, Przelewy24 i inne — pieniądze prosto do Ciebie' },
       { icon: '🖥️', title: 'Panel admina', desc: 'Rezerwacje, goście, cennik, opinie — wszystko w jednym miejscu' },
       { icon: '👤', title: 'Portal gościa', desc: 'Gość sprawdza rezerwację, pobiera fakturę, pisze do Ciebie' },
       { icon: '⭐', title: 'System opinii', desc: 'Email → formularz → moderacja → karuzela na stronie głównej' },
@@ -162,7 +162,7 @@ export const TR: Record<Lang, {
     basicFeatures: [
       'Serwer + domena + mailing na 2 lata',
       'Kalendarz i rezerwacje online',
-      'Płatności Stripe (karta, BLIK, P24)',
+      'Płatności Stripe (karta, BLIK, Przelewy24 i inne)',
       'Panel admina',
       'Portal gościa',
       'System opinii',
@@ -222,7 +222,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'Jakie są opcje płatności dla moich gości?',
-        a: 'Karta kredytowa/debetowa, BLIK, Przelewy24 — wszystko obsługuje Stripe. Pieniądze trafiają na Twoje konto Stripe zazwyczaj w ciągu 2 dni roboczych.',
+        a: 'Karta kredytowa/debetowa, BLIK, Przelewy24 i inne metody dostępne w Twoim kraju — o tym, co zobaczy gość, decydują ustawienia Twojego konta Stripe. Pieniądze trafiają na nie zazwyczaj w ciągu 2 dni roboczych.',
       },
     ],
     footerPrivacy: 'Polityka prywatności',
@@ -267,7 +267,7 @@ export const TR: Record<Lang, {
     featuresTitle: 'What do you get?',
     features: [
       { icon: '📅', title: 'Availability calendar', desc: 'Guests see free dates in real time' },
-      { icon: '💳', title: 'Stripe payments', desc: 'Card, BLIK, Przelewy24 — money straight to you' },
+      { icon: '💳', title: 'Stripe payments', desc: 'Card, BLIK, Przelewy24 and more — money straight to you' },
       { icon: '🖥️', title: 'Admin panel', desc: 'Bookings, guests, pricing, reviews — all in one place' },
       { icon: '👤', title: 'Guest portal', desc: 'Guest checks booking, downloads invoice, messages you' },
       { icon: '⭐', title: 'Review system', desc: 'Email → form → moderation → carousel on homepage' },
@@ -306,7 +306,7 @@ export const TR: Record<Lang, {
     basicFeatures: [
       'Server + domain + mailing for 2 years',
       'Online calendar and reservations',
-      'Stripe payments (card, BLIK, P24)',
+      'Stripe payments (card, BLIK, Przelewy24 and more)',
       'Admin panel',
       'Guest portal',
       'Review system',
@@ -366,7 +366,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'What payment options do my guests have?',
-        a: 'Credit/debit card, BLIK, Przelewy24 — all handled by Stripe. Funds reach your Stripe account typically within 2 business days.',
+        a: 'Credit/debit card, BLIK, Przelewy24 and other methods available in your country — what the guest sees depends on your Stripe account settings. Funds reach your account typically within 2 business days.',
       },
     ],
     footerPrivacy: 'Privacy policy',

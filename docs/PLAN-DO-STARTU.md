@@ -106,11 +106,29 @@ CI uruchamia się na pull requestach; wniosek do Meta złożony.
 
 ---
 
-## Etap 1 — Zamknięcie luk w ofercie
+## Etap 1 — Zamknięcie luk w ofercie ✅ KOD GOTOWY 2026-09-29
+
+> **Stan:** wszystkie luki wypełnione po stronie kodu. Decyzja z 1a: budujemy.
+> Wdrożenie blokują trzy nieuruchomione migracje (lista na końcu etapu).
+>
+> | Luka | Stan |
+> |---|---|
+> | SMS (1b) | zbudowane, Twilio; czeka na osobne poświadczenia i migrację |
+> | Online check-in (1c) | zbudowane i sprawdzone na żywym serwerze |
+> | Kody rabatowe (1d) | zbudowane; ścieżka z sesją właściciela niesprawdzona |
+> | Opinie (1e) | zbudowane; zapis czeka na indeks z migracji |
+> | Dashboard analityczny | **był makietą** — zbudowany od zera, sprawdzony na danych |
+> | Maile: anulowanie, przed przyjazdem (1f) | zbudowane |
+> | Treść oferty | „karta, BLIK, P24" → „…i inne", bo metody zależą od konta właściciela (Z1) |
+>
+> **Migracje do uruchomienia przed wdrożeniem** (niezmiennik 15):
+> `2026-09-29-sms.sql`, `2026-09-29-powiadomienia-gosci.sql`,
+> `2026-09-29-atrybucja-komentarze.sql`.
+
 
 Najważniejszy etap. Dopóki trwa, **nie sprzedajemy pakietu Pro.**
 
-### 1a. Decyzja: budować czy zdjąć z oferty
+### 1a. Decyzja: budować czy zdjąć z oferty ✅ ZDECYDOWANE — budujemy
 
 Dotyczy SMS-ów i online check-inu. Dwie drogi:
 
@@ -177,6 +195,17 @@ Dwie uczciwe drogi:
 
 Rekomendacja: pełny obieg, ale **po** SMS-ach i check-inie. Opinie nie są
 argumentem sprzedażowym Pro, a ich brak nikogo nie wprowadza w błąd tak mocno.
+
+### 1g. Dashboard analityczny *(dopisane 2026-09-29)*
+
+Nie było go w pierwszej wersji planu, bo raport weryfikacyjny zaliczył analitykę
+do działających z zastrzeżeniem. Przy budowie okazało się, że zakładka była
+rozmazaną makietą z liczbami wpisanymi na sztywno, pokazywaną **także planowi
+Pro**. Zbudowane: obłożenie miesiąc po miesiącu, przychód roczny i miesięczny,
+średnia długość pobytu, mediana wyprzedzenia rezerwacji.
+
+Świadomie **bez** odwiedzin strony i konwersji, które obiecywała makieta —
+wymagałyby zbierania ruchu, czyli osobnego podsystemu i zgód cookie.
 
 ### 1f. Drobne rozjazdy
 
