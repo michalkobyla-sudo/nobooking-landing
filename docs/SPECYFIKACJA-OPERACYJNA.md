@@ -100,7 +100,14 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
     właścicieli spoza Polski (2026-09-05) i przy odnowieniach po zmianie konta
     platformy (2026-09-29: nowe konto nie ma `p24`). Lista metod zależy też od
     waluty, więc nie da się jej ustalić w kodzie.
-17. **Klient nie dostaje danych logowania, zanim jego strona nie przejdzie
+17. **Strona renderuje się z `sites.config`, więc każda regeneracja musi tam
+    trafić.** `orders.generated_config` to kopia robocza, której nic nie czyta.
+    Poprawki i ręczne generowanie z panelu admina zapisywały wyłącznie ją —
+    klient dostawał mail „strona zaktualizowana", a strona zostawała bez zmian.
+18. **Slug strony bierze się z `orders.site_slug`, nigdy z nazwy apartamentu.**
+    Przy kolizji nazw drugi klient dostaje `nazwa-2`; `toSlug(apartment_name)`
+    wskazałby wtedy stronę pierwszego i nadpisał ją cudzą treścią.
+19. **Klient nie dostaje danych logowania, zanim jego strona nie przejdzie
     sprawdzenia.** Provisioning weryfikuje własną pracę: config (opis, zdjęcia,
     cennik, pojemność) i to, czy strona się otwiera. Usterka blokująca wstrzymuje
     maile i zostawia w `orders.notes` znacznik `[PROVISION-CHECK]`, po którym

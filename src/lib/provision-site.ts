@@ -216,3 +216,45 @@ export async function provisionSite(
     tempPassword: authError ? '(konto już istnieje — hasło bez zmian)' : tempPassword,
   }
 }
+
+/**
+ * Slug strony należącej do zamówienia.
+ *
+ * Liczenie go z nazwy apartamentu jest **błędem**: przy kolizji nazw
+ * `insertSiteWithFreeSlug` nadaje drugiemu klientowi `nazwa-2`, a `toSlug`
+ * zwróciłby `nazwa` — czyli stronę pierwszego klienta. Rozstrzyga zapisany
+ * `site_slug`; nazwa służy wyłącznie jako wartość awaryjna, zanim strona
+ * w ogóle powstanie.
+ */
+export function slugZamowienia(order: Pick<Order, 'site_slug' | 'apartment_name'>): string {
+  const zapisany = order.site_slug?.trim()
+  return zapisany && zapisany.length > 0 ? zapisany : toSlug(order.apartment_name)
+}
+
+/**
+ * Zapis nowej konfiguracji na stronie klienta.
+ *
+ * Strona renderuje się z `sites.config` (`src/app/sites/[slug]/page.tsx`),
+ * a nie z `orders.generated_config`. Bez tego zapisu regeneracja kończyła się
+ * mailem „strona zaktualizowana", podczas gdy strona zostawała bez zmian —
+ * klient tracił rundę poprawek, a rachunek za Claude i tak rósł.
+ *
+ * Zwraca `false`, gdy nie ma takiej strony; wywołujący ma to zalogować.
+ */
+export async function zapiszConfigStrony(
+  supabase: SupabaseClient,
+  slug: string,
+  configJson: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('sites')
+    .update({ config: JSON.parse(configJson) as Record<string, unknown> })
+    .eq('slug', slug)
+    .select('id')
+
+  if (error) {
+    console.error('[provision-site] nie udało się zapisać config strony:', error.message)
+    return false
+  }
+  return Boolean(data && data.length > 0)
+}

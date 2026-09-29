@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, requireAdmin } from '@/lib/supabase'
-import { generateSiteConfig, toSlug } from '@/lib/generate-site'
+import { generateSiteConfig } from '@/lib/generate-site'
+import { slugZamowienia, zapiszConfigStrony } from '@/lib/provision-site'
 import { sendSiteReadyEmail } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
@@ -39,16 +40,26 @@ export async function POST(request: NextRequest, { params }: Params) {
     )
   }
 
-  const slug = toSlug(order.apartment_name)
+  // Slug z zamówienia, nie z nazwy apartamentu — przy kolizji nazw `toSlug`
+  // wskazuje stronę pierwszego klienta o tej samej nazwie apartamentu.
+  const slug = slugZamowienia(order as Order)
+  const configJson = JSON.stringify(config)
 
   const { error: updateError } = await supabase
     .from('orders')
     .update({
       site_slug: slug,
-      generated_config: JSON.stringify(config),
+      generated_config: configJson,
       site_generated_at: new Date().toISOString(),
     })
     .eq('id', id)
+
+  // Strona renderuje się z `sites.config`, nie z `orders.generated_config`.
+  // Przy pierwszym generowaniu strony jeszcze nie ma i to jest w porządku —
+  // wiersz w `sites` tworzy provisioning.
+  if (!updateError) {
+    await zapiszConfigStrony(supabase, slug, configJson)
+  }
 
   if (updateError) {
     console.error('[generate-site] db error:', updateError)

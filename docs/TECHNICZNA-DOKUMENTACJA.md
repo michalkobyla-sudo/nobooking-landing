@@ -568,6 +568,24 @@ dokumencie: `SPECYFIKACJA-OPERACYJNA.md`.
 Zamówienie jest „zaklepywane" kolumną `orders.provisioning_started_at`, więc
 dwa nakładające się uruchomienia crona nie utworzą dwóch kont.
 
+### Poprawki i regeneracja strony
+
+Konfiguracja żyje w **dwóch** miejscach i łatwo je pomylić:
+
+| Gdzie | Rola |
+|---|---|
+| `sites.config` | to, co widzi gość — z tego renderuje się `/sites/[slug]` |
+| `orders.generated_config` | kopia robocza przy zamówieniu; **nic jej nie czyta** |
+
+Regeneracja (poprawki klienta i przycisk w panelu admina) musi zapisać do obu —
+służy do tego `zapiszConfigStrony` w `src/lib/provision-site.ts`. Do 2026-09-29
+zapisywała tylko do `orders`, więc klient dostawał mail „strona zaktualizowana",
+tracił rundę poprawek i płacił za wywołanie Claude, a strona zostawała bez zmian.
+
+Slug wyznacza `slugZamowienia` — z `orders.site_slug`, nigdy z nazwy apartamentu.
+Przy kolizji nazw `insertSiteWithFreeSlug` nadaje drugiemu klientowi `nazwa-2`,
+a `toSlug(apartment_name)` wskazałby stronę pierwszego.
+
 ### Atrybucja — skąd przyszedł klient
 
 `src/lib/attribution.ts` (czyste), `src/components/ZapiszZrodlo.tsx` (zapis),

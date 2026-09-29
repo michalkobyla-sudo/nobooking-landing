@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { generateSiteConfig, toSlug } from '@/lib/generate-site'
+import { generateSiteConfig } from '@/lib/generate-site'
+import { slugZamowienia, zapiszConfigStrony } from '@/lib/provision-site'
 import { sendSiteReadyEmail, sendRevisionCompleteEmail } from '@/lib/email'
 import type { Order } from '@/lib/types'
 
@@ -89,16 +90,27 @@ export async function POST(request: NextRequest, { params }: Params) {
     try {
       const orderWithNotes = { ...order, revision_notes: notes } as Order
       const config = await generateSiteConfig(orderWithNotes)
-      const slug = toSlug(order.apartment_name)
+      const configJson = JSON.stringify(config)
+
+      // Slug bierzemy z zamówienia, nie z nazwy apartamentu: przy kolizji nazw
+      // drugi klient dostaje `nazwa-2`, a `toSlug` wskazałby stronę pierwszego.
+      const slug = slugZamowienia(orderWithNotes)
 
       await supabase
         .from('orders')
         .update({
-          site_slug: slug,
-          generated_config: JSON.stringify(config),
+          generated_config: configJson,
           site_generated_at: new Date().toISOString(),
         })
         .eq('id', order.id)
+
+      // Strona renderuje się z `sites.config`. Bez tego zapisu klient dostawał
+      // mail „strona zaktualizowana", a strona zostawała bez zmian — runda
+      // poprawek przepadała, rachunek za Claude i tak rósł.
+      const zapisano = await zapiszConfigStrony(supabase, slug, configJson)
+      if (!zapisano) {
+        console.error(`[revisions] brak strony o slugu "${slug}" — poprawka nie trafiła na stronę`)
+      }
 
       const revisionsLeft = MAX_REVISIONS - newCount
 
