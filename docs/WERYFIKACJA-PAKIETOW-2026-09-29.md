@@ -36,7 +36,7 @@ Klient, który kupi Pro, poda numer telefonu w onboardingu i **nigdy nie dostani
 | Sprawdzenie | Wynik |
 |---|---|
 | Trasa formularza check-in dla gościa | brak |
-| Tabela lub kolumny na odpowiedzi gościa | brak |
+| Tabela na odpowiedzi gościa | **jest** — `checkin_forms` istnieje na produkcji, pusta, nieużywana przez kod |
 | E-mail z linkiem do check-inu | brak |
 
 Istnieje wyłącznie pole `orders.ob_checkin_fields`, w którym właściciel opisuje,

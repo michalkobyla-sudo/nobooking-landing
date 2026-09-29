@@ -141,7 +141,7 @@ zdrowia.
 
 ### 1c. Online check-in *(jeśli budujemy)*
 
-- tabela `guest_checkins` albo kolumny w `bookings`;
+- tabela `checkin_forms` **już istnieje** na produkcji (pusta, nieużywana) — zostaje ją podpiąć;
 - trasa `/sites/[slug]/guest/[bookingId]/checkin` — ten sam identyfikator co
   portal gościa, z tym samym sprawdzeniem przynależności do strony (Z6);
 - e-mail do gościa X dni przed przyjazdem (cron, wzorem `review-requests`);
@@ -157,9 +157,11 @@ odpowiedzi, dane znikają po zadanym czasie.
 Funkcja jest w 80% gotowa; brakuje strony zapisu.
 
 - obsługa przycisku „Dodaj kod" (dziś bez zdarzenia) i trasa zapisu;
-- **inkrementacja `uses_count`** przy potwierdzeniu rezerwacji — bez tego
-  `max_uses` jest ozdobą; zwiększenie atomowe, nie odczyt-potem-zapis (Z5);
-- lista i wyłączanie kodów w panelu.
+- lista i wyłączanie kodów w panelu;
+- odsłonięcie błędu inkrementacji licznika, który dziś przepada w pustym `catch`.
+
+Licznik użyć sam w sobie działa — zwiększa go funkcja `increment_discount_usage`
+wywoływana z webhooka.
 
 **Definicja ukończenia:** kod utworzony w panelu, użyty przy rezerwacji, licznik
 wzrósł, a kod z limitem jednego użycia przestaje działać za drugim razem.

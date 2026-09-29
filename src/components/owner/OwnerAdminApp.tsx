@@ -695,6 +695,137 @@ function GuestsView({ bookings }: { bookings: Booking[] }) {
   )
 }
 
+// ─── Kody rabatowe ────────────────────────────────────────────────
+interface KodRabatowy {
+  id: string
+  code: string
+  discount_pct: number
+  max_uses: number | null
+  uses_count: number
+  valid_until: string | null
+  active: boolean
+}
+
+const BLEDY_KODU: Record<string, string> = {
+  zly_kod: 'Kod może mieć 3–24 znaki: litery bez ogonków, cyfry i myślnik.',
+  zly_procent: 'Rabat musi być liczbą całkowitą od 1 do 100.',
+  zly_limit: 'Limit użyć musi być liczbą całkowitą większą od zera. Zostaw puste, żeby nie ograniczać.',
+  zla_data: 'Data ważności nie może być z przeszłości.',
+  kod_juz_istnieje: 'Taki kod już istnieje na tej stronie.',
+  pro_required: 'Kody rabatowe są dostępne w planie PRO.',
+}
+
+function KodyRabatowe({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) {
+  const [kody, setKody]       = useState<KodRabatowy[]>([])
+  const [kod, setKod]         = useState('')
+  const [procent, setProcent] = useState('')
+  const [limit, setLimit]     = useState('')
+  const [doKiedy, setDoKiedy] = useState('')
+  const [zapisuje, setZapisuje] = useState(false)
+  const [blad, setBlad]       = useState<string | null>(null)
+
+  const wczytaj = useCallback(async () => {
+    if (plan !== 'pro') return
+    try {
+      const res = await fetch(`/api/sites/${slug}/owner/discounts`)
+      if (res.ok) setKody(await res.json() as KodRabatowy[])
+    } catch { /* lista zostaje pusta — formularz i tak działa */ }
+  }, [slug, plan])
+
+  useEffect(() => { void wczytaj() }, [wczytaj])
+
+  async function dodaj(e: React.FormEvent) {
+    e.preventDefault()
+    setBlad(null)
+    setZapisuje(true)
+    try {
+      const res = await fetch(`/api/sites/${slug}/owner/discounts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: kod,
+          discount_pct: Number(procent),
+          max_uses: limit === '' ? null : Number(limit),
+          valid_until: doKiedy === '' ? null : doKiedy,
+        }),
+      })
+      const dane = await res.json() as KodRabatowy & { error?: string }
+      if (!res.ok) {
+        setBlad(BLEDY_KODU[dane.error ?? ''] ?? 'Nie udało się zapisać kodu.')
+        return
+      }
+      setKody(k => [dane, ...k])
+      setKod(''); setProcent(''); setLimit(''); setDoKiedy('')
+    } catch {
+      setBlad('Błąd połączenia. Spróbuj ponownie.')
+    } finally {
+      setZapisuje(false)
+    }
+  }
+
+  async function przelacz(id: string, active: boolean) {
+    const res = await fetch(`/api/sites/${slug}/owner/discounts`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, active }),
+    })
+    if (res.ok) setKody(k => k.map(x => (x.id === id ? { ...x, active } : x)))
+  }
+
+  const pole = { border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none' } as const
+
+  return (
+    <Card style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ filter: plan === 'pro' ? 'none' : 'blur(3px)', pointerEvents: plan === 'pro' ? 'auto' : 'none' }}>
+        <SectionTitle>Kody rabatowe</SectionTitle>
+        <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginTop: 0 }}>
+          Rabat obejmuje całość razem ze sprzątaniem. Limit użyć i data ważności są opcjonalne.
+        </p>
+
+        <form onSubmit={dodaj} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <input value={kod} onChange={e => setKod(e.target.value)} placeholder="Kod (np. LATO10)" style={{ ...pole, width: 150 }} />
+          <input value={procent} onChange={e => setProcent(e.target.value)} placeholder="%" inputMode="numeric" style={{ ...pole, width: 70 }} />
+          <input value={limit} onChange={e => setLimit(e.target.value)} placeholder="Limit użyć" inputMode="numeric" style={{ ...pole, width: 110 }} />
+          <input value={doKiedy} onChange={e => setDoKiedy(e.target.value)} type="date" style={{ ...pole, width: 150 }} />
+          <button type="submit" disabled={zapisuje} style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.45rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: zapisuje ? 0.7 : 1 }}>
+            {zapisuje ? 'Zapisywanie…' : 'Dodaj kod'}
+          </button>
+        </form>
+
+        {blad && <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', color: '#B91C1C' }}>{blad}</div>}
+
+        {kody.length > 0 && (
+          <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {kody.map(k => (
+              <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.7rem', border: `1px solid ${CARD_BD}`, borderRadius: 8, opacity: k.active ? 1 : 0.55 }}>
+                <code style={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.02em' }}>{k.code}</code>
+                <span style={{ fontSize: '0.82rem', color: '#374151' }}>−{k.discount_pct}%</span>
+                <span style={{ fontSize: '0.78rem', color: '#9CA3AF' }}>
+                  użyć: {k.uses_count}{k.max_uses !== null ? ` / ${k.max_uses}` : ''}
+                  {k.valid_until ? ` · do ${k.valid_until}` : ''}
+                </span>
+                <button onClick={() => void przelacz(k.id, !k.active)} style={{ marginLeft: 'auto', background: 'none', border: `1px solid ${CARD_BD}`, borderRadius: 6, padding: '0.25rem 0.6rem', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#374151' }}>
+                  {k.active ? 'Wyłącz' : 'Włącz'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {plan !== 'pro' && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(2px)' }}>
+          <ProBadge />
+          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem', textAlign: 'center' }}>Kody rabatowe dostępne w planie PRO</div>
+          <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.75rem', background: GOLD, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
+            Przejdź na PRO →
+          </a>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // ─── Cennik ───────────────────────────────────────────────────────
 function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
   settings: SiteSettings | null
@@ -842,27 +973,7 @@ function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
         </Card>
       </div>
 
-      {/* Discount codes PRO locked */}
-      <Card style={{ position: 'relative', overflow: 'hidden' }}>
-        <div style={{ filter: plan === 'pro' ? 'none' : 'blur(3px)', pointerEvents: plan === 'pro' ? 'auto' : 'none' }}>
-          <SectionTitle>Kody rabatowe</SectionTitle>
-          <p style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>Twórz kody rabatowe dla stałych gości.</p>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <input placeholder="Kod (np. LATO10)" style={{ border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', width: 160 }} />
-            <input placeholder="%" style={{ border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', width: 80 }} />
-            <button style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.45rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Dodaj kod</button>
-          </div>
-        </div>
-        {plan !== 'pro' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(2px)' }}>
-            <ProBadge />
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem', textAlign: 'center' }}>Kody rabatowe dostępne w planie PRO</div>
-            <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.75rem', background: GOLD, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
-              Przejdź na PRO →
-            </a>
-          </div>
-        )}
-      </Card>
+      <KodyRabatowe slug={slug} plan={plan} />
     </div>
   )
 }

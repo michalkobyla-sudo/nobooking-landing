@@ -54,7 +54,7 @@ powiadomienia dla właściciela.
 
 **Co trzeba dobudować:**
 
-- tabela `guest_checkins` albo kolumny w `bookings` na odpowiedzi gościa;
+- tabela **już istnieje**: `checkin_forms` (`booking_id`, `guests_data`, `arrival_time`, `notes`, RLS odcinający anonimowych) — jest na produkcji, pusta i nieużywana przez kod;
 - trasa `/sites/[slug]/guest/[bookingId]/checkin` — dostęp tym samym
   identyfikatorem co portal gościa, z tym samym sprawdzeniem przynależności
   do strony (niezmiennik 3);

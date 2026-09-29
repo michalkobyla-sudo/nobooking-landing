@@ -281,14 +281,23 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', bookingId)
 
-      // Increment discount code usage if applicable
+      // Zliczenie użycia kodu rabatowego.
+      //
+      // `supabase.rpc` przy błędzie NIE rzuca wyjątkiem — zwraca `{ error }`.
+      // Poprzednie `try/catch` z pustym blokiem nie miało więc czego złapać:
+      // nieudana inkrementacja przepadała bez śladu, a `max_uses` cicho
+      // przestawał obowiązywać. Niezmiennik 13: awaria musi być widoczna.
       if (booking.discount_code) {
-        try {
-          await supabase.rpc('increment_discount_usage', {
-            p_site_id: booking.site_id,
-            p_code: booking.discount_code,
-          })
-        } catch { /* ignore if RPC not set up */ }
+        const { error: bladLicznika } = await supabase.rpc('increment_discount_usage', {
+          p_site_id: booking.site_id,
+          p_code: booking.discount_code,
+        })
+        if (bladLicznika) {
+          console.error(
+            `[webhook] nie zliczono użycia kodu "${String(booking.discount_code)}" ` +
+            `dla rezerwacji ${bookingId}: ${bladLicznika.message}`
+          )
+        }
       }
 
       // Send confirmation emails (non-fatal)
