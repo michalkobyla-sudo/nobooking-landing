@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
+import { sendBookingCancelled, type BookingEmailData } from '@/lib/email'
 
 interface Params {
   params: Promise<{ slug: string; bookingId: string }>
@@ -55,6 +56,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   const supabase = createServiceClient()
+
+  // Stan sprzed zmiany rozstrzyga, czy mail o anulowaniu ma w ogóle wyjść:
+  // bez tego ponowny zapis tego samego statusu wysyłałby go drugi raz.
+  const { data: przed } = await supabase
+    .from('bookings')
+    .select('status')
+    .eq('id', bookingId)
+    .eq('site_id', site.id)
+    .single()
+
   const { data: booking, error } = await supabase
     .from('bookings')
     .update(updates)
@@ -65,6 +76,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   if (error || !booking) {
     return NextResponse.json({ error: error?.message ?? 'update_failed' }, { status: 500 })
+  }
+
+  if (body.status === 'cancelled' && przed?.status !== 'cancelled') {
+    try {
+      await sendBookingCancelled(booking as unknown as BookingEmailData, body.notes ?? null)
+    } catch (err) {
+      // Nie wywracamy anulowania przez nieudany mail, ale awaria musi być
+      // widoczna (niezmiennik 13).
+      console.error(`[owner/bookings] mail o anulowaniu ${bookingId} nie wyszedł:`, err)
+    }
   }
 
   return NextResponse.json(booking)

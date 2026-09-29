@@ -1031,43 +1031,138 @@ function OpinieView({ reviews, slug, onToggle }: { reviews: Review[]; slug: stri
 }
 
 // ─── Analityka (PRO locked) ───────────────────────────────────────
-function AnalitykaView() {
-  const isMobile = useIsMobile()
+interface DaneAnalityki {
+  miesiace: Array<{ miesiac: string; oblozenie: number; przychod: number; rezerwacje: number }>
+  przychodRok: number
+  waluta: string
+  sredniPobyt: number
+  medianaWyprzedzenia: number
+  rezerwacjeRok: number
+}
 
-  return (
-    <div style={{ position: 'relative' }}>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Analityka</h1>
-      <div style={{ filter: 'blur(6px)', pointerEvents: 'none', userSelect: 'none' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-          {['Odwiedziny strony', 'Konwersja', 'Przychód YTD', 'Śr. długość pobytu'].map((l, i) => (
-            <Card key={l}>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827' }}>{['1 248', '3.4%', '12 400 €', '6.8 nocy'][i]}</div>
-              <div style={{ fontSize: '0.76rem', color: '#9CA3AF' }}>{l}</div>
-            </Card>
-          ))}
-        </div>
-        <Card>
-          <SectionTitle>Obłożenie miesięczne (%)</SectionTitle>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', height: 100 }}>
-            {[40, 55, 60, 80, 95, 100, 98, 70, 45, 30, 35, 50].map((h, i) => (
-              <div key={i} style={{ flex: 1, background: PRIMARY, height: `${h}%`, borderRadius: '3px 3px 0 0', opacity: 0.8 }} />
-            ))}
-          </div>
-        </Card>
-      </div>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 16, padding: '1.75rem 2rem', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxWidth: 340, width: '90%' }}>
+const NAZWY_MIESIECY = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru']
+
+function etykietaMiesiaca(m: string): string {
+  const [, mies] = m.split('-')
+  return NAZWY_MIESIECY[Number(mies) - 1] ?? m
+}
+
+function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) {
+  const isMobile = useIsMobile()
+  const [dane, setDane] = useState<DaneAnalityki | null>(null)
+  const [blad, setBlad] = useState(false)
+
+  useEffect(() => {
+    if (plan !== 'pro') return
+    void (async () => {
+      try {
+        const res = await fetch(`/api/sites/${slug}/owner/analytics`)
+        if (!res.ok) { setBlad(true); return }
+        setDane(await res.json() as DaneAnalityki)
+      } catch { setBlad(true) }
+    })()
+  }, [slug, plan])
+
+  if (plan !== 'pro') {
+    return (
+      <div>
+        <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Analityka</h1>
+        <Card style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
           <ProBadge />
           <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', marginTop: '0.75rem', marginBottom: '0.5rem' }}>Analityka dostępna w planie PRO</h3>
-          <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '1.25rem' }}>
-            Śledź obłożenie, przychody, źródła ruchu i konwersję. Raporty miesięczne i roczne.
+          <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '1.25rem', maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
+            Obłożenie miesiąc po miesiącu, przychód roczny, średnia długość pobytu i to, z jakim wyprzedzeniem rezerwują goście.
           </p>
-          <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: GOLD, color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
+          <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: GOLD, color: 'white', borderRadius: 10, padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 800, fontFamily: 'inherit', textDecoration: 'none' }}>
             Przejdź na PRO →
           </a>
-        </div>
+        </Card>
       </div>
+    )
+  }
+
+  if (blad) {
+    return <div style={{ fontSize: '0.9rem', color: '#B91C1C' }}>Nie udało się wczytać analityki.</div>
+  }
+  if (!dane) {
+    return <div style={{ fontSize: '0.9rem', color: '#9CA3AF' }}>Liczenie…</div>
+  }
+
+  const maks = Math.max(1, ...dane.miesiace.map(m => m.oblozenie))
+  const brakDanych = dane.rezerwacjeRok === 0 && dane.miesiace.every(m => m.rezerwacje === 0)
+
+  const kafelki: Array<[string, string]> = [
+    [`${dane.przychodRok.toLocaleString('pl-PL')} ${dane.waluta}`, 'Przychód w tym roku'],
+    [String(dane.rezerwacjeRok), 'Rezerwacje w tym roku'],
+    [dane.sredniPobyt > 0 ? `${dane.sredniPobyt} nocy` : '—', 'Średni pobyt'],
+    [dane.medianaWyprzedzenia > 0 ? `${dane.medianaWyprzedzenia} dni` : '—', 'Rezerwują z wyprzedzeniem'],
+  ]
+
+  return (
+    <div>
+      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Analityka</h1>
+
+      {brakDanych && (
+        <Card style={{ marginBottom: '1.5rem' }}>
+          <p style={{ margin: 0, fontSize: '0.88rem', color: '#6B7280', lineHeight: 1.6 }}>
+            Nie ma jeszcze potwierdzonych rezerwacji, więc nie ma czego liczyć.
+            Liczby pojawią się same, gdy zaczną spływać.
+          </p>
+        </Card>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        {kafelki.map(([wartosc, etykieta]) => (
+          <Card key={etykieta}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827' }}>{wartosc}</div>
+            <div style={{ fontSize: '0.76rem', color: '#9CA3AF', marginTop: '0.15rem' }}>{etykieta}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Card style={{ marginBottom: '1.5rem' }}>
+        <SectionTitle>Obłożenie miesiąc po miesiącu</SectionTitle>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', height: 120, marginTop: '0.5rem' }}>
+          {dane.miesiace.map(m => (
+            <div key={m.miesiac} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', height: '100%', justifyContent: 'flex-end' }}>
+              <div style={{ fontSize: '0.68rem', color: '#6B7280', fontVariantNumeric: 'tabular-nums' }}>
+                {m.oblozenie > 0 ? `${m.oblozenie}%` : ''}
+              </div>
+              <div
+                title={`${m.miesiac}: ${m.oblozenie}% · ${m.przychod.toLocaleString('pl-PL')} ${dane.waluta} · ${m.rezerwacje} rez.`}
+                style={{ width: '100%', background: PRIMARY, height: `${Math.max(2, (m.oblozenie / maks) * 100)}%`, borderRadius: '3px 3px 0 0', opacity: m.oblozenie > 0 ? 0.85 : 0.15 }}
+              />
+              <div style={{ fontSize: '0.68rem', color: '#9CA3AF' }}>{etykietaMiesiaca(m.miesiac)}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle>Przychód miesięczny</SectionTitle>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.5rem' }}>
+          {dane.miesiace.filter(m => m.przychod > 0).length === 0 ? (
+            <div style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>Brak przychodu w tym okresie.</div>
+          ) : dane.miesiace.filter(m => m.przychod > 0).map(m => (
+            <div key={m.miesiac} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
+              <span style={{ width: 70, color: '#6B7280' }}>{etykietaMiesiaca(m.miesiac)} {m.miesiac.slice(2, 4)}</span>
+              <span style={{ fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>
+                {m.przychod.toLocaleString('pl-PL')} {dane.waluta}
+              </span>
+              <span style={{ marginLeft: 'auto', color: '#9CA3AF', fontSize: '0.78rem' }}>
+                {m.rezerwacje} {m.rezerwacje === 1 ? 'rezerwacja' : 'rezerwacje'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '1rem', lineHeight: 1.6 }}>
+        Liczone z rezerwacji potwierdzonych i zakończonych. Pobyt na przełomie miesięcy dzieli się
+        proporcjonalnie na noce. Wyprzedzenie podajemy medianą — jedna rezerwacja zrobiona rok wcześniej
+        przesunęłaby średnią tak, że przestałaby cokolwiek znaczyć.
+      </p>
     </div>
   )
 }
@@ -1709,7 +1804,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
               />
             )}
             {tab === 'opinie'     && <OpinieView reviews={reviews} slug={slug} onToggle={handleReviewToggle} />}
-            {tab === 'analityka'  && <AnalitykaView />}
+            {tab === 'analityka'  && <AnalitykaView slug={slug} plan={plan} />}
             {tab === 'ustawienia'  && <UstawieniaView settings={settings} slug={slug} onSaved={handleSettingsSaved} />}
             {tab === 'subskrypcja' && <SubskrypcjaView slug={slug} />}
           </div>

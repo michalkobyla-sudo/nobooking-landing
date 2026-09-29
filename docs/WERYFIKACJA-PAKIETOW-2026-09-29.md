@@ -9,8 +9,11 @@ możliwe — wywołanie na produkcji (`nobooking.eu`, strona `apart-sunny`).
 Brak kodu traktowany jest jako brak funkcji, niezależnie od tego, jak wygląda
 wersja demonstracyjna.
 
-**Wynik ogólny: 11 z 15 obietnic działa. Dwie nie istnieją, dwie działają
+**Wynik ogólny: 10 z 15 obietnic działa. Trzy nie istnieją, dwie działają
 połowicznie.**
+
+*(Pierwsza wersja mówiła „11 z 15, dwie nie istnieją". Dashboard analityczny
+okazał się makietą, nie funkcją działającą z zastrzeżeniem — sprostowanie niżej.)*
 
 ---
 
@@ -120,15 +123,27 @@ Mechanizm działa i został sprawdzony wywołaniami na koncie platformy. Ale:
   świadomie nie wymusza listy metod (niezmiennik 16) — dla właściciela
   z polskim kontem obietnica jest prawdziwa, dla zagranicznego lista będzie inna.
 
-### Dashboard analityczny (Pro)
+### Dashboard analityczny (Pro) — sprostowanie z 2026-09-29
 
-Endpoint `owner/stats` działa, a zakładka „Analityka" jest w interfejsie
-oznaczona jako Pro i ukryta dla Basic. Ale **sam endpoint nie sprawdza planu** —
-właściciel z planem Basic, który wywoła go bezpośrednio, dostanie dane.
-Niskie ryzyko (to jego własne dane, nie cudze), ale rozjazd z ofertą.
+Pierwsza wersja raportu zaliczyła tę pozycję do dzialajacych z zastrzezeniem.
+**To bylo blednie.** Zakladka „Analityka" w panelu wlasciciela byla rozmazana
+makieta z liczbami wpisanymi na sztywno (1 248 odwiedzin, 3.4% konwersji,
+12 400 EUR, wykres z tablicy [40, 55, 60, ...]) i nakladka „Analityka dostepna
+w planie PRO" — wyswietlana **wszystkim, takze planowi Pro**. Komponent nie
+przyjmowal nawet informacji o planie. Klient Pro zobaczylby ten sam ekran
+zachety do przejscia na Pro, za ktory wlasnie zaplacil.
 
-Dla porównania: trasy kodów rabatowych sprawdzają plan po stronie serwera
-(`site.plan !== 'pro'` → 403). Analityka powinna robić to samo.
+Myline bylo to, ze endpoint `owner/stats` istnieje i dziala — ale on zasila
+kafelki **pulpitu**, ktory nalezy do pakietu Basic, a nie zakladke analityki.
+
+To wiec **trzecia nieistniejaca funkcja Pro**, obok SMS-ow i check-inu.
+Zbudowana tego samego dnia: `src/lib/analytics.ts` i `owner/analytics`.
+Swiadomie bez odwiedzin strony i konwersji, ktore obiecywala makieta —
+wymagalyby zbierania ruchu, czyli osobnego podsystemu i zgod cookie. Lepiej
+pokazac mniej rzeczy prawdziwych niz wiecej wymyslonych.
+
+Przy okazji uniknieta regresja: bramka planu **nie moze** trafic do
+`owner/stats`, bo zostawilaby wlascicieli Basic z pustym pulpitem.
 
 ### Domeny (Basic)
 

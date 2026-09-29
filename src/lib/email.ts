@@ -528,6 +528,85 @@ export interface BookingEmailData {
   discount_code: string | null
 }
 
+/**
+ * E-mail: rezerwacja anulowana.
+ *
+ * Obiecany w siatce funkcji („Potwierdzenie, anulowanie, przypomnienie przed
+ * przyjazdem"), a nie istniał — gość dowiadywał się o anulowaniu dopiero
+ * wtedy, gdy sam zajrzał do portalu.
+ *
+ * `powod` jest opcjonalny: właściciel nie musi się tłumaczyć, ale jeśli poda
+ * powód, gość nie zostaje z samym faktem.
+ */
+export async function sendBookingCancelled(booking: BookingEmailData, powod?: string | null) {
+  await sendEmail(
+    booking.guest_email,
+    `Rezerwacja anulowana — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
+    wrapEmail(`
+      ${renderHeader('Rezerwacja anulowana')}
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>,</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Twoja rezerwacja w terminie <strong>${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}</strong>
+          została anulowana.
+        </p>
+        ${powod ? `
+        <div style="border-left: 3px solid #E5E7EB; padding: 0 0 0 1rem; margin: 0 0 1.5rem; color: #4b5563; line-height: 1.7;">
+          ${escapeHtml(powod)}
+        </div>` : ''}
+        <p style="color: #6b7280; font-size: 0.9rem; margin: 0; line-height: 1.7;">
+          Jeśli płatność została już pobrana, zwrot trafi na tę samą kartę — zwykle w ciągu kilku dni roboczych.
+          W razie pytań odpisz na tę wiadomość.
+        </p>
+      </div>
+    `),
+  )
+}
+
+/**
+ * E-mail: przypomnienie przed przyjazdem.
+ *
+ * Wysyłany przez cron `guest-reminders` na siedem dni przed przyjazdem.
+ * Dla stron w planie Pro zawiera link do check-inu online — to jedyne miejsce,
+ * z którego gość dowiaduje się, że taki formularz w ogóle istnieje.
+ */
+export async function sendPreArrivalReminder(params: {
+  booking: BookingEmailData
+  slug: string
+  nazwaApartamentu: string
+  linkCheckin: string | null
+}) {
+  const { booking, slug, nazwaApartamentu, linkCheckin } = params
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+
+  await sendEmail(
+    booking.guest_email,
+    `Do zobaczenia za tydzień — ${escapeHtml(nazwaApartamentu)}`,
+    wrapEmail(`
+      ${renderHeader('Przyjazd za tydzień')}
+      <div style="padding: 2rem;">
+        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!</p>
+        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
+          Za tydzień zaczyna się Twój pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong>
+          — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}.
+        </p>
+
+        ${linkCheckin ? `
+        <a href="${linkCheckin}" style="display: block; background: #059669; color: white; text-decoration: none; border-radius: 10px; padding: 0.9rem 1.25rem; text-align: center; font-weight: 700; margin-bottom: 1.5rem;">
+          Wypełnij check-in online →
+        </a>
+        <p style="color: #6b7280; font-size: 0.85rem; margin: 0 0 1.5rem; line-height: 1.6;">
+          Zajmie minutę, a skróci formalności na miejscu.
+        </p>` : ''}
+
+        <a href="${siteUrl}/sites/${escapeHtml(slug)}/guest/${escapeHtml(booking.id)}" style="color: #059669; font-size: 0.9rem;">
+          Podgląd rezerwacji →
+        </a>
+      </div>
+    `),
+  )
+}
+
 /** Email: Guest booking confirmation */
 export async function sendBookingConfirmation(booking: BookingEmailData) {
   const nights = Math.round(
