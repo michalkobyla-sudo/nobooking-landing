@@ -52,16 +52,27 @@ Realizacja kodu działa i jest solidna: walidacja przynależności do strony,
 aktywności, ważności, limitu użyć i planu; osobna trasa do podglądu rabatu przed
 rezerwacją; limit żądań chroniący przed zgadywaniem kodów.
 
-Brakuje dwóch rzeczy po stronie zapisu:
+**Nie ma jak utworzyć kodu.** W panelu właściciela sekcja „Kody rabatowe" ma
+pola i przycisk „Dodaj kod", ale przycisk **nie ma żadnej obsługi zdarzenia**
+(`OwnerAdminApp.tsx`). W całym kodzie nie ma ani jednego `insert` do
+`discount_codes`, nie ma też funkcji bazodanowej, która by to robiła.
+W bazie jest dziś **zero kodów**. Dodać można wyłącznie ręcznie w SQL.
 
-1. **Nie ma jak utworzyć kodu.** W panelu właściciela sekcja „Kody rabatowe" ma
-   pola i przycisk „Dodaj kod", ale przycisk **nie ma żadnej obsługi zdarzenia**
-   (`OwnerAdminApp.tsx`). W całym kodzie nie ma ani jednego `insert` do
-   `discount_codes`. Kod można dziś dodać wyłącznie ręcznie w SQL.
-2. **`uses_count` nigdy nie rośnie.** Kolumna jest tylko odczytywana — w trzech
-   miejscach do sprawdzenia limitu, w zerowych do zwiększenia. Oznacza to, że
-   `max_uses` jest niewykonalne: kod z limitem jednego użycia zadziała dowolną
-   liczbę razy.
+### Sprostowanie do pierwszej wersji tego raportu
+
+Pierwsza wersja twierdziła, że `uses_count` nigdy nie rośnie i `max_uses` jest
+niewykonalne. **To było nieprawdą.** Licznik zwiększa funkcja bazodanowa
+`increment_discount_usage`, wywoływana z webhooka przy potwierdzeniu rezerwacji;
+wyszukiwanie po nazwie kolumny w kodzie TypeScript jej nie pokazało, bo
+inkrementacja żyje w Postgresie. Funkcja istnieje na produkcji (sprawdzone
+wywołaniem) i jest poprawna — atomowy `uses_count = uses_count + 1`, ograniczony
+do strony i kodu.
+
+Zostaje jednak mniejsza usterka w tym samym miejscu: wywołanie jest opakowane
+w `try/catch` z pustym blokiem i komentarzem „ignore if RPC not set up".
+To narusza zasadę widoczności awarii (niezmiennik 13) podwójnie — `supabase.rpc`
+przy błędzie **nie rzuca wyjątkiem**, tylko zwraca `{ error }`, więc `catch`
+i tak nigdy się nie wykona, a błąd przepada bez śladu.
 
 ### System opinii (Basic) — karuzela tak, obieg nie
 
@@ -155,10 +166,10 @@ Rozstrzyga ryzyko, że klient zapłaci za coś, czego nie dostanie.
    Pro. Dziś sprzedaż pakietu Pro oznacza obietnicę SMS-ów i check-inu, których
    klient nie dostanie i o których braku nic go nie uprzedzi. To jedyna pozycja
    na tej liście, która jest problemem wobec klienta, a nie usterką techniczną.
-2. **Kody rabatowe: dodać zapis i licznik użyć.** Funkcja jest w 80% gotowa —
-   brakuje formularza (przycisk już jest, bez obsługi) i inkrementacji
-   `uses_count` przy potwierdzeniu rezerwacji. Bez licznika `max_uses` jest
-   ozdobą.
+2. **Kody rabatowe: dodać tworzenie kodów.** Funkcja jest w 80% gotowa —
+   realizacja i licznik użyć działają, brakuje wyłącznie ścieżki zapisu
+   (przycisk już jest, bez obsługi). Przy okazji odsłonić błąd RPC, który dziś
+   przepada w pustym `catch`.
 3. **Opinie: dopiąć obieg albo poprawić opis.** Karuzela z opiniami z configu
    też jest funkcją — tylko inną niż opisana. Najtańsze uczciwe rozwiązanie:
    zmienić opis w ofercie. Pełny obieg to formularz, e-mail i zapis.

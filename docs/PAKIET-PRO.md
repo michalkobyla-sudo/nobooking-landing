@@ -79,8 +79,11 @@ i są objęte limitem żądań, bo pozwalają zgadywać kody.
 Rabat nakłada się na całość razem ze sprzątaniem i jest zaokrąglany do pełnej
 jednostki (`wycen` w `bookingPricing.ts`, pokryte testami).
 
-**Czego brakuje:** sposobu utworzenia kodu i zliczania użyć. Szczegóły
-w dokumencie weryfikacyjnym.
+Licznik użyć zwiększa funkcja bazodanowa `increment_discount_usage`, wywoływana
+z webhooka przy potwierdzeniu rezerwacji — atomowo, więc `max_uses` jest
+wykonalne.
+
+**Czego brakuje:** sposobu utworzenia kodu. Szczegóły w dokumencie weryfikacyjnym.
 
 **Struktura tabeli** `discount_codes`: `site_id`, `code` (wielkimi literami),
 `discount_pct`, `max_uses` (null = bez limitu), `uses_count`, `valid_until`,
