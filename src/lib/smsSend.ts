@@ -8,12 +8,21 @@ import {
  * Wysyłka SMS — warstwa sieciowa i baza. Logika bez zależności siedzi
  * w `src/lib/sms.ts` i jest pokryta testami.
  *
- * Dostawca: SMSAPI (`SMSAPI_TOKEN`, opcjonalnie `SMSAPI_SENDER`).
- * Bez tokenu moduł nic nie robi i mówi o tym wprost — brak konfiguracji nie
- * może udawać sukcesu, ale nie może też wywracać potwierdzenia rezerwacji.
+ * Dostawca: **Twilio** (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
+ * `TWILIO_FROM_NUMBER`). Wybrany, bo Casa Sol używa go od kwietnia 2026
+ * z polskim numerem nadawcy — wzorzec jest sprawdzony w boju, a jeden dostawca
+ * zamiast dwóch to jedno miejsce do pilnowania. Przy tej skali (kilka SMS-ów
+ * tygodniowo na właściciela) różnica w cenie wobec dostawców krajowych nie ma
+ * znaczenia.
+ *
+ * **Poświadczenia muszą być osobne od Casa Sol** — albo własne konto, albo
+ * subkonto Twilio. Casa Sol ma być całkowicie niezależna od Nobookinga, tak
+ * samo jak przy Stripe.
+ *
+ * Bez kompletu zmiennych moduł nic nie robi i mówi o tym wprost — brak
+ * konfiguracji nie może udawać sukcesu, ale nie może też wywracać
+ * potwierdzenia rezerwacji.
  */
-
-const ENDPOINT = 'https://api.smsapi.pl/sms.do'
 
 export type WynikSms =
   | { stan: 'wyslano'; numer: string }
@@ -60,8 +69,10 @@ export async function wyslijSms(
   db: SupabaseClient,
   params: { siteId: string; numerSurowy: string | null; tresc: string; rodzaj: string; wlaczone: boolean },
 ): Promise<WynikSms> {
-  const token = (process.env.SMSAPI_TOKEN ?? '').trim()
-  if (!token) return { stan: 'pominieto', powod: 'brak_konfiguracji' }
+  const sid   = (process.env.TWILIO_ACCOUNT_SID ?? '').trim()
+  const token = (process.env.TWILIO_AUTH_TOKEN ?? '').trim()
+  const from  = (process.env.TWILIO_FROM_NUMBER ?? '').trim()
+  if (!sid || !token || !from) return { stan: 'pominieto', powod: 'brak_konfiguracji' }
   if (!params.wlaczone) return { stan: 'pominieto', powod: 'wylaczone' }
 
   const numer = normalizujNumer(params.numerSurowy)
@@ -77,25 +88,27 @@ export async function wyslijSms(
   }
 
   const ciało = new URLSearchParams({
-    to: numer.numer,
-    message: bezOgonkow(params.tresc),
-    format: 'json',
-    encoding: 'utf-8',
+    To: numer.numer,
+    From: from,
+    Body: bezOgonkow(params.tresc),
   })
-  const nadawca = (process.env.SMSAPI_SENDER ?? '').trim()
-  if (nadawca) ciało.set('from', nadawca)
 
   try {
-    const odp = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: ciało,
-    })
-    const dane = await odp.json() as { error?: number; message?: string }
+    const odp = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: ciało,
+      },
+    )
+    const dane = await odp.json() as { code?: number; message?: string; sid?: string }
 
-    // SMSAPI zwraca 200 także przy błędzie — rozstrzyga pole `error` w treści.
-    if (!odp.ok || dane.error) {
-      const powod = `${dane.error ?? odp.status}: ${dane.message ?? 'nieznany błąd'}`
+    if (!odp.ok) {
+      const powod = `${dane.code ?? odp.status}: ${dane.message ?? 'nieznany błąd'}`
       console.error(`[sms] wysyłka dla strony ${params.siteId} nie powiodła się — ${powod}`)
       await zapiszSlad(db, params.siteId, numer.numer, params.rodzaj, false, powod)
       return { stan: 'blad', powod }

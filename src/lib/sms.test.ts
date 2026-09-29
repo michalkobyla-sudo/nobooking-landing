@@ -42,7 +42,7 @@ describe('normalizujNumer', () => {
 })
 
 describe('bezOgonkow', () => {
-  // SMSAPI liczy wiadomość z polskim znakiem w UCS-2, gdzie limit spada
+  // Operator liczy wiadomość z polskim znakiem w UCS-2, gdzie limit spada
   // ze 160 znaków do 70 — ta sama treść kosztowałaby trzy razy więcej.
   it('zamienia wszystkie polskie znaki', () => {
     expect(bezOgonkow('Zażółć gęślą jaźń')).toBe('Zazolc gesla jazn')

@@ -6,10 +6,9 @@
  * policzyć bez sieci, liczy się tutaj i jest pokryte testami; wysyłka
  * (`src/lib/smsSend.ts`) dostaje gotowy, sprawdzony numer i gotową treść.
  *
- * Dostawca: SMSAPI. Wybrany, bo odbiorcami są właściciele apartamentów,
- * w większości z polskimi numerami, a przy tych SMSAPI jest wyraźnie tańsze
- * od Twilio. Kształt modułu jest jednak niezależny od dostawcy — zmiana
- * wymaga podmiany jednej funkcji w `smsSend.ts`.
+ * Dostawca: Twilio — ten sam, którego od kwietnia 2026 używa Casa Sol
+ * (`casa-sol/src/lib/sms.ts`), z polskim numerem nadawcy. Kształt modułu jest
+ * niezależny od dostawcy: zmiana dotyka jednej funkcji w `smsSend.ts`.
  */
 
 /** Ile SMS-ów dziennie na jedną stronę. Zabezpieczenie przed rachunkiem,

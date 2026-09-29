@@ -1,4 +1,4 @@
--- Powiadomienia SMS dla wlasciciela (pakiet Pro).
+-- Powiadomienia SMS dla wlasciciela (pakiet Pro). Dostawca: Twilio.
 -- Projekt: cgsfhvgddtwppmqvdecz (nobooking-prod). SPRAWDZ REF PRZED URUCHOMIENIEM.
 --
 -- Numer telefonu zbieramy dzis w `orders.ob_sms_phone`, ale wysylka operuje na
