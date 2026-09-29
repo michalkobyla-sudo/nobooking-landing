@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
+import { normalizujNumer } from '@/lib/sms'
 import { isValidEmail, toBoundedNumber, LIMITY_CENNIKA } from '@/lib/validation'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
@@ -27,6 +28,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     slug:              site.slug,
     stripe_account_id: site.stripe_account_id        ?? null,
     stripe_onboarded:  site.stripe_onboarded         ?? false,
+    sms_phone:         site.sms_phone                 ?? '',
+    sms_enabled:       site.sms_enabled               !== false,
   })
 }
 
@@ -47,6 +50,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       cleaningFee?: number
       tiers?: { high?: TierPatch; mid?: TierPatch; low?: TierPatch }
     }
+    sms_phone?:   string | null
+    sms_enabled?: boolean
   }
 
   const supabase = createServiceClient()
@@ -126,6 +131,29 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       ...(body.currency               ? { currency: body.currency } : {}),
       ...(cleaningFee !== undefined   ? { cleaningFee }             : {}),
     }
+  }
+
+  // ── SMS (pakiet Pro) ────────────────────────────────────────────────────────
+  // Numer trzymamy w kolumnie, nie w configu: wysyłka czyta `sites`, a config
+  // bywa nadpisywany przy regeneracji strony.
+  if (body.sms_phone !== undefined) {
+    if (site.plan !== 'pro') {
+      return NextResponse.json({ error: 'pro_required' }, { status: 403 })
+    }
+    if (body.sms_phone === null || String(body.sms_phone).trim() === '') {
+      updates.sms_phone = null
+    } else {
+      const numer = normalizujNumer(String(body.sms_phone))
+      if (!numer.ok) return NextResponse.json({ error: 'zly_numer' }, { status: 400 })
+      updates.sms_phone = numer.numer
+    }
+  }
+
+  if (body.sms_enabled !== undefined) {
+    if (site.plan !== 'pro') {
+      return NextResponse.json({ error: 'pro_required' }, { status: 403 })
+    }
+    updates.sms_enabled = body.sms_enabled === true
   }
 
   if (Object.keys(configUpdates).length > 0) {

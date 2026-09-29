@@ -603,6 +603,40 @@ Pułapka przy zmianach w tym kodzie: punktem odniesienia musi zostać config
 rundzie poprawek zmiana właściciela zrównuje się z punktem odniesienia, wygląda
 na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
 
+### Powiadomienia SMS (pakiet Pro)
+
+`src/lib/sms.ts` — logika bez sieci i bez bazy (normalizacja numeru, treść,
+limit), `src/lib/smsSend.ts` — wysyłka i zapis śladu.
+Migracja: `docs/supabase/2026-09-29-sms.sql`.
+
+**Dostawca: SMSAPI.** Wybrany, bo odbiorcami są właściciele apartamentów,
+w większości z polskimi numerami. Zmiana dostawcy dotyka jednej funkcji
+w `smsSend.ts`. Konfiguracja: `SMSAPI_TOKEN` (wymagany) i `SMSAPI_SENDER`
+(opcjonalna nazwa nadawcy). **Bez tokenu moduł nie robi nic i mówi o tym
+w logu** — brak konfiguracji nie udaje sukcesu, ale też nie wywraca
+potwierdzenia rezerwacji.
+
+Dwie rzeczy, które odróżniają SMS od e-maila i wymusiły kształt tego kodu:
+
+- **Kosztuje za sztukę.** Stąd dzienny limit na stronę (`MAX_SMS_DZIENNIE`),
+  liczony z `sms_log`. Gdy licznika nie da się odczytać, zawodzimy „na
+  zamknięto": lepiej nie wysłać jednego SMS-a niż wysłać ich tyle, ile przyjdzie
+  zdarzeń.
+- **Polski znak potraja cenę.** SMSAPI liczy wiadomość z „ł" albo „ą"
+  w alfabecie UCS-2, gdzie limit spada ze 160 znaków do 70. Treść przechodzi
+  więc przez `bezOgonkow` i jest przycinana do 160 znaków.
+
+Numer trzymamy w `sites.sms_phone`, nie w configu — config bywa nadpisywany
+przy regeneracji strony. Kopiowany z `orders.ob_sms_phone` przy provisioningu,
+od razu znormalizowany do postaci `+48600123456`.
+
+Każda wysyłka, udana i nieudana, zostawia wiersz w `sms_log` razem z powodem
+błędu. Agent zdrowia raportuje nieudane wysyłki z ostatniej doby — bez tego
+byłaby to awaria niewidoczna dla właściciela, bo brak SMS-a niczym się nie
+objawia.
+
+Plan sprawdzany po stronie serwera, w `powiadomORezerwacji` i w trasie ustawień.
+
 ### Atrybucja — skąd przyszedł klient
 
 `src/lib/attribution.ts` (czyste), `src/components/ZapiszZrodlo.tsx` (zapis),

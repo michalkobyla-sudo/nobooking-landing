@@ -93,6 +93,12 @@ export interface Site {
   owner_user_id: string | null
   stripe_account_id: string | null
   stripe_onboarded: boolean
+
+  // ─── SMS (pakiet Pro, migracja 2026-09-29) ─────────────────────────────────
+  /** Numer właściciela w postaci E.164. Kopiowany z `orders.ob_sms_phone`. */
+  sms_phone: string | null
+  /** Wyłącznik po stronie właściciela — SMS kosztuje za sztukę. */
+  sms_enabled: boolean
   expires_at: string | null
   renewal_price_pln: number | null
   renewal_price_eur: number | null

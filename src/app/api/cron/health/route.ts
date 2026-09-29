@@ -120,6 +120,23 @@ export async function GET(request: NextRequest) {
     return { slug: o.site_slug as string, powod: linie[linie.length - 1] ?? MARKER_PRZEGLADU }
   })
 
+  // Nieudane SMS-y z ostatniej doby. Tabela może nie istnieć, dopóki migracja
+  // 2026-09-29-sms.sql nie zostanie uruchomiona — brak tabeli to nie awaria SMS-ów,
+  // tylko brak migracji, który i tak zgłasza kontrola schematu.
+  const { data: smsBledy } = await db
+    .from('sms_log')
+    .select('blad')
+    .eq('udane', false)
+    .gte('created_at', godzTemu(24))
+
+  const smsNieudane = Object.entries(
+    (smsBledy ?? []).reduce<Record<string, number>>((acc, w) => {
+      const powod = String(w.blad ?? 'nieznany').slice(0, 60)
+      acc[powod] = (acc[powod] ?? 0) + 1
+      return acc
+    }, {}),
+  ).map(([powod, ile]) => ({ powod, ile }))
+
   const { count: rezerwacjePendingStare } = await db
     .from('bookings')
     .select('id', { count: 'exact', head: true })
@@ -158,6 +175,7 @@ export async function GET(request: NextRequest) {
     ostatniaKopiaGodzinTemu,
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
     stronyDoPrzegladu,
+    smsNieudane,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
     wygasajaceSubskrypcje,

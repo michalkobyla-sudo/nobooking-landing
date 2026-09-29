@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { createConnectAccount } from '@/lib/stripe-connect'
 import { hashPassword } from '@/lib/ownerAuth'
 import { toSlug } from '@/lib/generate-site'
+import { normalizujNumer } from '@/lib/sms'
 import { scalPoRegeneracji, parsujConfig } from '@/lib/configMerge'
 import { PRICES } from '@/lib/prices'
 import type { Order } from '@/lib/types'
@@ -193,12 +194,18 @@ export async function provisionSite(
 
   const baseSlug = toSlug(order.apartment_name)
 
+  const wynikNumeru = normalizujNumer(order.ob_sms_phone)
+  const numerSms = wynikNumeru.ok ? wynikNumeru.numer : null
+
   const { siteId, slug } = await insertSiteWithFreeSlug(supabase, baseSlug, {
     order_id: order.id,
     plan: order.plan,
     active: true,
     config: JSON.parse(configJson) as Record<string, unknown>,
     owner_email: ownerEmail,
+    // Numer do SMS-ów zbieramy w onboardingu, ale wysyłka operuje na `sites`.
+    // Normalizacja tutaj, raz — żeby wysyłka nie musiała zgadywać formatu.
+    sms_phone: numerSms,
     owner_user_id: ownerUserId,
     stripe_account_id: stripeAccountId || null,
     stripe_onboarded: false,

@@ -24,6 +24,8 @@ export interface StanSystemu {
   zamowieniaUtkniete: number
   /** Strony wstrzymane przez sprawdzenie provisioningu — czekają na przegląd. */
   stronyDoPrzegladu: Array<{ slug: string; powod: string }>
+  /** Nieudane wysyłki SMS z ostatniej doby, pogrupowane po powodzie. */
+  smsNieudane: Array<{ powod: string; ile: number }>
   /** Rezerwacje `pending` starsze niż 3 h — cron sprzątający powinien je anulować. */
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
@@ -120,6 +122,18 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       szczegol: s.stronyDoPrzegladu
         .map((p) => `${p.slug} — ${p.powod}`)
         .join('; ') + '. Klient nie dostał danych logowania. Popraw config i wyślij ręcznie.',
+    })
+  }
+
+  // SMS kosztuje za sztukę i jest funkcją płatnego pakietu — nieudana wysyłka
+  // jest niewidoczna dla właściciela, bo nic mu nie przychodzi i nic go o tym
+  // nie informuje.
+  if (s.smsNieudane.length > 0) {
+    const razem = s.smsNieudane.reduce((a, x) => a + x.ile, 0)
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: `Nieudane SMS-y: ${razem}`,
+      szczegol: s.smsNieudane.map((x) => `${x.powod} × ${x.ile}`).join('; ') + '.',
     })
   }
 

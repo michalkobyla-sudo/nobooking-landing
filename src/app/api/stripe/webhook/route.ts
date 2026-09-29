@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyStripeEvent, webhookSecrets, type StripeWebhooks } from '@/lib/stripeWebhook'
 import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, type BookingEmailData } from '@/lib/email'
+import { powiadomORezerwacji } from '@/lib/smsSend'
 import type { Order } from '@/lib/types'
 
 const _require = createRequire(import.meta.url)
@@ -307,6 +308,32 @@ export async function POST(request: NextRequest) {
         await sendOwnerBookingNotification(emailData)
       } catch (emailErr) {
         console.error('[webhook] booking email error:', emailErr)
+      }
+
+      // SMS do właściciela (pakiet Pro). Nie przerywa potwierdzania rezerwacji:
+      // `powiadomORezerwacji` zwraca wynik zamiast rzucać, a każdą nieudaną
+      // próbę zapisuje w `sms_log` razem z powodem (niezmiennik 13).
+      try {
+        const { data: strona } = await supabase
+          .from('sites')
+          .select('id, slug, plan, sms_phone, sms_enabled, config')
+          .eq('id', booking.site_id)
+          .single()
+
+        if (strona) {
+          const nazwa = (strona.config as { name?: string } | null)?.name ?? strona.slug as string
+          const wynik = await powiadomORezerwacji(
+            supabase,
+            strona as unknown as Parameters<typeof powiadomORezerwacji>[1],
+            booking as unknown as Parameters<typeof powiadomORezerwacji>[2],
+            nazwa,
+          )
+          if (wynik.stan !== 'wyslano') {
+            console.log(`[webhook] SMS dla rezerwacji ${bookingId}: ${wynik.stan} — ${'powod' in wynik ? wynik.powod : ''}`)
+          }
+        }
+      } catch (smsErr) {
+        console.error('[webhook] booking sms error:', smsErr)
       }
     }
 

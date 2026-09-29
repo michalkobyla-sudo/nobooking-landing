@@ -5,6 +5,7 @@ const zdrowy: StanSystemu = {
   ostatniaKopiaGodzinTemu: 5,
   zamowieniaUtkniete: 0,
   stronyDoPrzegladu: [],
+  smsNieudane: [],
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
   wygasajaceSubskrypcje: [],
@@ -141,5 +142,26 @@ describe('tematRaportu i odmiana', () => {
       .toBe('Nobooking: 1 problem krytyczny')
     expect(tematRaportu(ocenStan({ ...zdrowy, rezerwacjePendingStare: 1 })))
       .toBe('Nobooking: 1 rzecz do sprawdzenia')
+  })
+})
+
+describe('ocenStan — SMS', () => {
+  // SMS kosztuje za sztuke i jest funkcja platnego pakietu. Nieudana wysylka
+  // jest niewidoczna dla wlasciciela: nic mu nie przychodzi i nic go o tym
+  // nie informuje.
+  it('zglasza nieudane wysylki z podzialem na powody', () => {
+    const z = ocenStan({
+      ...zdrowy,
+      smsNieudane: [{ powod: 'limit_dzienny', ile: 3 }, { powod: '101: invalid token', ile: 1 }],
+    })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].tytul).toContain('4')
+    expect(z[0].szczegol).toContain('limit_dzienny × 3')
+    expect(z[0].szczegol).toContain('101: invalid token × 1')
+  })
+
+  it('milczy, gdy nic nie padlo', () => {
+    expect(ocenStan({ ...zdrowy, smsNieudane: [] })).toEqual([])
   })
 })
