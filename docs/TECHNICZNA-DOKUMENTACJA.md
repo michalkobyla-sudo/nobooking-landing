@@ -206,14 +206,37 @@ Sesja powstaje z opcją `{ stripeAccount: acct_xxx }` (`src/lib/stripe-connect.t
 |---|---|
 | Merchant of record | **właściciel apartamentu** |
 | Płaci prowizję Stripe | **właściciel** |
-| Odpowiada za chargebacki i zwroty | **właściciel** |
+| Odpowiada za chargebacki i zwroty | **właściciel** — z zastrzeżeniem niżej |
 | Nazwa na wyciągu gościa | firma **właściciela** |
 | Przychód Nobooking z rezerwacji | **brak** — model to jednorazowa opłata za stronę |
 
-**Nie ustawiamy `payment_method_types`.** Przy direct charge Stripe pokazuje metody
-włączone na koncie właściciela. Wcześniejsza sztywna lista `['card','blik','p24']`
-wywracała tworzenie sesji dla kont bez blik/p24 — czyli praktycznie każdego
-właściciela spoza Polski.
+**Zastrzeżenie o chargebackach.** Stripe wymaga od każdej platformy Connect
+podpisania *Refunds and chargebacks liability acknowledgement*. W pierwszej
+kolejności obciążany jest właściciel, ale jeśli jego konto wyjdzie na minus
+i nie da się tego ściągnąć z salda ani rachunku, koszt spada na Nobooking. Nie
+da się tego wyłączyć. Przy wynajmie ryzyko jest realne, bo chargeback przychodzi
+zwykle po pobycie, gdy właściciel zdążył już wypłacić środki.
+
+**Konto platformy:** `acct_1UKa8vBYbNUONJ2O` („Nobooking", PL/PLN). Do 2026-09-28
+Nobooking dzielił konto z Casa Sol (`acct_1TCfH5C4nRKn3H7A`); są rozdzielone.
+Casa Sol **nie jest** kontem połączonym Nobookinga — to osobna, samodzielna
+instalacja.
+
+**Nie ustawiamy `payment_method_types` w żadnej sesji Checkout** — ani przy
+rezerwacjach, ani przy zakupie strony, ani przy odnowieniu. Stripe pokazuje
+metody włączone na koncie, na którym powstaje płatność, i dobiera je do waluty.
+
+Sztywna lista wywraca **całą** sesję, gdy choć jednej metody brakuje; Stripe nie
+pomija niedostępnej. Zdarzyło się dwa razy:
+
+- 2026-09-05 — `['card','blik','p24']` przy rezerwacjach psuło sesje dla kont
+  spoza Polski, czyli praktycznie każdego właściciela zagranicznego;
+- 2026-09-29 — ta sama lista przy odnowieniach przestała działać po przejściu na
+  własne konto Stripe, bo nowe konto nie ma włączonego `p24`. Sprawdzone
+  wywołaniem: `The payment method type provided: p24 is invalid`.
+
+Po usunięciu listy sesja dobiera metody sama: `card, blik, link, klarna` dla PLN
+i `card, bancontact, eps, link, mb_way, klarna, satispay` dla EUR.
 
 **Gdyby kiedyś wprowadzać prowizję Nobooking:** `application_fee_amount` w sesji
 plus `stripe_account` — wtedy część kwoty trafia na konto platformy. Dziś: 0.
@@ -406,6 +429,23 @@ Upewnij się że cookie ma `path: '/'`. Jeśli path jest `/sites/slug/admin`, pr
 2. Jeśli `false` — właściciel musi przejść onboarding: panel → Ustawienia → „Połącz Stripe →"
 3. Jeśli `stripe_account_id` jest null — j.w., konto zostanie stworzone automatycznie
 
+### Problem: Onboarding Stripe właściciela kończy się błędem
+
+Dwie różne przyczyny, mylące się nawzajem:
+
+1. **403 `more_permissions_required`** — klucz `rk_live_` nie ma uprawnienia.
+   Stripe pisze w treści błędu, którego dokładnie brakuje, i daje link do edycji
+   tego konkretnego klucza. Komplet: **Accounts** (Write) i **Account Links**
+   (Write) w kolumnie *In your account*, **Checkout Sessions** (Write)
+   w *In connected accounts*, **Events** (Read). „Accounts **v2**" to inny zasób
+   i nie zastępuje „Accounts".
+2. **„You must complete your platform profile to use Connect"** — mimo treści
+   komunikatu zwykle chodzi o weryfikację tożsamości właściciela platformy.
+   Sprawdź `individual.verification` w `GET /v1/account`: `pending` to
+   weryfikacja w toku (czekać, nie wgrywać kolejnego dokumentu — nowe wgranie
+   kasuje trwające sprawdzenie), `unverified` z `details_code` to odrzucenie.
+   Baner w panelu pokazuje wynik poprzedniej próby i potrafi wprowadzać w błąd.
+
 ### Problem: Webhook Stripe nie działa (rezerwacje nie potwierdzają się)
 
 1. Sprawdź logi Vercela: `npx vercel logs | grep webhook`
@@ -510,7 +550,7 @@ dokumencie: `SPECYFIKACJA-OPERACYJNA.md`.
 ## 15. Ścieżka klienta — od zamówienia do działającej strony
 
 ```
-/zamow  →  POST /api/orders           zapis w `orders`, e-mail do Michała
+/zamow  →  POST /api/orders           zapis w `orders` (razem ze źródłem), e-mail do Michała
         →  POST /api/stripe/checkout  sesja płatności (konto platformy)
         →  webhook checkout.session.completed
               stripe_paid = true, status = onboarding_sent
@@ -520,12 +560,70 @@ dokumencie: `SPECYFIKACJA-OPERACYJNA.md`.
         →  cron provision-sites (co minutę)
               generuje config przez Claude, tworzy konto Auth,
               konto Stripe Connect i wiersz w `sites`
+              SPRAWDZA WŁASNĄ PRACĘ (patrz niżej)
               e-mail powitalny (hasło + link do Connect) i „strona gotowa"
         →  /poprawki/[token]          do 4 rund poprawek (MAX_REVISIONS)
 ```
 
 Zamówienie jest „zaklepywane" kolumną `orders.provisioning_started_at`, więc
 dwa nakładające się uruchomienia crona nie utworzą dwóch kont.
+
+### Atrybucja — skąd przyszedł klient
+
+`src/lib/attribution.ts` (czyste), `src/components/ZapiszZrodlo.tsx` (zapis),
+migracja `docs/supabase/2026-09-29-atrybucja.sql`.
+
+**Pierwsze dotknięcie wygrywa.** Parametry kampanii lądują na stronie wejścia,
+a formularz zamówienia jest kilka kliknięć dalej — przy ostatnim dotknięciu
+każde zamówienie miałoby źródło „wejście bezpośrednie". `ZapiszZrodlo` siedzi
+w `layout.tsx`, zapisuje źródło do `localStorage` przy pierwszej wizycie
+i nie nadpisuje go przy kolejnych. Wyjątek: zapisane „wejście bezpośrednie"
+ustępuje późniejszemu źródłu z informacją.
+
+Rozpoznawanie, w kolejności pierwszeństwa:
+
+1. parametry `utm_*` z adresu,
+2. `fbclid` / `gclid` — Meta i Google dokładają je nawet bez UTM-ów, więc bez
+   tego cały ruch płatny wyglądałby na bezpośredni; dają `source` i `medium: paid`,
+3. `document.referrer` — znane domeny mapowane na nazwy (`facebook`, `instagram`,
+   `google`, `x`, …), reszta jako `medium: referral`. Referrer wewnętrzny jest
+   ignorowany, inaczej każde zamówienie miałoby źródło `nobooking.eu`.
+
+Wartości przechodzą przez `zBody` po stronie serwera: przycięcie do 200 znaków,
+usunięcie znaków sterujących, odrzucenie pól spoza zestawu. Pochodzą z adresu
+URL, więc są niezaufane. Dostęp do `localStorage` jest w `try/catch` — tryb
+prywatny rzuca, a brak atrybucji nie może zablokować zamówienia.
+
+Źródło trafia też jedną linią do maila z powiadomieniem o zamówieniu
+(`opisZrodla`).
+
+### Krok weryfikacji przed wysyłką
+
+`src/lib/provisionCheck.ts` — czysta funkcja, bez bazy i bez sieci; pobranie
+strony dostaje funkcję pobierającą z zewnątrz, żeby dało się to testować.
+
+Sprawdzane jest:
+
+| Co | Waga |
+|---|---|
+| nazwa pusta lub wyglądająca na zaślepkę | blokująca |
+| opis po polsku krótszy niż 120 znaków, pusty albo z zaślepką (`{{ }}`, `lorem ipsum`, `TODO`) | blokująca |
+| mniej niż 3 zdjęcia albo adres inny niż pełny `http(s)` | blokująca |
+| cena za noc ≤ 0, `minNights` < 1, nieznana waluta, ujemna opłata za sprzątanie | blokująca |
+| `specs.guests` < 1 | blokująca |
+| strona `/sites/<slug>` nie zwraca 200 | blokująca |
+| brak tłumaczeń, brak tekstów alternatywnych, brak metrażu, brak udogodnień, brak nazwy w treści strony | ostrzeżenie |
+
+Usterka blokująca **wstrzymuje oba maile** i dopisuje do `orders.notes` linię
+ze znacznikiem `[PROVISION-CHECK]`. Agent zdrowia szuka tego znacznika i zgłasza
+sprawę jako krytyczną — bez tego wstrzymane zamówienie wyglądałoby w bazie
+dokładnie jak udane, bo ma wypełniony `site_slug`.
+
+Cron **nie ponowi** takiego zamówienia (`site_slug` jest już ustawiony). Po
+poprawieniu configu dane logowania trzeba wysłać ręcznie.
+
+Ostrzeżenia trafiają tylko do logu — klient wolałby dostać stronę bez tłumaczenia
+niemieckiego niż nie dostać jej wcale.
 
 ## 16. Crony
 

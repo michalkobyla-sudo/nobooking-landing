@@ -22,6 +22,8 @@ export interface StanSystemu {
   ostatniaKopiaGodzinTemu: number | null
   /** Zamówienia z wypełnionym onboardingiem, które nie dostały strony. */
   zamowieniaUtkniete: number
+  /** Strony wstrzymane przez sprawdzenie provisioningu — czekają na przegląd. */
+  stronyDoPrzegladu: Array<{ slug: string; powod: string }>
   /** Rezerwacje `pending` starsze niż 3 h — cron sprzątający powinien je anulować. */
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
@@ -105,6 +107,19 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Zamówienia bez wygenerowanej strony',
       szczegol: `${s.zamowieniaUtkniete} klient(ów) wypełnił onboarding i nie dostał strony. Sprawdź cron provision-sites.`,
+    })
+  }
+
+  // Strona powstała, ale nie przeszła sprawdzenia, więc klient nie dostał maila
+  // z danymi logowania. Czeka, nie wiedząc na co — dlatego to jest krytyczne,
+  // a nie ostrzeżenie.
+  if (s.stronyDoPrzegladu.length > 0) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: `Strony wstrzymane do przeglądu: ${s.stronyDoPrzegladu.length}`,
+      szczegol: s.stronyDoPrzegladu
+        .map((p) => `${p.slug} — ${p.powod}`)
+        .join('; ') + '. Klient nie dostał danych logowania. Popraw config i wyślij ręcznie.',
     })
   }
 

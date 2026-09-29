@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
+import { MARKER_PRZEGLADU } from '@/lib/provisionCheck'
 
 export const runtime = 'nodejs'
 
@@ -105,6 +106,20 @@ export async function GET(request: NextRequest) {
     .eq('onboarding_submitted', true)
     .is('site_slug', null)
 
+  // Strony wstrzymane przez sprawdzenie provisioningu. Marker w `notes` jest
+  // jedynym śladem — zamówienie ma wypełniony `site_slug`, więc bez tego
+  // wyglądałoby dokładnie jak udane.
+  const { data: doPrzegladu } = await db
+    .from('orders')
+    .select('site_slug, notes')
+    .not('site_slug', 'is', null)
+    .like('notes', `%${MARKER_PRZEGLADU}%`)
+
+  const stronyDoPrzegladu = (doPrzegladu ?? []).map((o) => {
+    const linie = String(o.notes ?? '').split('\n').filter((l) => l.includes(MARKER_PRZEGLADU))
+    return { slug: o.site_slug as string, powod: linie[linie.length - 1] ?? MARKER_PRZEGLADU }
+  })
+
   const { count: rezerwacjePendingStare } = await db
     .from('bookings')
     .select('id', { count: 'exact', head: true })
@@ -142,6 +157,7 @@ export async function GET(request: NextRequest) {
   const stan: StanSystemu = {
     ostatniaKopiaGodzinTemu,
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
+    stronyDoPrzegladu,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
     wygasajaceSubskrypcje,

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { PRICE_LABELS } from '@/lib/prices'
+import { zJson, PUSTE_ZRODLO, KLUCZ_ZRODLA } from '@/lib/attribution'
 
 interface Props {
   plan: 'basic' | 'pro'
@@ -106,6 +107,13 @@ export default function OrderForm({ plan, currency }: Props) {
           apartment_name: form.apartment_name.trim(),
           apartment_location: form.apartment_location.trim(),
           notes: form.notes.trim() || null,
+          // Źródło zapisane przy pierwszej wizycie (`ZapiszZrodlo`). Odczyt
+          // w try/catch, bo tryb prywatny rzuca — brak atrybucji nie może
+          // zablokować zamówienia.
+          zrodlo: (() => {
+            try { return zJson(window.localStorage.getItem(KLUCZ_ZRODLA)) ?? PUSTE_ZRODLO }
+            catch { return PUSTE_ZRODLO }
+          })(),
         }),
       })
 

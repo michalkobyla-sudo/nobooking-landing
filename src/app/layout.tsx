@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/context/LangContext'
+import ZapiszZrodlo from '@/components/ZapiszZrodlo'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin', 'latin-ext'],
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pl" className={jakarta.variable}>
       <body>
+        <ZapiszZrodlo />
         <LangProvider>
           {children}
         </LangProvider>

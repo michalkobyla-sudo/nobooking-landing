@@ -21,6 +21,17 @@ export interface Order {
   apartment_location: string
   notes: string | null
 
+  // ─── Atrybucja — skąd przyszedł klient (migracja 2026-09-29) ────────────────
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_content: string | null
+  utm_term: string | null
+  /** fbclid albo gclid — identyfikator kliknięcia z reklamy. */
+  click_id: string | null
+  referrer: string | null
+  landing_path: string | null
+
   // ─── Onboarding — opis i specyfikacja ───────────────────────────────────────
   ob_description: string | null
   ob_tagline: string | null

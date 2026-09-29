@@ -243,19 +243,95 @@ git commit -m "backup: pełna kopia wszystkich tabel + zabezpieczenie przed nadp
 
 ---
 
-## ETAP H — Dokończenie odcięcia (później, bez pośpiechu)
+## ETAP H — Dokończenie odcięcia ✅ ZROBIONE
 
-`nobooking-prod` zawiera **kopię danych Casa Sol** — site `casasol-almadelmar`
-z rezerwacjami gości, w wersji nowszej niż w bazie Casa Sol. Do pełnej
-niezależności trzeba je stamtąd usunąć.
+`nobooking-prod` zawierał **kopię danych Casa Sol** — site `casasol-almadelmar`
+z rezerwacjami gości, w wersji nowszej niż w bazie Casa Sol. Usunięte po
+wykonaniu i sprawdzeniu kopii zapasowej.
 
-Nie rób tego teraz. Najpierw etapy A–G, potem daj znać — przygotuję SQL
-z zapytaniem kontrolnym i skryptem weryfikującym, że po zmianie nie został
-tam ani jeden wiersz Casa Sol.
+Stan sprawdzony ponownie 2026-09-28, bezpośrednio na `cgsfhvgddtwppmqvdecz`:
 
-Zostaje też do rozważenia: `nobooking-landing` leży w iCloud, w ścieżce ze
+| Zapytanie | Wynik |
+|---|---|
+| `sites` | 1 wiersz — wyłącznie `apart-sunny` |
+| `sites` ze slugiem `casasol-almadelmar` | 0 |
+| `bookings` | 0 |
+| `blocked_dates` | 9, wszystkie z `site_id` strony `apart-sunny`, czerwiec 2026 |
+
+Ani jednego wiersza Casa Sol. Bazy, projekty Vercela, domeny, poczta i — od
+2026-09-28 — konta Stripe są rozdzielone.
+
+Zostaje do rozważenia: `nobooking-landing` leży w iCloud, w ścieżce ze
 spacjami, przez co iCloud tworzy duplikaty plików psujące `tsc`. Przeniesienie
 repo poza iCloud usunie klasę problemów, która wraca w każdej sesji.
+
+---
+
+## ETAP I — Rozdzielenie Stripe (w toku 2026-09-28)
+
+Do tej pory Nobooking i Casa Sol korzystały z jednego konta Stripe
+`acct_1TCfH5C4nRKn3H7A` („Casasol-almadelmar"). To ostatni wspólny element
+i jedyny, który wciąż łączył oba projekty.
+
+**Zrobione:**
+
+1. Założone osobne konto platformy: `acct_1UKa8vBYbNUONJ2O` („Nobooking", PL,
+   PLN), Connect włączony.
+2. Utworzony cel webhooka typu *Account* — `we_1UKaVfBYbNUONJ2OETPYLB06`,
+   `https://www.nobooking.eu/api/stripe/webhook`. Sekret podpisu odłożony
+   do wpisania w Vercelu.
+3. Utworzony klucz restrykcyjny `rk_live_…POdW` i doprowadzony do kompletu
+   uprawnień. Zweryfikowane wywołaniami na żywo:
+
+   | Ścieżka | Wynik |
+   |---|---|
+   | `GET /v1/accounts` | 200 |
+   | `POST /v1/accounts` | przechodzi walidację uprawnień |
+   | `POST /v1/account_links` | przechodzi walidację uprawnień |
+   | `GET /v1/events` | 200 |
+
+   Pułapka, która kosztowała najwięcej czasu: w panelu istnieją osobno
+   **Accounts** i **Accounts v2**. Kod woła `POST /v1/accounts`, więc potrzebuje
+   tego pierwszego; sam „v2" daje 403 z komunikatem o `connected_account_write`.
+
+4. Utworzony cel webhooka typu *Connected accounts* — `we_1UKcadBYbNUONJ2O4tuo8ZF9`,
+   nazwa `nobooking-connect-rezerwacje`, `checkout.session.completed`. API przyjmuje
+   `connect=true`, ale go nie stosuje, więc powstał przez panel. Nazwa opisowa
+   celowo — automatyczne nazwy typu „elegant-excellence" utrudniły wcześniej
+   diagnozę rozjechanych sekretów.
+5. Vercel (Production): `STRIPE_SECRET_KEY` → nowy klucz, `STRIPE_WEBHOOK_SECRET`
+   → sekret celu *Account*, `STRIPE_CONNECT_WEBHOOK_SECRET` → sekret celu
+   *Connected accounts*. Wdrożone przez `vercel redeploy` bieżącej produkcji,
+   bez wysyłania niezacommitowanej pracy.
+6. Zweryfikowane na produkcji podpisanymi zdarzeniami próbnymi:
+
+   | Podpis | Odpowiedź |
+   |---|---|
+   | sekret platformy | 200 `{"received":true}` |
+   | sekret Connect | 200 `{"received":true}` |
+   | sekret błędny | 400 `invalid_signature` |
+
+   Strona główna 200, strona apartamentu 200, `/api/cron/health` 401 bez sekretu.
+
+**Blokada:** Stripe nie pozwala tworzyć żywych kont połączonych, dopóki nie
+zweryfikuje dokumentu tożsamości właściciela platformy. Komunikat API mówi
+o „platform profile questionnaire", co jest mylące — profil jest wypełniony,
+a blokuje właśnie weryfikacja. Stan sprawdzać przez `individual.verification`
+na `GET /v1/account`, nie przez baner w panelu (baner pokazuje poprzednią próbę).
+
+**Do zrobienia po odblokowaniu Connect:**
+
+1. Test end-to-end: konto Express → link onboardingowy → sesja checkout na tym
+   koncie → skasowanie konta testowego.
+2. Wyłączenie starego celu webhooka Nobookinga na koncie Casa Sol.
+3. Onboarding Connect właściciela `apart-sunny` (dziś `stripe_account_id` jest
+   puste, więc rezerwacje zwracają 402).
+
+Zamówienia stron i odnowienia działają już na nowym koncie — nie czekają na
+Connect. Prowizjonowanie też: utworzenie konta właściciela jest w `try/catch`
+opisanym jako *non-fatal* (`src/lib/provision-site.ts`), a link onboardingowy ma
+fallback na własną trasę (`src/app/api/cron/provision-sites/route.ts`). Klient
+dostanie stronę i dane logowania; nie zadziała tylko podpięcie jego Stripe'a.
 
 ---
 
@@ -318,7 +394,19 @@ złym podpisie i 403 przy złym tokenie weryfikacyjnym.
 
 ### Co zostaje otwarte
 
-- **Etap H** — usunięcie kopii danych Casa Sol z `nobooking-prod` (czeka na decyzję).
+- **Etap 4 audytu (A1 — Agent Provisioningu)** — krok weryfikacji dodany
+  2026-09-29 (`src/lib/provisionCheck.ts`, 24 testy). Niewdrożony: czeka na
+  decyzję o commicie i deployu.
+- **Etap 5 audytu (atrybucja)** — kolumny UTM w `orders`, przechwytywanie
+  pierwszego dotknięcia, źródło w mailu o zamówieniu (`src/lib/attribution.ts`,
+  24 testy). **Migracja `docs/supabase/2026-09-29-atrybucja.sql` NIE została
+  uruchomiona** — zgodnie z niezmiennikiem 15 musi poprzedzić wdrożenie kodu.
+- **Regresja po zmianie konta Stripe** — trasa odnowienia miała sztywne
+  `payment_method_types: ['card','p24','blik']`, a nowe konto nie ma `p24`.
+  Każde odnowienie kończyłoby się błędem 500. Poprawione 2026-09-29 przez
+  usunięcie listy; niewdrożone.
+- **Etap I** — rozdzielenie Stripe. Konto, webhook i klucz gotowe; czeka na
+  weryfikację tożsamości właściciela platformy. Szczegóły i lista kroków wyżej.
 - **Endpoint Stripe typu Connected accounts** + onboarding Connect pierwszego
   właściciela. Bez tego rezerwacje zwracają 402.
 - **`.github/workflows/ci.yml`** — plik czeka poza `main`, bo token OAuth nie ma

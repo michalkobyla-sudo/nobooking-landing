@@ -4,6 +4,7 @@ import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, odmien, type StanSyste
 const zdrowy: StanSystemu = {
   ostatniaKopiaGodzinTemu: 5,
   zamowieniaUtkniete: 0,
+  stronyDoPrzegladu: [],
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
   wygasajaceSubskrypcje: [],
@@ -62,6 +63,20 @@ describe('ocenStan', () => {
 
   it('wykrywa zamówienia bez wygenerowanej strony', () => {
     expect(tytuly({ zamowieniaUtkniete: 2 })).toContain('Zamówienia bez wygenerowanej strony')
+  })
+
+  // Wstrzymana strona wygląda w bazie jak udana — ma wypełniony `site_slug`.
+  // Gdyby raport jej nie pokazywał, klient czekałby bez końca na dane logowania.
+  it('zgłasza strony wstrzymane do przeglądu razem z powodem', () => {
+    const z = ocenStan({
+      ...zdrowy,
+      stronyDoPrzegladu: [{ slug: 'apart-sunny', powod: '✗ photos: Zero zdjęć.' }],
+    })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].tytul).toContain('1')
+    expect(z[0].szczegol).toContain('apart-sunny')
+    expect(z[0].szczegol).toContain('Zero zdjęć')
   })
 
   it('wykrywa niedziałający webhook po braku zdarzeń mimo ruchu', () => {

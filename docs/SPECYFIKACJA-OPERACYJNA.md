@@ -22,11 +22,17 @@ klientów naraz — inaczej niż w `casa-sol/`, które jest stroną jednego mies
 | Supabase | `cgsfhvgddtwppmqvdecz` | `ejteazvuaufaltmhcrwi` |
 | Vercel | `nobooking-landing` | `casa-sol-app` |
 | Poczta | Brevo | Resend |
-| Stripe | **wspólne konto** `acct_1TCfH5C4nRKn3H7A` | **to samo konto** |
+| Stripe | `acct_1UKa8vBYbNUONJ2O` „Nobooking" | `acct_1TCfH5C4nRKn3H7A` „Casasol-almadelmar" |
 
-Stripe to ostatni wspólny element. Do czasu rozdzielenia: zdarzenia płatności
-Casa Sol trafiają także do webhooka Nobookinga (i odwrotnie), więc **każdy
-handler musi ignorować zdarzenia, których nie rozpoznaje** — nigdy ich nie zgadywać.
+Do 2026-09-28 oba projekty dzieliły jedno konto Stripe i zdarzenia płatności
+Casa Sol trafiały także do webhooka Nobookinga. Konta są rozdzielone, ale reguła
+zostaje: **każdy handler ignoruje zdarzenia, których nie rozpoznaje** — nigdy ich
+nie zgaduje. Kosztuje jedną instrukcję `if`, a chroni przed każdym przyszłym
+zlaniem źródeł.
+
+Nobooking jest platformą Connect; konta właścicieli apartamentów powstają jako
+konta połączone (Express) pod `acct_1UKa8vBYbNUONJ2O`. Casa Sol **nie jest** i nie
+ma być jednym z nich — to osobne, samodzielne konto Stripe.
 
 ---
 
@@ -56,8 +62,15 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
    Właściciel kontroluje własne konto połączone i mógłby inaczej wystawić sobie
    sesję z metadanymi `{type:'renewal'}` i przedłużyć subskrypcję za darmo.
 7. **Merchant of record to właściciel apartamentu** (direct charges). On płaci
-   prowizję Stripe i odpowiada za chargebacki. Nie wracać do
-   `transfer_data.destination` — przy nim koszt prowizji ponosiła platforma.
+   prowizję Stripe i w pierwszej kolejności odpowiada za zwroty i chargebacki.
+   Nie wracać do `transfer_data.destination` — przy nim koszt prowizji ponosiła
+   platforma.
+   **Zastrzeżenie:** Stripe wymaga od platformy Connect podpisania
+   *Refunds and chargebacks liability acknowledgement*. Jeśli konto właściciela
+   wyjdzie na minus i nie da się tego pokryć z jego salda ani rachunku, obciążenie
+   spada na Nobooking. Tego nie da się wyłączyć — to warunek korzystania
+   z Connect. Ryzyko jest realne przy wynajmie: chargeback trafia zwykle po
+   pobycie, gdy właściciel zdążył już wypłacić środki.
 8. **Dwa terminy nie mogą się nakładać.** Gwarantuje to constraint
    `bookings_no_overlap` w bazie. Sprawdzenie w kodzie ma okno wyścigu i nie wystarcza.
 
@@ -80,6 +93,20 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
 14. **Kopia zapasowa nigdy nie nadpisuje dobrej wersji gorszą.** Spadek liczby
     wierszy poniżej połowy przerywa zapis.
 15. **Migracja poprzedza wdrożenie kodu, który jej wymaga.**
+16. **Żadna sesja Checkout nie podaje `payment_method_types`.** Stripe sam
+    pokazuje metody włączone na koncie, na którym powstaje płatność. Sztywna
+    lista wywraca **całą** sesję, gdy choć jednej metody brakuje — Stripe nie
+    pomija niedostępnej. Zdarzyło się dwa razy: przy rezerwacjach dla
+    właścicieli spoza Polski (2026-09-05) i przy odnowieniach po zmianie konta
+    platformy (2026-09-29: nowe konto nie ma `p24`). Lista metod zależy też od
+    waluty, więc nie da się jej ustalić w kodzie.
+17. **Klient nie dostaje danych logowania, zanim jego strona nie przejdzie
+    sprawdzenia.** Provisioning weryfikuje własną pracę: config (opis, zdjęcia,
+    cennik, pojemność) i to, czy strona się otwiera. Usterka blokująca wstrzymuje
+    maile i zostawia w `orders.notes` znacznik `[PROVISION-CHECK]`, po którym
+    agent zdrowia zgłasza sprawę. Zasada powstała, bo cron raportował sukces
+    także dla strony z zerem zdjęć albo ceną 0 za noc — a klient dowiadywał się
+    pierwszy. Implementacja: `src/lib/provisionCheck.ts`.
 
 ---
 
@@ -129,6 +156,28 @@ na celu webhooka.
 
 **Klient zapłacił i nie dostał strony** → `orders` z `onboarding_submitted = true`
 i `site_slug IS NULL`; sprawdź logi `provision-sites`.
+
+**Strona powstała, ale klient nie dostał maila** → to celowe wstrzymanie.
+Szukaj `orders` z `site_slug` niepustym i `notes LIKE '%[PROVISION-CHECK]%'` —
+ostatnia linia notatki mówi, co nie przeszło. Popraw config strony w panelu,
+a potem wyślij dane logowania ręcznie; cron nie ponowi wysyłki, bo `site_slug`
+jest już ustawiony.
+
+**Provisioning pada na tworzeniu konta właściciela** → sprawdź, czy to uprawnienia
+klucza, czy blokada Connect. Stripe podaje brakujące uprawnienie wprost w treści
+błędu, razem z linkiem do edycji konkretnego klucza. Klucz `rk_live_` Nobookinga
+potrzebuje w kolumnie *In your account*: **Accounts** (Write), **Account Links**
+(Write), **Events** (Read), a w kolumnie *In connected accounts*: **Checkout
+Sessions** (Write). Uwaga na pułapkę nazw: „Accounts **v2**" to inny zasób niż
+„Accounts" i nie obsługuje `POST /v1/accounts` używanego przez kod.
+
+**Błąd „You must complete your platform profile to use Connect"** → treść jest
+myląca. Sprawdź najpierw `individual.verification` na `GET /v1/account`:
+`status: unverified` z wypełnionym `details_code` to odrzucony dokument
+tożsamości właściciela platformy, a nie ankieta. `status: pending` oznacza
+weryfikację w toku — **nie wgrywaj kolejnego dokumentu**, bo każde wgranie kasuje
+trwające sprawdzenie i ustawia cię na końcu kolejki. Baner w panelu pokazuje
+wynik poprzedniej próby i nie odświeża się w trakcie bieżącej.
 
 **Cokolwiek dziwnego z danymi Casa Sol** → `casa-sol/docs/DIAGNOSTYKA-kalendarz.sql`
 (tylko odczyt) i kopia z `backups/casasol_bookings_latest.json`.

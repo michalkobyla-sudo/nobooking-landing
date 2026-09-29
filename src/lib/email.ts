@@ -1,4 +1,5 @@
 import type { Order } from './types'
+import { opisZrodla } from '@/lib/attribution'
 import { PRICE_LABELS } from './prices'
 
 const FROM_EMAIL = 'noreply@nobooking.eu'
@@ -115,6 +116,10 @@ export async function sendNewOrderNotification(order: Order) {
           </tr>
           ` : ''}
         </table>
+
+        <div style="border-left: 2px solid #e5e7eb; padding: 0 0 0 0.875rem; margin: 0 0 1.5rem; font-size: 0.8125rem; color: #6b7280;">
+          ${escapeHtml(opisZrodla(order))}
+        </div>
 
         <h3 style="font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem;">Apartament</h3>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">

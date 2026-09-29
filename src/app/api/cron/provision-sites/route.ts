@@ -5,6 +5,7 @@ import { provisionSite } from '@/lib/provision-site'
 import { createOnboardingLink } from '@/lib/stripe-connect'
 import { requireCron } from '@/lib/cronAuth'
 import { sendOwnerWelcomeEmail, sendSiteReadyEmail } from '@/lib/email'
+import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
 
 // Allow up to 300s on Vercel Pro, 60s on Hobby
@@ -90,8 +91,39 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', typedOrder.id)
 
-      // 4. Build Stripe Connect onboarding URL
       const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+
+      // 4. Sprawdzenie własnej pracy — przed mailem do klienta.
+      //    Bez tego kroku cron raportował sukces nawet dla strony z zerem zdjęć,
+      //    opisem-zaślepką albo ceną 0 za noc, a klient dowiadywał się pierwszy.
+      const usterki = [
+        ...sprawdzConfig(config),
+        ...await sprawdzStrone(`${siteUrl}/sites/${slug}`, config.name, async (u) => {
+          const r = await fetch(u, { headers: { 'user-agent': 'nobooking-provision-check' } })
+          return { status: r.status, tresc: await r.text() }
+        }),
+      ]
+
+      if (blokujeWysylke(usterki)) {
+        const opis = podsumowanie(usterki)
+        console.error(`[provision-cron] ⚠ order ${typedOrder.id} — strona "${slug}" do przeglądu: ${opis}`)
+
+        // Dopisujemy, nie nadpisujemy — w `notes` siedzą uwagi od klienta.
+        const wpis = `${MARKER_PRZEGLADU} ${new Date().toISOString()} — ${opis}`
+        await supabase
+          .from('orders')
+          .update({ notes: [typedOrder.notes, wpis].filter(Boolean).join('\n') })
+          .eq('id', typedOrder.id)
+
+        results.push({ id: typedOrder.id, status: 'do_przegladu', error: opis })
+        continue
+      }
+
+      if (usterki.length > 0) {
+        console.warn(`[provision-cron] order ${typedOrder.id} — uwagi: ${podsumowanie(usterki)}`)
+      }
+
+      // 5. Build Stripe Connect onboarding URL
       let stripeOnboardUrl = `${siteUrl}/api/connect/onboard?slug=${slug}`
       if (stripeAccountId) {
         try {
@@ -101,7 +133,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // 5. Welcome email (credentials + Stripe Connect link)
+      // 6. Welcome email (credentials + Stripe Connect link)
       const ownerEmail = (typedOrder.ob_contact_email ?? typedOrder.email).toLowerCase().trim()
       await sendOwnerWelcomeEmail({
         email: ownerEmail,
@@ -113,7 +145,7 @@ export async function GET(request: NextRequest) {
         plan: typedOrder.plan,
       })
 
-      // 6. Site-ready email with revision link
+      // 7. Site-ready email with revision link
       await sendSiteReadyEmail(typedOrder, slug, 0, 4)
 
       console.log(`[provision-cron] ✅ order ${typedOrder.id} — site "${slug}" provisioned`)

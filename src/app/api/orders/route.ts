@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { sendNewOrderNotification } from '@/lib/email'
+import { zBody, opisZrodla } from '@/lib/attribution'
 import type { Order } from '@/lib/types'
 
 function validateEmail(email: string): boolean {
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     apartment_name?: string
     apartment_location?: string
     notes?: string
+    zrodlo?: unknown
   }
 
   // Validate required fields
@@ -48,6 +50,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_nip' }, { status: 400 })
   }
 
+  const zrodlo = zBody(body.zrodlo)
+
   const supabase = createServiceClient()
 
   // Insert order
@@ -66,6 +70,9 @@ export async function POST(request: NextRequest) {
       apartment_name: body.apartment_name!.trim(),
       apartment_location: body.apartment_location!.trim(),
       notes: body.notes?.trim() || null,
+      // Atrybucja. `zBody` przycina i czyści — to dane z formularza, czyli
+      // pochodzące ostatecznie z adresu URL, więc niezaufane.
+      ...zrodlo,
     })
     .select()
     .single()

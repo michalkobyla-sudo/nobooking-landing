@@ -43,7 +43,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card', 'p24', 'blik'],
+      // Bez `payment_method_types` — Stripe pokazuje metody włączone na koncie.
+      // Sztywna lista ['card','p24','blik'] wywracała tworzenie sesji po zmianie
+      // konta platformy 2026-09-28: nowe konto nie ma włączonego p24, a Stripe
+      // odrzuca całą sesję, zamiast pominąć niedostępną metodę. Ten sam błąd
+      // naprawiono wcześniej przy rezerwacjach (`src/lib/stripe-connect.ts`).
       line_items: [
         {
           price_data: {
