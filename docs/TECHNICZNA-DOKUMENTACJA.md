@@ -647,8 +647,21 @@ wywołanie crona.
 ponowiony automatycznie — świadomy wybór, bo gość woli nie dostać przypomnienia
 niż dostać je pięć razy.
 
-Uwaga na nazwy: cron `review-requests` pyta **właścicieli apartamentów** o opinię
-o samym Nobookingu i nie ma nic wspólnego z opiniami gości.
+Uwaga na nazwy — dwie różne prośby o opinię, łatwe do pomylenia:
+
+| Cron | Do kogo | O czym | Kiedy |
+|---|---|---|---|
+| `guest-reminders` | gość | apartament | 2 dni po wyjeździe |
+| `review-requests` | właściciel apartamentu (nasz klient) | Nobooking | 3 dni po uruchomieniu strony |
+
+Ten drugi **nie wysłał ani jednej wiadomości od maja**: szukał zamówień
+w statusie `completed`, który ustawia wyłącznie człowiek w panelu admina — nic
+w kodzie go nie nadaje. Do tego okno ±12 h wokół „trzy dni temu" przy dziennym
+cyklu pozwalało trafić w to samo zamówienie dwa razy.
+
+Od 2026-09-30 rozstrzyga znacznik `orders.review_request_sent_at`, niezależny
+od statusu i od szerokości okna. Zapisywany **po** udanej wysyłce — zapisany
+wcześniej odciąłby ponowienie przy awarii poczty, a ta awaria już tu była.
 
 ### Online check-in (pakiet Pro)
 

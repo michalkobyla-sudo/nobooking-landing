@@ -72,6 +72,8 @@ export interface Order {
   site_slug: string | null
   generated_config: string | null  // JSON: ApartmentConfig
   site_generated_at: string | null
+  /** Kiedy poszła prośba o opinię o Nobookingu (migracja 2026-09-30). */
+  review_request_sent_at: string | null
 
   // ─── Runda poprawek (max 4) ───────────────────────────────────────────────────
   revision_token: string
