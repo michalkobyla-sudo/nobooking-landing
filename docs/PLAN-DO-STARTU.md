@@ -93,9 +93,32 @@ Rzeczy, których nikt poza Tobą nie zrobi, a blokują resztę.
 
 | Zadanie | Blokuje |
 |---|---|
-| Weryfikacja tożsamości w Stripe (przycisk Retry, z telefonu) | całe Connect: żadna strona nie przyjmie płatności |
+| **Weryfikacja tożsamości w Stripe — sprawa u nich**, case `sco_VM2a5pB7AWY2PO` | całe Connect: żadna strona nie przyjmie płatności |
 | `gh auth refresh -h github.com -s workflow` | CI — plik `ci.yml` leży poza `main` |
 | **Wniosek do Meta o `ads_management`** | Etap 4; czeka tygodniami, więc składamy najwcześniej |
+
+### Stan weryfikacji tożsamości — 2026-09-30
+
+Pięć prób: trzy razy dowód osobisty (28.09), raz paszport (30.09, 07:42 UTC,
+`file_1ULIAABYbNUONJ2OxuLM5HbR`). Wszystkie odrzucone bez podania powodu.
+
+Sprzeczność, której nie da się rozstrzygnąć z zewnątrz:
+
+| Źródło | Co mówi |
+|---|---|
+| Kreator w panelu | „Verify your identity — **Failed**" |
+| `GET /v1/account` | `status: pending`, `details_code: null` |
+| `requirements` | pusty obiekt — Stripe niczego nie żąda |
+
+Rozmowa z supportem 30.09 przeszła przez trzy linie (Ayush → Jay → dział
+weryfikacji) i skończyła się przekazaniem sprawy mailem.
+**Case: `sco_VM2a5pB7AWY2PO`.**
+
+Pytanie przekazane do zespołu: jaki powód odrzucenia jest zapisany po ich
+stronie, a jeśli żaden — prośba o ręczny reset stanu weryfikacji.
+
+**Nie wgrywamy szóstego dokumentu.** Pięć prób, dwa typy dokumentu, zero
+zapisanych powodów: to nie jest problem jakości zdjęcia.
 
 **Wniosek do Meta składamy teraz, mimo że marketing jest ostatni.** Weryfikacja
 Business Managera i App Review trwają niezależnie od naszej pracy — czekanie
