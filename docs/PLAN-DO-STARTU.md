@@ -331,9 +331,21 @@ i tematykę: case studies, koszt prowizji, zrzuty panelu — nie zdjęcia plaż.
 - strona firmowa FB i konto IG Business połączone z nią;
 - agent treści (A4 z audytu) — kalendarz postów do kolejki roboczej,
   publikacja po zatwierdzeniu;
-- agent społeczności (A5) — rozbudowa istniejącego bota Messengera o Instagram DM;
-  **warunek: bot odpowiada publicznie pod Twoją marką**, więc granica zaufania
-  musi zostać taka, jak jest teraz;
+- agent społeczności (A5) — **bot Messengera nie działa i nigdy nie działał.**
+  Sprawdzone 2026-09-30: z pięciu tabel, na których stoi, istnieje wyłącznie
+  `bot_processed_messages` (utworzona przy naprawie duplikatów 25 września).
+  Brakuje `bot_settings`, `bot_knowledge`, `bot_leads`, `bot_conversations`.
+  `isBotEnabled()` trafia na błąd i zawodzi na zamknięto, więc bot milczy —
+  zachowanie poprawne, tylko funkcji nie ma.
+
+  Znaczy to, że wrześniowe poprawki bota (model `claude-sonnet-5`, prompt
+  caching, structured outputs, zaklepywanie po `message.mid`) dotyczyły kodu,
+  który nigdy się nie wykonał. Są poprawne, ale nie naprawiły niczego
+  działającego — jak przy poprawkach klienta.
+
+  Zanim A5 ruszy: migracja z czterema tabelami plus baza wiedzy do wypełnienia.
+  **Warunek pozostaje ten sam** — bot odpowiada publicznie pod Twoją marką, więc
+  granica zaufania musi zostać taka, jak jest teraz;
 - agent reklamowy (A6) — tylko odczyt wyników i propozycje, zmiany zatwierdzasz
   Ty (Z7).
 
