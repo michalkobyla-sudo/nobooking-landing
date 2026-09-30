@@ -739,6 +739,15 @@ błędu. Agent zdrowia raportuje nieudane wysyłki z ostatniej doby — bez tego
 byłaby to awaria niewidoczna dla właściciela, bo brak SMS-a niczym się nie
 objawia.
 
+Agent zdrowia sprawdza też **same poświadczenia**, tak jak robi to z kluczem
+Brevo i Anthropic. Zły token byłby inaczej niewidoczny aż do pierwszej
+rezerwacji. Trzy stany: `null` — nieskonfigurowane, i to nie jest awaria, bo
+SMS-y są funkcją pakietu Pro; `false` — Twilio odrzuca poświadczenia albo
+konfiguracja jest niekompletna; `true` — w porządku.
+
+Niekompletna konfiguracja (jedna lub dwie zmienne z trzech) jest traktowana jak
+awaria, nie jak brak: wygląda na włączoną, a moduł i tak nie wyśle nic.
+
 Plan sprawdzany po stronie serwera, w `powiadomORezerwacji` i w trasie ustawień.
 
 ### Atrybucja — skąd przyszedł klient

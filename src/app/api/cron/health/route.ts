@@ -63,6 +63,30 @@ export async function GET(request: NextRequest) {
     console.error('[health] nie udało się sprawdzić poczty:', err)
   }
 
+  // ── SMS ────────────────────────────────────────────────────────────────────
+  // Komplet zmiennych albo nic: brak konfiguracji to null, nie awaria, bo
+  // SMS-y są funkcją pakietu Pro i dopóki nikt go nie ma, są zbędne.
+  let smsDziala: boolean | null = null
+  try {
+    const sid = (process.env.TWILIO_ACCOUNT_SID ?? '').trim()
+    const token = (process.env.TWILIO_AUTH_TOKEN ?? '').trim()
+    const from = (process.env.TWILIO_FROM_NUMBER ?? '').trim()
+
+    if (sid && token && from) {
+      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
+        headers: { Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64') },
+      })
+      smsDziala = r.ok
+    } else if (sid || token || from) {
+      // Częściowa konfiguracja jest gorsza od żadnej: wygląda na włączoną,
+      // a moduł i tak nie wyśle nic.
+      console.error('[health] konfiguracja Twilio jest niekompletna')
+      smsDziala = false
+    }
+  } catch (err) {
+    console.error('[health] nie udało się sprawdzić Twilio:', err)
+  }
+
   // ── Generowanie stron i bot ────────────────────────────────────────────────
   let modelDziala: boolean | null = null
   try {
@@ -176,6 +200,7 @@ export async function GET(request: NextRequest) {
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
     stronyDoPrzegladu,
     smsNieudane,
+    smsDziala,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
     wygasajaceSubskrypcje,

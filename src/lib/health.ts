@@ -26,6 +26,8 @@ export interface StanSystemu {
   stronyDoPrzegladu: Array<{ slug: string; powod: string }>
   /** Nieudane wysyłki SMS z ostatniej doby, pogrupowane po powodzie. */
   smsNieudane: Array<{ powod: string; ile: number }>
+  /** Czy poświadczenia Twilio są ważne. `null` = SMS-y nieskonfigurowane. */
+  smsDziala: boolean | null
   /** Rezerwacje `pending` starsze niż 3 h — cron sprzątający powinien je anulować. */
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
@@ -122,6 +124,18 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       szczegol: s.stronyDoPrzegladu
         .map((p) => `${p.slug} — ${p.powod}`)
         .join('; ') + '. Klient nie dostał danych logowania. Popraw config i wyślij ręcznie.',
+    })
+  }
+
+  // Zły token byłby niewidoczny aż do pierwszej rezerwacji: wysyłka nie
+  // przewraca potwierdzania, tylko cicho nie dochodzi. `null` znaczy
+  // „nieskonfigurowane" i nie jest awarią — SMS-y są funkcją pakietu Pro,
+  // więc dopóki nikt go nie ma, brak konfiguracji jest w porządku.
+  if (s.smsDziala === false) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Powiadomienia SMS nie działają',
+      szczegol: 'Twilio odrzuca poświadczenia. Właściciele z planem Pro nie dostaną SMS-ów o rezerwacjach, a nic ich o tym nie poinformuje.',
     })
   }
 

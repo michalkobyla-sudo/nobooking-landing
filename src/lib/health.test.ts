@@ -6,6 +6,7 @@ const zdrowy: StanSystemu = {
   zamowieniaUtkniete: 0,
   stronyDoPrzegladu: [],
   smsNieudane: [],
+  smsDziala: null,
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
   wygasajaceSubskrypcje: [],
@@ -163,5 +164,23 @@ describe('ocenStan — SMS', () => {
 
   it('milczy, gdy nic nie padlo', () => {
     expect(ocenStan({ ...zdrowy, smsNieudane: [] })).toEqual([])
+  })
+})
+
+describe('ocenStan — poswiadczenia Twilio', () => {
+  it('zglasza odrzucone poswiadczenia', () => {
+    const z = ocenStan({ ...zdrowy, smsDziala: false })
+    expect(z).toHaveLength(1)
+    expect(z[0].tytul).toContain('SMS')
+  })
+
+  // Brak konfiguracji to nie awaria: SMS-y sa funkcja pakietu Pro, wiec dopoki
+  // nikt go nie ma, ich brak jest w porzadku. Alarm bylby tu szumem.
+  it('milczy, gdy SMS-y nie sa skonfigurowane', () => {
+    expect(ocenStan({ ...zdrowy, smsDziala: null })).toEqual([])
+  })
+
+  it('milczy, gdy dzialaja', () => {
+    expect(ocenStan({ ...zdrowy, smsDziala: true })).toEqual([])
   })
 })
