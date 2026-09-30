@@ -570,6 +570,12 @@ dwa nakładające się uruchomienia crona nie utworzą dwóch kont.
 
 ### Poprawki i regeneracja strony
 
+> **Wymaga migracji `2026-09-30-poprawki.sql`.** Kolumny `revision_token`,
+> `revision_count` i `revision_notes` nie istniały w bazie do 2026-09-30, mimo
+> że cały mechanizm był w kodzie od maja. Mail „strona gotowa" budował link
+> `/poprawki/undefined`, a trasa poprawek kończyła się błędem 42703. Ten sam
+> wzorzec co przy odnowieniach: kod wdrożony, migracja nie.
+
 Konfiguracja żyje w **dwóch** miejscach i łatwo je pomylić:
 
 | Gdzie | Rola |

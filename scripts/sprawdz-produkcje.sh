@@ -69,6 +69,8 @@ kolumna sites  sms_enabled          "2026-09-29-sms.sql"
 tabela  sms_log                     "2026-09-29-sms.sql"
 tabela  guest_notifications         "2026-09-29-powiadomienia-gosci.sql"
 kolumna orders review_request_sent_at "2026-09-30-prosba-o-opinie-klienta.sql"
+kolumna orders revision_token        "2026-09-30-poprawki.sql"
+kolumna orders revision_count        "2026-09-30-poprawki.sql"
 tabela  checkin_forms               "(w schemacie od poczatku)"
 
 # ── Strony publiczne ──────────────────────────────────────────────────────────
