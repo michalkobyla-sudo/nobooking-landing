@@ -73,6 +73,31 @@ kolumna orders revision_token        "2026-09-30-poprawki.sql"
 kolumna orders revision_count        "2026-09-30-poprawki.sql"
 tabela  checkin_forms               "(w schemacie od poczatku)"
 
+# ── Kazda tabela, do ktorej siega kod ─────────────────────────────────────────
+#
+# Cztery razy w tym projekcie zdarzylo sie, ze kod byl wdrozony, a migracja nie:
+# odnowienia, poprawki klienta, prosba o opinie, bot Messengera. Za kazdym razem
+# funkcja milczala zamiast krzyczec. To sprawdzenie zamyka cala klase: lista
+# tabel bierze sie z kodu, wiec nie da sie dodac odwolania i zapomniec o migracji.
+naglowek "── Tabele uzywane w kodzie"
+
+# Tabele bota nalezą do etapu 4 i celowo jeszcze nie istnieja. Wymienione
+# wprost, zeby ich brak nie zamienil sie w codzienny czerwony szum.
+OCZEKIWANY_BRAK="bot_settings bot_knowledge bot_leads bot_conversations"
+
+for T in $(grep -rho "from('[a-z_]*')" src/ | sed "s/from('//;s/')//" | sort -u); do
+  KOD=$(curl -s -o /dev/null -w '%{http_code}' \
+    "$BAZA/rest/v1/$T?select=*&limit=1" \
+    -H "apikey: $KLUCZ" -H "Authorization: Bearer $KLUCZ")
+  if [ "$KOD" = "200" ]; then
+    ok "$T"
+  elif echo "$OCZEKIWANY_BRAK" | grep -qw "$T"; then
+    uwaga "$T — brak, ale to oczekiwane (bot, etap 4)"
+  else
+    zle "$T — TABELA NIE ISTNIEJE, a kod jej uzywa"
+  fi
+done
+
 # ── Strony publiczne ──────────────────────────────────────────────────────────
 naglowek "── Strony"
 # Cennik jest kotwica na stronie glownej (#cennik), nie osobna podstrona.
