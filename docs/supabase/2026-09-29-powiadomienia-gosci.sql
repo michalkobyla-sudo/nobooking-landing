@@ -35,15 +35,22 @@ comment on table public.guest_notifications is
 --
 -- Formularz opinii zapisuje przez upsert po `booking_id`: gosc moze poprawic
 -- swoja opinie, ale nie dopisac drugiej. Bez tego indeksu upsert nie ma po czym
--- rozstrzygac konfliktu. Indeks czesciowy, bo `booking_id` bywa puste —
--- opinie przeniesione recznie z innych serwisow nie maja rezerwacji.
+-- rozstrzygac konfliktu.
+--
+-- Indeks NIE moze byc czesciowy. Pierwsza wersja miala `where booking_id is not
+-- null` i choc pilnowala unikalnosci, `ON CONFLICT (booking_id)` nie potrafil
+-- jej dopasowac — Postgres przy indeksie czesciowym wymaga powtorzenia tego
+-- samego predykatu w zapytaniu. Predykat niczego zreszta nie kupowal: w zwyklym
+-- indeksie unikalnym i tak mozna miec wiele wartosci NULL, wiec opinie bez
+-- rezerwacji nadal sie zapisza.
 --
 -- Tabela `reviews` jest dzis pusta (do 2026-09-29 nic do niej nie pisalo), wiec
 -- nie ma duplikatow, ktore moglyby zablokowac utworzenie indeksu.
 
+drop index if exists public.reviews_booking_id_uniq;
+
 create unique index if not exists reviews_booking_id_uniq
-  on public.reviews (booking_id)
-  where booking_id is not null;
+  on public.reviews (booking_id);
 
 -- Sprawdzenie po uruchomieniu:
 -- select count(*) from public.guest_notifications;
