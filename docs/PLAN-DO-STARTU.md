@@ -121,9 +121,20 @@ CI uruchamia się na pull requestach; wniosek do Meta złożony.
 > | Maile: anulowanie, przed przyjazdem (1f) | zbudowane |
 > | Treść oferty | „karta, BLIK, P24" → „…i inne", bo metody zależą od konta właściciela (Z1) |
 >
-> **Migracje do uruchomienia przed wdrożeniem** (niezmiennik 15):
-> `2026-09-29-sms.sql`, `2026-09-29-powiadomienia-gosci.sql`,
-> `2026-09-29-atrybucja-komentarze.sql`.
+> **Wszystkie migracje uruchomione 2026-09-29/30.** Skrypt
+> `./scripts/sprawdz-produkcje.sh` pilnuje każdej kolumny, od której zależy
+> jakaś funkcja — dziesięć pozycji.
+>
+> **Dwie martwe funkcje znalezione 2026-09-30** przy przeglądzie klasy „kod
+> kończy się sukcesem, nie robiąc nic":
+>
+> | Co | Od kiedy | Dlaczego niewidoczne |
+> |---|---|---|
+> | Prośba o opinię do klienta (`review-requests`) | maj | zapytanie poprawne, wynik zawsze pusty — szukało statusu, którego nic nie nadaje |
+> | Cała funkcja poprawek, 4 rundy | maj | migracja nigdy nieuruchomiona; mail dawał link `/poprawki/undefined` |
+>
+> Obie naprawione i sprawdzone na produkcji. Żadna nie zostawiała błędu
+> w logach — wyszły dopiero przy porównaniu kodu z rzeczywistą bazą.
 
 
 Najważniejszy etap. Dopóki trwa, **nie sprzedajemy pakietu Pro.**
@@ -218,6 +229,16 @@ wymagałyby zbierania ruchu, czyli osobnego podsystemu i zgód cookie.
 ---
 
 ## Etap 2 — Pełny przebieg na prawdziwych danych
+
+> **Runbook:** `ETAP-2-PRZEBIEG.md` — dziesięć kroków z opisem, czego każdy
+> dowodzi. Przygotowany 2026-09-30, czeka na odblokowanie Connecta.
+>
+> Dwie rzeczy ustalone przy pisaniu runbooka:
+> - **Hasło do panelu bierze się z maila powitalnego**, który wysyła
+>   provisioning. Nie ma potrzeby zmieniać żadnego hasła ręcznie, żeby
+>   sprawdzić analitykę i kody rabatowe.
+> - **Potrzebne są dwie strony**, bo trzy sprawdzenia dotyczą granicy między
+>   najemcami i na jednej stronie przechodzą fałszywie.
 
 Do tej pory każda funkcja była sprawdzana osobno. Teraz jedna ścieżka od końca
 do końca, na produkcji, bez skrótów:
