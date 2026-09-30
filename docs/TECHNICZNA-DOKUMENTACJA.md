@@ -609,6 +609,34 @@ Pułapka przy zmianach w tym kodzie: punktem odniesienia musi zostać config
 rundzie poprawek zmiana właściciela zrównuje się z punktem odniesienia, wygląda
 na brak zmiany i zostaje cofnięta. Pilnuje tego test „dwie rundy poprawek".
 
+### Obserwowalność — Sentry
+
+| Plik | Rola |
+|---|---|
+| `instrumentation.ts` | `register()` — jedyny sposób, w jaki Next uruchamia konfigurację serwerową; plus `onRequestError` |
+| `instrumentation-client.ts` | konfiguracja przeglądarki; plus `onRouterTransitionStart` |
+| `sentry.server.config.ts`, `sentry.edge.config.ts` | właściwe `Sentry.init`, importowane przez `register()` |
+| `next.config.ts` | `withSentryConfig` — mapy źródeł i build |
+
+**Do 2026-09-30 Sentry nie zbierało niczego**, mimo że wyglądało na
+skonfigurowane: pliki `sentry.*.config.ts` istniały, `withSentryConfig` owijał
+build, a DSN był ustawiony w Vercelu. Brakowało `instrumentation.ts`, bez
+którego `Sentry.init` po stronie serwera nigdy się nie wykonuje, oraz
+właściwej nazwy pliku klienckiego (`sentry.client.config.ts` zamiast
+`instrumentation-client.ts`, wymaganego przez Next 16).
+
+Skutkiem ubocznym było to, że `Sentry.captureException` w `global-error.tsx`
+trafiało w niezainicjowany SDK — wyglądało na obsługę błędów, a nie było nią.
+
+To jest meta-problem wszystkich cichych awarii w tym projekcie: backup, sekrety
+webhooków, poczta i dwa martwe crony nie miały kanału zgłoszeniowego, choć
+wydawało się, że mają. Agent zdrowia powstał jako proteza tego braku i nią
+zostaje — działa na danych z bazy, więc łapie inne rzeczy niż Sentry.
+
+`onRequestError` jest tu ważniejszy niż w typowej aplikacji, bo nasze trasy
+łapią większość wyjątków, żeby nie wywracać płatności. Bez niego Sentry
+widziałoby wyłącznie to, co aplikacja zgłosi sama.
+
 ### Opinie gości
 
 Pełny obieg: e-mail dwa dni po wyjeździe → formularz gościa → moderacja
