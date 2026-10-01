@@ -50,6 +50,8 @@ export interface StanSystemu {
   rezerwacje7dni: number
   /** Kolumny lub tabele, których zabrakło przy sprawdzeniu schematu. */
   brakiSchematu: string[]
+  /** Crony, które milczą dłużej, niż pozwala ich harmonogram. */
+  cronyMilczace: Array<{ nazwa: string; godzinTemu: number | null }>
   /** Czy klucz API poczty jest ważny. null = nie udało się sprawdzić. */
   mailDziala: boolean | null
   /** Czy klucz Anthropic jest ważny — bez niego provisioning nie wygeneruje strony. */
@@ -218,6 +220,19 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Zamówienie bez strony — próby wyczerpane',
       szczegol: `${p.id} — cron provision-sites przestał próbować. Powód ostatniej próby: ${p.powod || 'nie zapisano'}. Klient zapłacił i czeka.`,
+    })
+  }
+
+  // Cron, ktory sie nie uruchomil, nie zostawia sladu nigdzie indziej:
+  // Sentry zglosi wyjatek, ale nie zglosi nieobecnosci. Wszystkie pozostale
+  // wykrywacze w tym raporcie sa objawowe i pilnuja skutku pojedynczego crona.
+  for (const c of s.cronyMilczace) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: `Cron nie chodzi: ${c.nazwa}`,
+      szczegol: c.godzinTemu === null
+        ? 'Nie ma po nim ani jednego uruchomienia. Sprawdź harmonogram w vercel.json i limity planu Vercel.'
+        : `Ostatnie uruchomienie ${Math.round(c.godzinTemu)} h temu — dłużej, niż pozwala harmonogram.`,
     })
   }
 

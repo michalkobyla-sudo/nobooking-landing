@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { sendRenewalEmail } from '@/lib/sendRenewalEmail'
 
 // Reminder thresholds in days before expiry.
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(supabase, request.nextUrl.pathname)
   const now = new Date()
   const today = now.toISOString().slice(0, 10)
 

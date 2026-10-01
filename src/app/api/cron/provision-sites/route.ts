@@ -4,6 +4,7 @@ import { generateSiteConfig } from '@/lib/generate-site'
 import { provisionSite } from '@/lib/provision-site'
 import { createOnboardingLink } from '@/lib/stripe-connect'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { sendOwnerWelcomeEmail, sendSiteReadyEmail } from '@/lib/email'
 import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(supabase, request.nextUrl.pathname)
   const staleCutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString()
 
   // Find orders: onboarding submitted but site not yet generated

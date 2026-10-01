@@ -18,6 +18,7 @@ const zdrowy: StanSystemu = {
   zdarzeniaStripe7dni: 3,
   rezerwacje7dni: 2,
   brakiSchematu: [],
+  cronyMilczace: [],
   mailDziala: true,
   modelDziala: true,
   botWlaczony: false,
@@ -265,5 +266,27 @@ describe('ocenStan - provisioning poddany', () => {
 
   it('milczy, gdy nic sie nie poddalo', () => {
     expect(ocenStan({ ...zdrowy, zamowieniaPoddane: [] })).toEqual([])
+  })
+})
+
+describe('ocenStan - crony, ktore stanely', () => {
+  // Jedyna awaria, ktorej nie zlapie ani Sentry, ani zaden objawowy wykrywacz:
+  // kod, ktory sie nie wykonal, nie zostawia po sobie nic.
+  it('zglasza spozniony cron jako krytyczny', () => {
+    const z = ocenStan({ ...zdrowy, cronyMilczace: [{ nazwa: 'backup-bookings', godzinTemu: 50 }] })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].tytul).toContain('backup-bookings')
+    expect(z[0].szczegol).toContain('50')
+  })
+
+  it('odroznia cron, ktory nigdy sie nie uruchomil', () => {
+    const z = ocenStan({ ...zdrowy, cronyMilczace: [{ nazwa: 'health', godzinTemu: null }] })
+    expect(z[0].szczegol).toContain('ani jednego uruchomienia')
+    expect(z[0].szczegol).toContain('vercel.json')
+  })
+
+  it('milczy, gdy wszystkie chodza', () => {
+    expect(ocenStan({ ...zdrowy, cronyMilczace: [] })).toEqual([])
   })
 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { DNI_RETENCJI } from '@/lib/checkin'
 
 // GET /api/cron/cleanup-pending-bookings
@@ -13,6 +14,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(supabase, request.nextUrl.pathname)
 
   // Find pending bookings older than 2 hours
   const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()

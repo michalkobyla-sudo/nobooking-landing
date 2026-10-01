@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import type { Order } from '@/lib/types'
 
 /**
@@ -23,6 +24,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const supabase = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(supabase, request.nextUrl.pathname)
 
   // Trzy dni od uruchomienia strony, bez górnego ograniczenia: jeśli cron
   // nie zadziałał wczoraj, nadrobi dziś. Znacznik pilnuje jednokrotności.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { sendPreArrivalReminder, sendReviewRequest, type BookingEmailData } from '@/lib/email'
 
 export const maxDuration = 120
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const db = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(db, request.nextUrl.pathname)
   const wyniki = { przed_przyjazdem: 0, prosba_o_opinie: 0, bledy: [] as string[] }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')

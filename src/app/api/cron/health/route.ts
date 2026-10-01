@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
+import { odnotujPrzebieg, milczaceCrony } from '@/lib/cronHeartbeat'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
@@ -56,6 +57,7 @@ const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
   // Bez tej tabeli limit żądań cicho przestaje być wspólny: proxy zawodzi
   // na otwarto i zostaje tylko licznik w pamięci instancji.
   ['rate_limits', 'koniec'],
+  ['cron_runs', 'ostatni_przebieg'],
 ]
 
 export async function GET(request: NextRequest) {
@@ -63,6 +65,10 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const db = createServiceClient()
+
+  // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
+  // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
+  await odnotujPrzebieg(db, request.nextUrl.pathname)
   const teraz = Date.now()
   const godzTemu = (h: number) => new Date(teraz - h * 3_600_000).toISOString()
 
@@ -87,6 +93,25 @@ export async function GET(request: NextRequest) {
     id: String(o.id),
     powod: String(o.provisioning_error ?? ''),
   }))
+
+  // Czy wszystkie crony w ogole chodza.
+  const { data: przebiegi } = await db
+    .from('cron_runs')
+    .select('nazwa, ostatni_przebieg, przebiegi')
+
+  // Licznik samego raportu mowi, czy mechanizm zdazyl sie zapelnic. Bez tego
+  // pierwszy przebieg po migracji wypisalby alarm o kazdym cronie.
+  const przebiegiRaportu = Number(
+    (przebiegi ?? []).find(r => String(r.nazwa) === 'health')?.przebiegi ?? 0,
+  )
+
+  const cronyMilczace = milczaceCrony(
+    (przebiegi ?? []).map(r => ({
+      nazwa: String(r.nazwa),
+      godzinTemu: (teraz - Date.parse(String(r.ostatni_przebieg))) / 3_600_000,
+    })),
+    przebiegiRaportu,
+  )
 
   // ── Kopia zapasowa ─────────────────────────────────────────────────────────
   let ostatniaKopiaGodzinTemu: number | null = null
@@ -324,6 +349,7 @@ export async function GET(request: NextRequest) {
     zdarzeniaStripe7dni: zdarzeniaStripe7dni ?? 0,
     rezerwacje7dni: rezerwacje7dni ?? 0,
     brakiSchematu,
+    cronyMilczace,
     mailDziala,
     modelDziala,
     botWlaczony,
