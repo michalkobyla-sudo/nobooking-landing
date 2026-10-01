@@ -308,11 +308,13 @@ wzrost.
   na każdym pushu na `main` i każdym pull requeście. Pierwszy przebieg: 56 s,
   zielony. **Bez żadnych sekretów** — sprawdzone, że `npm run build` przechodzi
   bez `.env.local`, bo generowanie stron nie sięga do Supabase ani do Stripe.
-  Plik trzeba było dodać przez edytor GitHuba: token OAuth bez zakresu
-  `workflow` nie może tworzyć ani zmieniać plików workflow (potwierdzone
-  odbiciem pusha). To samo ograniczenie dotyczy każdej przyszłej zmiany w tym
-  pliku — albo `gh auth refresh -h github.com -s workflow`, albo edytor
-  w przeglądarce;
+  Pierwszy plik trzeba było dodać przez edytor GitHuba, bo token OAuth bez
+  zakresu `workflow` nie może tworzyć ani zmieniać plików workflow — push
+  odbija się z `refusing to allow an OAuth App…`. Zakres dodany tego samego
+  dnia (`gh auth refresh -h github.com -s workflow`), więc kolejne poprawki
+  idą normalnie z CLI. **Jeśli `gh auth refresh` zawiesza się na „Press Enter"**
+  — a zawiesi się, bo czeka na klawisz, zanim zacznie odpytywać GitHuba —
+  uruchom `echo | gh auth refresh -h github.com -s workflow`;
 - ✅ **repo poza iCloud** — przeniesione 2026-10-01 do `~/Developer/nobooking-landing`
   (świeży klon z GitHuba, przeniesione `.env.local` i `.vercel/`). iCloud tworzył
   duplikaty plików w `.next/types/` (`routes.d 2.ts`), przez co `tsc` zgłaszał
