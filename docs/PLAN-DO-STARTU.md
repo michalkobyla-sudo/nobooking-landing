@@ -301,11 +301,18 @@ z zapisanym wynikiem każdego kroku.
 Rzeczy, które nie są widoczne dla klienta, ale decydują, czy system przetrwa
 wzrost.
 
-> **Stan 2026-10-01: trzy z czterech zamknięte.** Zostaje CI (czeka na
-> `gh auth refresh -h github.com -s workflow`). Repo wyprowadzone z iCloud
-> tego samego dnia.
+> **Stan 2026-10-01: etap zamknięty.** Wszystkie cztery pozycje plus piąta,
+> której w planie nie było (ślady po cronach).
 
-- **CI** — `tsc` i testy na każdym pull requeście (odblokowane w Etapie 0);
+- ✅ **CI** — `.github/workflows/ci.yml`: `npm ci`, `tsc`, 283 testy i build
+  na każdym pushu na `main` i każdym pull requeście. Pierwszy przebieg: 56 s,
+  zielony. **Bez żadnych sekretów** — sprawdzone, że `npm run build` przechodzi
+  bez `.env.local`, bo generowanie stron nie sięga do Supabase ani do Stripe.
+  Plik trzeba było dodać przez edytor GitHuba: token OAuth bez zakresu
+  `workflow` nie może tworzyć ani zmieniać plików workflow (potwierdzone
+  odbiciem pusha). To samo ograniczenie dotyczy każdej przyszłej zmiany w tym
+  pliku — albo `gh auth refresh -h github.com -s workflow`, albo edytor
+  w przeglądarce;
 - ✅ **repo poza iCloud** — przeniesione 2026-10-01 do `~/Developer/nobooking-landing`
   (świeży klon z GitHuba, przeniesione `.env.local` i `.vercel/`). iCloud tworzył
   duplikaty plików w `.next/types/` (`routes.d 2.ts`), przez co `tsc` zgłaszał
@@ -416,7 +423,7 @@ Ruszamy, gdy wszystkie poniższe są prawdziwe:
 - [ ] każda funkcja z `PAKIET-BASIC.md` i `PAKIET-PRO.md` działa i została
       sprawdzona na produkcji (Etapy 1–2);
 - [ ] pełny przebieg od zamówienia do odnowienia przeszedł raz (Etap 2);
-- [ ] CI pilnuje testów i typów (Etap 3);
+- [x] CI pilnuje testów i typów (Etap 3) — od 2026-10-01;
 - [ ] agent zdrowia raportuje czysto przez siedem dni z rzędu;
 - [ ] kopia zapasowa powstaje codziennie i ma niezerową treść;
 - [ ] atrybucja wiąże zamówienie z kampanią (Etap 4a);
