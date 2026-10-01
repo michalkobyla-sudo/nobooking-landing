@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // Create Connect account if not yet assigned
   if (!accountId) {
     try {
-      accountId = await createConnectAccount(site.owner_email)
+      accountId = await createConnectAccount(site.owner_email, site.slug as string)
       await supabase
         .from('sites')
         .update({ stripe_account_id: accountId, stripe_onboarded: false })

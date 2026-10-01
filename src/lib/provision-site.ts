@@ -175,10 +175,12 @@ export async function provisionSite(
     ownerUserId = authData.user!.id
   }
 
-  // ── 2. Create Stripe Connect Express account ─────────────────────────────
+  // ── 2. Konto polaczone Stripe (Accounts v2, oplaty po stronie wlasciciela) ──
   let stripeAccountId = ''
   try {
-    stripeAccountId = await createConnectAccount(ownerEmail)
+    // Nazwa apartamentu trafia do panelu Stripe wlasciciela i na faktury,
+    // ktore Stripe mu wystawia — bez niej widzi tam samo "Nowe konto".
+    stripeAccountId = await createConnectAccount(ownerEmail, order.apartment_name)
   } catch (err) {
     // Non-fatal — owner can connect Stripe later via the admin panel
     console.error('[provision-site] Stripe Connect error (non-fatal):', err)

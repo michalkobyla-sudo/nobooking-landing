@@ -4,6 +4,8 @@ const _require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const StripeLib = _require('stripe') as any
 
+const API_WERSJA = '2026-04-22.dahlia'
+
 function getStripe() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   return new StripeLib(
@@ -12,27 +14,84 @@ function getStripe() {
   )
 }
 
+/** Domyslny kraj wlasciciela. Onboarding go nie zbiera, a klienci sa polscy;
+ *  gdyby to sie zmienilo, to jest miejsce do rozszerzenia o pole w formularzu. */
+export const KRAJ_DOMYSLNY = 'pl'
+
 /**
- * Create a Stripe Connect Express account for an apartment owner.
- * Returns the account id (acct_xxx).
+ * Cialo zadania zakladajacego konto polaczone. Czysta funkcja — zeby dalo sie
+ * sprawdzic sam ksztalt, bez dzwonienia do Stripe'a.
+ *
+ * **Dlaczego nie Express.** Do 2026-10-01 zakladalismy konta `type: 'express'`.
+ * Taki typ dostaje `controller.fees.payer = application_express`, czyli
+ * **oplaty Stripe placi platforma** — my, nie wlasciciel. Przy realnym obrocie
+ * jednego apartamentu to 370-590 zl rocznie na klienta, przy przychodzie
+ * ~400 zl rocznie z pakietu Basic. Koszt rosnacy razem z sukcesem klienta,
+ * przy zerowym przychodzie z tego tytulu. Sama dokumentacja Stripe'a pisze
+ * o tym ustawieniu: „We don't recommend using direct charges with this legacy
+ * setting".
+ *
+ * `fees_collector: 'stripe'` znaczy, ze Stripe sciaga oplaty wprost z konta
+ * wlasciciela — zgodnie z modelem, w ktorym to on jest sprzedawca.
+ *
+ * `losses_collector: 'stripe'` zdejmuje z platformy odpowiedzialnosc za ujemne
+ * saldo konta wlasciciela. Przy Expressie spadala ona na nas i byla opisana
+ * jako nie do unikniecia — przy tej konfiguracji po prostu nie wystepuje.
+ *
+ * Cena: wlasciciel dostaje **pelny panel Stripe** zamiast uproszczonego
+ * Expressa. Panelu nie da sie pozniej zmienic, bo `dashboard` jest niezmienny
+ * — trzeba by zalozyc nowe konto.
  */
-export async function createConnectAccount(email: string): Promise<string> {
-  const stripe = getStripe()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  const account = await stripe.accounts.create({
-    type: 'express',
-    email,
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
+export function cialoKontaV2(email: string, nazwa?: string, kraj = KRAJ_DOMYSLNY) {
+  return {
+    contact_email: email,
+    ...(nazwa ? { display_name: nazwa.slice(0, 200) } : {}),
+    dashboard: 'full' as const,
+    identity: { country: kraj, entity_type: 'individual' as const },
+    defaults: {
+      responsibilities: {
+        fees_collector: 'stripe' as const,
+        losses_collector: 'stripe' as const,
+      },
     },
-    business_type: 'individual',
-    settings: {
-      payouts: { schedule: { interval: 'weekly', weekly_anchor: 'monday' } },
+    configuration: { merchant: {} },
+  }
+}
+
+/**
+ * Zaklada konto polaczone dla wlasciciela apartamentu. Zwraca `acct_…`.
+ *
+ * **Accounts v2.** `POST /v1/accounts` jest od 2026 odrzucane dla nowych
+ * integracji („Stripe no longer recommends Accounts v1"), co przez kilka dni
+ * wygladalo jak blokada weryfikacji platformy. Przez v2 to samo zadanie
+ * przechodzi — sprawdzone na koncie live 2026-10-01.
+ *
+ * Reszta obiegu zostaje na v1 i dziala bez zmian: `account_links` buduje link
+ * onboardingu, a Checkout z naglowkiem `Stripe-Account` tworzy obciazenie
+ * bezposrednie. Sprawdzone na koncie zalozonym przez v2.
+ */
+export async function createConnectAccount(email: string, nazwa?: string): Promise<string> {
+  const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
+  if (!klucz) throw new Error('STRIPE_SECRET_KEY nie jest ustawiony')
+
+  const odp = await fetch('https://api.stripe.com/v2/core/accounts', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64'),
+      'Content-Type': 'application/json',
+      'Stripe-Version': API_WERSJA,
     },
+    body: JSON.stringify(cialoKontaV2(email, nazwa)),
   })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  return account.id as string
+
+  const dane = await odp.json() as { id?: string; error?: { code?: string; message?: string } }
+
+  if (!odp.ok || dane.error || !dane.id) {
+    const e = dane.error ?? {}
+    throw new Error(`Stripe v2 accounts: ${[e.code, e.message].filter(Boolean).join(': ') || `HTTP ${odp.status}`}`)
+  }
+
+  return dane.id
 }
 
 /**
@@ -147,8 +206,6 @@ export async function createBookingCheckout(params: {
 export type StanConnect =
   | { mozna: true }
   | { mozna: false; powod: string }
-
-const API_WERSJA = '2026-04-22.dahlia'
 
 export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
   const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
