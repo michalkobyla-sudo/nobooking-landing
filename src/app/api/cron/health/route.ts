@@ -5,6 +5,7 @@ import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU } from '@/lib/provisionCheck'
 import { DNI_RETENCJI } from '@/lib/checkin'
+import { parsujConfig } from '@/lib/configMerge'
 
 export const runtime = 'nodejs'
 
@@ -255,11 +256,25 @@ export async function GET(request: NextRequest) {
   // ── Strony ─────────────────────────────────────────────────────────────────
   const { data: strony } = await db
     .from('sites')
-    .select('slug, stripe_onboarded, expires_at, active')
+    .select('slug, stripe_onboarded, expires_at, active, config')
     .eq('active', true)
 
   const stronyBezStripe = (strony ?? [])
     .filter(s => s.stripe_onboarded !== true)
+    .map(s => s.slug as string)
+
+  // Zdjecia zastepcze z generatora (`PLACEHOLDER_PHOTOS` w generate-site.ts)
+  // poznaje sie po hoscie. Strona z nimi dziala, tylko pokazuje cudzy
+  // apartament — stad `info`, a nie ostrzezenie.
+  const stronyZeZdjeciamiZastepczymi = (strony ?? [])
+    .filter(s => {
+      const config = parsujConfig(s.config)
+      const photos = Array.isArray(config?.photos) ? config.photos : []
+      return photos.some(p =>
+        typeof (p as { url?: unknown })?.url === 'string' &&
+        (p as { url: string }).url.includes('images.unsplash.com'),
+      )
+    })
     .map(s => s.slug as string)
 
   const wygasajaceSubskrypcje = (strony ?? [])
@@ -280,6 +295,7 @@ export async function GET(request: NextRequest) {
     przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
+    stronyZeZdjeciamiZastepczymi,
     wygasajaceSubskrypcje,
     zdarzeniaStripe7dni: zdarzeniaStripe7dni ?? 0,
     rezerwacje7dni: rezerwacje7dni ?? 0,

@@ -119,6 +119,19 @@ else
   uwaga "brak aktywnej strony w bazie — pomijam sprawdzenie strony apartamentu"
 fi
 
+# -- Panel wlasciciela: musi zawodzic na zamknieto -----------------------------
+naglowek "-- Panel wlasciciela bez sesji (oczekiwane 401)"
+if [ -n "$SLUG" ]; then
+  for E in gallery settings bookings analytics discounts; do
+    KOD=$(curl -sL -o /dev/null -w '%{http_code}' "$STRONA/api/sites/$SLUG/owner/$E")
+    [ "$KOD" = "401" ] && ok "owner/$E" || zle "owner/$E -> $KOD (powinno byc 401)"
+  done
+  # Zapis galerii bez sesji nie moze przejsc nawet z poprawnym cialem.
+  KOD=$(curl -sL -o /dev/null -w '%{http_code}' -X PUT "$STRONA/api/sites/$SLUG/owner/gallery" \
+    -H "Content-Type: application/json" -d '{"photos":[{"url":"https://example.com/a.jpg"}]}')
+  [ "$KOD" = "401" ] && ok "PUT owner/gallery" || zle "PUT owner/gallery -> $KOD (powinno byc 401)"
+fi
+
 # ── Crony: musza zawodzic na zamknieto ────────────────────────────────────────
 naglowek "── Crony bez sekretu (oczekiwane 401)"
 for C in provision-sites cleanup-pending-bookings review-requests \

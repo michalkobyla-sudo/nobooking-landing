@@ -36,6 +36,8 @@ export interface StanSystemu {
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
   stronyBezStripe: string[]
+  /** Strony, które wciąż mają w galerii zdjęcia zastępcze z generatora. */
+  stronyZeZdjeciamiZastepczymi: string[]
   /** Strony z datą wygaśnięcia w ciągu 60 dni. */
   wygasajaceSubskrypcje: Array<{ slug: string; dni: number }>
   /** Zdarzenia Stripe zapisane w ostatnich 7 dniach. */
@@ -199,6 +201,18 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Strony bez połączonego Stripe',
       szczegol: `${s.stronyBezStripe.join(', ')} — goście zobaczą dane kontaktowe zamiast płatności.`,
+    })
+  }
+
+  // Celowo `info`, a nie ostrzeżenie: strona ze zdjęciami zastępczymi działa,
+  // tylko pokazuje cudzy apartament. Klient, który nie wgrał swoich, zobaczy
+  // to sam — a alarm powtarzany co tydzień przy każdej takiej stronie
+  // przestałby być czytany razem z resztą raportu (zasada Z4).
+  if (s.stronyZeZdjeciamiZastepczymi.length > 0) {
+    z.push({
+      waga: 'info',
+      tytul: 'Strony ze zdjęciami zastępczymi',
+      szczegol: `${s.stronyZeZdjeciamiZastepczymi.join(', ')} — w galerii stoją zdjęcia z Unsplasha wstawione przy generowaniu. Właściciel podmienia je w panelu, zakładka Galeria.`,
     })
   }
 

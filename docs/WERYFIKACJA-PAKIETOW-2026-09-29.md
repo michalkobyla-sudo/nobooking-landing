@@ -166,7 +166,7 @@ używają ścieżki `/sites/<slug>`.
 | Panel administracyjny | logowanie HMAC, unieważnianie sesji przez `token_version`, limit żądań |
 | Portal gościa | działa; od 2026-09-29 sprawdza przynależność rezerwacji do strony |
 | Cztery języki | config `apart-sunny` ma opis w `pl`, `en`, `es`, `de`; interfejs strony ma własne tłumaczenia |
-| Galeria zdjęć i wideo | 6 zdjęć w configu; mechanizm wideo (modal + odtwarzacz) działa, `videoUrl` opcjonalny |
+| Galeria zdjęć i wideo | zdjęcia i filmy w panelu właściciela (zakładka Galeria); zapis przez `owner/gallery` — **domknięte 2026-10-01** |
 | Kalkulator ceny z sezonami | `bookingPricing.ts`, 12 testów: sezony, minimalne noce, rabat, przeliczenie na grosze, limit 365 nocy |
 | Mapa i okolica | `config.map.embedUrl` osadzony; 5 pozycji w okolicy |
 | Serwer i poczta na 2 lata | `expires_at` ustawiane przy provisioningu; cron przypomnień D-90/30/14/7/1; Brevo wysyła (potwierdzone raportem agenta zdrowia) |
@@ -280,6 +280,41 @@ powinna być opisywana.
 Obie są świadomymi brakami, nie awariami — ale zasada Z1 mówi, że oferta opisuje
 to, co działa.
 
+### Domknięte 2026-10-01
+
+Obie luki powyżej są zamknięte — zamiast zwężać opis pakietu, dołożyliśmy
+brakującą funkcję.
+
+- `src/lib/galeria.ts` — walidacja list zdjęć i filmów, 24 testy.
+- `GET/PUT /api/sites/[slug]/owner/gallery` — odczyt i podmiana całości.
+  Bez bramki planu: galeria jest w Basicu.
+- `src/components/owner/GaleriaView.tsx` — zakładka **Galeria** w panelu.
+  Kolejność zdjęć, opisy, usuwanie, filmy z YouTube.
+
+Trzy rzeczy, które wyszły dopiero przy budowaniu:
+
+1. `ApartmentPhoto.videoUrl` — pole istnieje w typie i było opisane w pakiecie
+   jako działające wideo, ale **żaden komponent go nie renderuje**. Wideo żyje
+   wyłącznie w `config.videos`. Panel nie przyjmuje `videoUrl`, a opis pakietu
+   został poprawiony.
+2. `ApartmentPage` składa źródło ramki jako `${embedUrl}?autoplay=1`, więc adres
+   z własnym zapytaniem (`?si=…` z przycisku „Udostępnij") dałby dwa znaki
+   zapytania i film by nie wstał. Walidacja sprowadza każdy adres do czystej
+   postaci `embed/<id>`.
+3. `video.title` jest czterojęzyczne i czytane przez `t(title, lang)` — niepełne
+   pole pokazałoby części gości puste miejsce na kaflu. Tytuł podany raz trafia
+   w cztery języki tą samą treścią; nie tłumaczymy go i nie udajemy, że
+   tłumaczymy.
+
+Sprawdzone na `apart-sunny`: dodanie zdjęcia i filmu, zapis, render sekcji wideo
+na stronie publicznej (`iframe` z poprawnym `?autoplay=1`), usunięcie obu
+i powrót do stanu wyjściowego. Zły adres zdjęcia pokazuje w panelu krzyżyk
+zamiast miniatury, zanim właściciel zapisze.
+
+Agent zdrowia: strony, które wciąż mają zdjęcia z Unsplasha, trafiają do raportu
+jako **informacja** (nie ostrzeżenie — taka strona działa, a alarm powtarzany co
+tydzień przestałby być czytany; zasada Z4).
+
 ## Gotowość do obsługi nowego klienta
 
 Prześledzone od zamówienia do gotowej strony:
@@ -291,8 +326,8 @@ Prześledzone od zamówienia do gotowej strony:
 | `review_request_sent_at` | puste → prośba o opinię pójdzie po trzech dniach |
 | Hasło tymczasowe | generowane z CSPRNG, trafia do maila powitalnego |
 | `sites.sms_phone` | kopiowane z onboardingu, znormalizowane do E.164 |
-| Config | komplet pól poza `videos` |
-| Zdjęcia | sześć zastępczych, próg weryfikacji spełniony |
+| Config | komplet pól; `videos` właściciel dodaje w panelu |
+| Zdjęcia | sześć zastępczych, próg weryfikacji spełniony; właściciel podmienia je w panelu |
 | Konto Stripe Connect | tworzone, błąd nie przerywa provisioningu |
 | Mail „strona gotowa" | zawiera token poprawek (źródło: `select('*')`) |
 | Krok weryfikacji | sprawdza config i to, czy strona się otwiera |

@@ -11,6 +11,7 @@ const zdrowy: StanSystemu = {
   przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
+  stronyZeZdjeciamiZastepczymi: [],
   wygasajaceSubskrypcje: [],
   zdarzeniaStripe7dni: 3,
   rezerwacje7dni: 2,
@@ -207,5 +208,22 @@ describe('ocenStan — retencja i zaleglosci', () => {
 
   it('milczy, gdy obie liczby sa zerowe', () => {
     expect(ocenStan({ ...zdrowy, checkinyPoRetencji: 0, przypomnieniaZalegle: 0 })).toEqual([])
+  })
+})
+
+describe('ocenStan - zdjecia zastepcze', () => {
+  // Informacja, nie alarm: strona dziala, tylko pokazuje cudzy apartament.
+  // Przy ostrzezeniu kazda nowa strona wysylalaby maila co tydzien, az klient
+  // wgra swoje zdjecia — i caly raport przestalby byc czytany.
+  it('zglasza strony ze zdjeciami z Unsplasha jako info', () => {
+    const z = ocenStan({ ...zdrowy, stronyZeZdjeciamiZastepczymi: ['apart-sunny'] })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('info')
+    expect(z[0].szczegol).toContain('apart-sunny')
+    expect(wymagaUwagi(z)).toBe(false)
+  })
+
+  it('milczy, gdy wszystkie strony maja wlasne zdjecia', () => {
+    expect(ocenStan({ ...zdrowy, stronyZeZdjeciamiZastepczymi: [] })).toEqual([])
   })
 })

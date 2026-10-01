@@ -143,6 +143,7 @@ CI uruchamia się na pull requestach; wniosek do Meta złożony.
 > | Dashboard analityczny | **był makietą** — zbudowany od zera, sprawdzony na danych |
 > | Maile: anulowanie, przed przyjazdem (1f) | zbudowane |
 > | Treść oferty | „karta, BLIK, P24" → „…i inne", bo metody zależą od konta właściciela (Z1) |
+> | Galeria zdjęć i wideo | **właściciel nie miał jak jej zmienić** — zbudowane 2026-10-01, sprawdzone na `apart-sunny` |
 >
 > **Wszystkie migracje uruchomione 2026-09-29/30.** Skrypt
 > `./scripts/sprawdz-produkcje.sh` pilnuje każdej kolumny, od której zależy
@@ -158,6 +159,14 @@ CI uruchamia się na pull requestach; wniosek do Meta złożony.
 >
 > Obie naprawione i sprawdzone na produkcji. Żadna nie zostawiała błędu
 > w logach — wyszły dopiero przy porównaniu kodu z rzeczywistą bazą.
+>
+> **Trzecia luka, 2026-10-01:** galeria. Nowa strona wstaje z sześcioma
+> zdjęciami z Unsplasha, a w panelu nie było czym ich podmienić — „galeria
+> zdjęć i wideo" z oferty była usługą wykonywaną ręcznie w bazie. Doszła
+> zakładka **Galeria** (zdjęcia + filmy z YouTube), trasa
+> `owner/gallery` i wpis w raporcie stanu. Przy okazji: pole
+> `ApartmentPhoto.videoUrl`, które pakiet opisywał jako działające wideo,
+> nie jest renderowane przez nic — opis poprawiony (Z1).
 
 
 Najważniejszy etap. Dopóki trwa, **nie sprzedajemy pakietu Pro.**

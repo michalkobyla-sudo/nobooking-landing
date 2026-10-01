@@ -111,8 +111,30 @@ obiekty czterojęzyczne; interfejs strony ma własne tłumaczenia w
 
 ## 9. Galeria zdjęć i wideo
 
-`config.photos[]` — każdy wpis ma `url`, `alt` i opcjonalny `videoUrl`
-(osadzenie YouTube). Zdjęcie z wideo otwiera modal z odtwarzaczem.
+Dwie osobne rzeczy na stronie i jeden ekran w panelu właściciela
+(zakładka **Galeria**, `src/components/owner/GaleriaView.tsx`).
+
+- `config.photos[]` — wpisy `{ url, alt }`. Pierwsze zdjęcie jest tym dużym
+  w nagłówku, reszta wchodzi do siatki; kliknięcie otwiera powiększenie.
+- `config.videos[]` — wpisy `{ embedUrl, title, thumbnail? }`. Kafle filmów
+  w osobnej sekcji; kliknięcie otwiera odtwarzacz YouTube w modalu. Bez
+  żadnego filmu sekcja w ogóle się nie renderuje.
+
+Właściciel zarządza obiema listami sam: wkleja adresy zdjęć ze swojej chmury,
+ustala kolejność, usuwa wpisy i dodaje filmy z YouTube. Adres filmu
+skopiowany z paska przeglądarki (`watch?v=…`, `youtu.be/…`, shorts) jest
+zamieniany na postać osadzaną — walidacja w `src/lib/galeria.ts`, zapis przez
+`PUT /api/sites/[slug]/owner/gallery`. Miniatura w panelu pokazuje, czy adres
+faktycznie się wczytuje, bo zły link nie wywraca strony, tylko zostawia pusty
+kafelek.
+
+Nowa strona wstaje z sześcioma zdjęciami zastępczymi z Unsplasha
+(`PLACEHOLDER_PHOTOS` w `generate-site.ts`) — model nie potrafi wytworzyć
+zdjęć apartamentu. Raport stanu systemu wypisuje takie strony jako
+informację, dopóki właściciel nie podmieni zdjęć na własne.
+
+Pole `videoUrl` w typie `ApartmentPhoto` jest pozostałością: nic go nie
+renderuje, więc panel go nie przyjmuje. Wideo żyje wyłącznie w `config.videos`.
 
 ## 10. Kalkulator ceny z sezonami
 
