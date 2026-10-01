@@ -1,0 +1,43 @@
+name: CI
+
+# Kazdy push na main i kazdy pull request. Build nie potrzebuje sekretow ‚ÄĒ
+# sprawdzone 2026-10-01: `npm run build` bez .env.local przechodzi, bo
+# generowanie stron nie siega do Supabase ani do Stripe.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Nowy push na te sama galaz przerywa poprzedni przebieg: liczy sie wynik
+# dla najnowszego commita, a nie kolejka nieaktualnych.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sprawdzenie:
+    name: Typy, testy, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # `npm ci`, nie `npm install`: instaluje dokladnie to, co w
+      # package-lock.json, i wywala sie, gdy lock rozjechal sie z package.json.
+      - name: Instalacja zaleznosci
+        run: npm ci
+
+      - name: Typy
+        run: npx tsc --noEmit
+
+      - name: Testy
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
