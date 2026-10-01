@@ -196,3 +196,16 @@ export function podsumowanie(usterki: Usterka[]): string {
   if (usterki.length === 0) return 'bez zastrzeżeń'
   return usterki.map((u) => `${u.waga === 'blokujaca' ? '✗' : '!'} ${u.pole}: ${u.opis}`).join(' | ')
 }
+
+/**
+ * Po tylu nieudanych probach cron przestaje ponawiac provisioning.
+ *
+ * Zaklepanie wygasa po 15 minutach, wiec bez limitu zamowienie, ktore nie moze
+ * sie udac, probowaloby w nieskonczonosc — a kazda proba to platne wywolanie
+ * modelu. Piec prob rozklada sie na ponad godzine: tyle wystarczy, zeby
+ * przetrwac chwilowa awarie, a to, co nie przejdzie, wymaga czlowieka.
+ *
+ * Czytaja to dwie trasy — `cron/provision-sites` (przestaje brac) i
+ * `cron/health` (zglasza jako krytyczne) — wiec liczba musi byc jedna.
+ */
+export const MAX_PROB_PROVISIONINGU = 5

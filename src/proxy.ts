@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { czyPrzekroczono, type Wpis } from '@/lib/rateLimit'
+import { czyPrzekroczonoWBazie } from '@/lib/rateLimitDb'
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'nobooking.eu'
 
@@ -56,21 +57,45 @@ const RATE_RULES: Array<[RegExp, number, number, number]> = [
 // a mógłby odciąć prawdziwy ruch. Limit dla bota jest nałożony per
 // użytkownik Messengera w samym handlerze.
 
-function applyRateLimit(request: NextRequest): NextResponse | null {
+function odpowiedz429(retryAfter: number): NextResponse {
+  return NextResponse.json(
+    { error: 'too_many_requests' },
+    { status: 429, headers: { 'Retry-After': String(retryAfter) } },
+  )
+}
+
+/**
+ * Dwa liczniki, w tej kolejności:
+ *
+ * 1. **W pamięci instancji** — natychmiastowy i darmowy. Blokuje tylko wtedy,
+ *    gdy jedna instancja sama przekroczyła limit, czyli w podzbiorze przypadków
+ *    globalnych. Dzięki temu przy prawdziwym szturmie odcinamy bez ruszania
+ *    bazy — a to ona miałaby najwięcej do stracenia.
+ * 2. **W bazie** — wspólny dla wszystkich instancji, więc dopiero on realizuje
+ *    limit, który obiecują reguły. Gdy nie odpowie, przepuszczamy: awaria bazy
+ *    nie może zatrzymywać rezerwacji i płatności.
+ */
+async function applyRateLimit(request: NextRequest): Promise<NextResponse | null> {
   const path = request.nextUrl.pathname
   const ip = clientIp(request)
 
   for (const [pattern, max, windowMs, retryAfter] of RATE_RULES) {
-    if (pattern.test(path)) {
-      if (czyPrzekroczono(rateLimitStore, `${path}:${ip}`, max, windowMs)) {
-        console.warn(`[rate-limit] blocked ${ip} → ${path}`)
-        return NextResponse.json(
-          { error: 'too_many_requests' },
-          { status: 429, headers: { 'Retry-After': String(retryAfter) } }
-        )
-      }
-      break
+    if (!pattern.test(path)) continue
+
+    const klucz = `${path}:${ip}`
+
+    if (czyPrzekroczono(rateLimitStore, klucz, max, windowMs)) {
+      console.warn(`[rate-limit] blocked ${ip} → ${path} (licznik instancji)`)
+      return odpowiedz429(retryAfter)
     }
+
+    const wynik = await czyPrzekroczonoWBazie(klucz, max, windowMs)
+    if (wynik.przekroczono) {
+      console.warn(`[rate-limit] blocked ${ip} → ${path} (licznik wspolny)`)
+      return odpowiedz429(retryAfter)
+    }
+
+    break
   }
   return null
 }
@@ -100,7 +125,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── 0. Rate limiting ───────────────────────────────────────────────────────
-  const rateLimitResponse = applyRateLimit(request)
+  const rateLimitResponse = await applyRateLimit(request)
   if (rateLimitResponse) return rateLimitResponse
 
   // ── 1. Subdomain routing ───────────────────────────────────────────────────

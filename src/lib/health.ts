@@ -22,6 +22,8 @@ export interface StanSystemu {
   ostatniaKopiaGodzinTemu: number | null
   /** Zamówienia z wypełnionym onboardingiem, które nie dostały strony. */
   zamowieniaUtkniete: number
+  /** Zamówienia, które wyczerpały próby provisioningu — cron już ich nie weźmie. */
+  zamowieniaPoddane: Array<{ id: string; powod: string }>
   /** Strony wstrzymane przez sprawdzenie provisioningu — czekają na przegląd. */
   stronyDoPrzegladu: Array<{ slug: string; powod: string }>
   /** Nieudane wysyłki SMS z ostatniej doby, pogrupowane po powodzie. */
@@ -206,6 +208,16 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Rezerwacje wiszą w stanie pending',
       szczegol: `${s.rezerwacjePendingStare} rezerwacji starszych niż 3 h blokuje terminy. Cron cleanup-pending-bookings powinien je anulować.`,
+    })
+  }
+
+  // Cron przestal probowac, wiec bez tego wpisu klient czekalby na strone
+  // w nieskonczonosc, a jedynym sladem bylby log Vercela sprzed godziny.
+  for (const p of s.zamowieniaPoddane) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: 'Zamówienie bez strony — próby wyczerpane',
+      szczegol: `${p.id} — cron provision-sites przestał próbować. Powód ostatniej próby: ${p.powod || 'nie zapisano'}. Klient zapłacił i czeka.`,
     })
   }
 

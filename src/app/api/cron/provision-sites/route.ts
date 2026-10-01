@@ -5,7 +5,7 @@ import { provisionSite } from '@/lib/provision-site'
 import { createOnboardingLink } from '@/lib/stripe-connect'
 import { requireCron } from '@/lib/cronAuth'
 import { sendOwnerWelcomeEmail, sendSiteReadyEmail } from '@/lib/email'
-import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU } from '@/lib/provisionCheck'
+import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
 
 // Allow up to 300s on Vercel Pro, 60s on Hobby
@@ -15,6 +15,7 @@ export const maxDuration = 300
 // zamówienie ponownie. Musi być wyraźnie dłuższe niż maxDuration, żeby nie
 // wyprzedzić uruchomienia, które wciąż pracuje.
 const STALE_CLAIM_MS = 15 * 60 * 1000
+
 
 // GET /api/cron/provision-sites
 // Runs every minute via Vercel Cron.
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
     .eq('onboarding_submitted', true)
     .is('site_slug', null)
     .or(`provisioning_started_at.is.null,provisioning_started_at.lt.${staleCutoff}`)
+    .lt('provisioning_attempts', MAX_PROB_PROVISIONINGU)   // wyczerpane zglasza raport stanu, nie cron
     .limit(3) // process up to 3 at a time to stay within timeout
 
   if (error) {
@@ -56,7 +58,13 @@ export async function GET(request: NextRequest) {
     // konto Stripe Connect dla tego samego klienta.
     const { data: claimed } = await supabase
       .from('orders')
-      .update({ provisioning_started_at: new Date().toISOString() })
+      .update({
+        provisioning_started_at: new Date().toISOString(),
+        // Odczyt sprzed chwili wystarcza: warunki ponizej sprawiaja, ze
+        // zaklepanie wygrywa dokladnie jedno uruchomienie, wiec tylko ono
+        // tu pisze.
+        provisioning_attempts: (typedOrder.provisioning_attempts ?? 0) + 1,
+      })
       .eq('id', typedOrder.id)
       .is('site_slug', null)
       .or(`provisioning_started_at.is.null,provisioning_started_at.lt.${staleCutoff}`)
@@ -112,7 +120,10 @@ export async function GET(request: NextRequest) {
         const wpis = `${MARKER_PRZEGLADU} ${new Date().toISOString()} — ${opis}`
         await supabase
           .from('orders')
-          .update({ notes: [typedOrder.notes, wpis].filter(Boolean).join('\n') })
+          .update({
+            notes: [typedOrder.notes, wpis].filter(Boolean).join('\n'),
+            provisioning_error: opis,
+          })
           .eq('id', typedOrder.id)
 
         results.push({ id: typedOrder.id, status: 'do_przegladu', error: opis })
@@ -154,6 +165,15 @@ export async function GET(request: NextRequest) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.error(`[provision-cron] ❌ order ${typedOrder.id} error:`, message)
+
+      // Powod musi przetrwac w bazie. Log Vercela nikt nie oglada, a po
+      // wyczerpaniu prob to jedyne, co powie, dlaczego klient nie ma strony.
+      const { error: bladZapisu } = await supabase
+        .from('orders')
+        .update({ provisioning_error: message.slice(0, 500) })
+        .eq('id', typedOrder.id)
+      if (bladZapisu) console.error('[provision-cron] nie udalo sie zapisac powodu:', bladZapisu.message)
+
       results.push({ id: typedOrder.id, status: 'error', error: message })
     }
   }

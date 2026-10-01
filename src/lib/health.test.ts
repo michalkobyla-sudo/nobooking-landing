@@ -4,6 +4,7 @@ import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, odmien, type StanSyste
 const zdrowy: StanSystemu = {
   ostatniaKopiaGodzinTemu: 5,
   zamowieniaUtkniete: 0,
+  zamowieniaPoddane: [],
   stronyDoPrzegladu: [],
   smsNieudane: [],
   smsDziala: null,
@@ -240,5 +241,29 @@ describe('ocenStan - nadawca SMS', () => {
   it('milczy, gdy nadawca jest poprawny albo nieskonfigurowany', () => {
     expect(ocenStan({ ...zdrowy, smsNadawcaOk: true })).toEqual([])
     expect(ocenStan({ ...zdrowy, smsNadawcaOk: null })).toEqual([])
+  })
+})
+
+describe('ocenStan - provisioning poddany', () => {
+  // Cron przestal probowac po wyczerpaniu limitu. Bez tego wpisu klient,
+  // ktory zaplacil, czekalby na strone w nieskonczonosc.
+  it('zglasza wyczerpane proby jako krytyczne, razem z powodem', () => {
+    const z = ocenStan({
+      ...zdrowy,
+      zamowieniaPoddane: [{ id: 'ord_1', powod: 'Anthropic API: 401 invalid key' }],
+    })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].szczegol).toContain('ord_1')
+    expect(z[0].szczegol).toContain('invalid key')
+  })
+
+  it('radzi sobie z brakiem zapisanego powodu', () => {
+    const z = ocenStan({ ...zdrowy, zamowieniaPoddane: [{ id: 'ord_2', powod: '' }] })
+    expect(z[0].szczegol).toContain('nie zapisano')
+  })
+
+  it('milczy, gdy nic sie nie poddalo', () => {
+    expect(ocenStan({ ...zdrowy, zamowieniaPoddane: [] })).toEqual([])
   })
 })

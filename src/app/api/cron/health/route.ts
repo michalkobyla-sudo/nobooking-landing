@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
-import { MARKER_PRZEGLADU } from '@/lib/provisionCheck'
+import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
@@ -53,6 +53,9 @@ const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
   // Pozostałe
   ['bot_processed_messages', 'mid'],
   ['renewal_reminders', 'id'],
+  // Bez tej tabeli limit żądań cicho przestaje być wspólny: proxy zawodzi
+  // na otwarto i zostaje tylko licznik w pamięci instancji.
+  ['rate_limits', 'koniec'],
 ]
 
 export async function GET(request: NextRequest) {
@@ -69,6 +72,21 @@ export async function GET(request: NextRequest) {
     const { error } = await db.from(tabela).select(kolumna).limit(1)
     if (error) brakiSchematu.push(`${tabela}.${kolumna}`)
   }
+
+  // Zamowienia, ktorych cron juz nie wezmie: licznik prob dobil do limitu.
+  // Prog jest wspolny z trasa provisioningu (MAX_PROB_PROVISIONINGU), zeby
+  // nie zdarzylo sie, ze cron przestal probowac, a raport jeszcze milczy.
+  const { data: poddane } = await db
+    .from('orders')
+    .select('id, provisioning_error')
+    .eq('onboarding_submitted', true)
+    .is('site_slug', null)
+    .gte('provisioning_attempts', MAX_PROB_PROVISIONINGU)
+
+  const zamowieniaPoddane = (poddane ?? []).map(o => ({
+    id: String(o.id),
+    powod: String(o.provisioning_error ?? ''),
+  }))
 
   // ── Kopia zapasowa ─────────────────────────────────────────────────────────
   let ostatniaKopiaGodzinTemu: number | null = null
@@ -292,6 +310,7 @@ export async function GET(request: NextRequest) {
   const stan: StanSystemu = {
     ostatniaKopiaGodzinTemu,
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
+    zamowieniaPoddane,
     stronyDoPrzegladu,
     smsNieudane,
     smsDziala,

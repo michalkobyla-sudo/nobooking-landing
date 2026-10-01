@@ -21,6 +21,12 @@ export interface Order {
   apartment_location: string
   notes: string | null
 
+  // ─── Provisioning (migracja 2026-10-01) ─────────────────────────────────────
+  /** Ile razy cron zaklepał to zamówienie. Po `MAX_PROB` przestaje próbować. */
+  provisioning_attempts?: number | null
+  /** Powód ostatniej nieudanej próby — czytany przez raport stanu systemu. */
+  provisioning_error?: string | null
+
   // ─── Atrybucja — skąd przyszedł klient (migracja 2026-09-29) ────────────────
   utm_source: string | null
   utm_medium: string | null

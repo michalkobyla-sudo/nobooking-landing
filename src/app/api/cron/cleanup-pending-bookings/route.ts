@@ -34,8 +34,13 @@ export async function GET(request: NextRequest) {
   // wczesnym wyjsciem ponizej.
   const usunieteCheckiny = await skasujStareCheckiny(supabase)
 
+  // Liczniki limitow zadan. Wygasly wiersz nie szkodzi — funkcja `sprawdz_limit`
+  // i tak zaczyna od nowa, gdy okno minelo — ale bez sprzatania tabela rosnie
+  // o wiersz na kazdy adres IP, ktory kiedykolwiek dotknal chronionej trasy.
+  const usunieteLimity = await skasujWygasleLimity(supabase)
+
   if (!stale || stale.length === 0) {
-    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny })
+    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity })
   }
 
   const ids = stale.map(b => b.id)
@@ -52,7 +57,7 @@ export async function GET(request: NextRequest) {
 
   console.log(`[cleanup-pending] cancelled ${ids.length} stale pending bookings:`, ids)
 
-  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny })
+  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity })
 }
 
 /**
@@ -91,4 +96,30 @@ async function skasujStareCheckiny(supabase: ReturnType<typeof createServiceClie
   const ile = usuniete?.length ?? 0
   if (ile > 0) console.log(`[cleanup-pending] retencja RODO: usunieto ${ile} formularzy check-in`)
   return ile
+}
+
+/**
+ * Kasuje liczniki limitow, ktorych okno minelo ponad dobe temu.
+ *
+ * Doba zapasu, a nie "wszystko wygasle": najdluzsze okno w regulach ma
+ * kwadrans, wiec starsze wiersze nie sluza juz niczemu, a zapas chroni przed
+ * skasowaniem licznika, ktory wlasnie jest w uzyciu.
+ *
+ * Blad nie przerywa crona, ale musi byc widoczny: brak tabeli oznacza, ze
+ * migracja nie zostala uruchomiona i limit nie jest wspolny.
+ */
+async function skasujWygasleLimity(supabase: ReturnType<typeof createServiceClient>): Promise<number> {
+  const granica = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await supabase
+    .from('rate_limits')
+    .delete()
+    .lt('koniec', granica)
+    .select('klucz')
+
+  if (error) {
+    console.error('[cleanup-pending] nie udalo sie posprzatac rate_limits:', error.message)
+    return 0
+  }
+  return data?.length ?? 0
 }
