@@ -223,10 +223,10 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
     const odp = await fetch('https://api.stripe.com/v2/core/accounts', {
       method: 'POST',
       headers: naglowki,
-      body: JSON.stringify({
-        contact_email: 'probe@nobooking.eu',
-        display_name: 'Proba agenta zdrowia',
-      }),
+      // Dokladnie to cialo, ktore poleci przy zakladaniu konta klienta.
+      // Proba z uproszczonym zadaniem potwierdzalaby, ze dziala cos innego
+      // niz to, co nas interesuje.
+      body: JSON.stringify(cialoKontaV2('probe@nobooking.eu', 'Proba agenta zdrowia')),
     })
     const dane = await odp.json() as { id?: string; error?: { code?: string; message?: string } }
 
@@ -248,7 +248,7 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
         const z = await fetch(`https://api.stripe.com/v2/core/accounts/${id}/close`, {
           method: 'POST',
           headers: naglowki,
-          body: JSON.stringify({ applied_configurations: [] }),
+          body: JSON.stringify({ applied_configurations: ['merchant'] }),
         })
         if (!z.ok) throw new Error(`HTTP ${z.status}`)
       } catch (err) {
