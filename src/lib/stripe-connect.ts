@@ -130,52 +130,73 @@ export async function createBookingCheckout(params: {
  * Stripe'a — czyli wtedy, gdy ktos akurat odpisal. Sam stan konta zmienia sie
  * niezaleznie od korespondencji, a od niego zalezy caly Etap 2.
  *
- * Proba jest prawdziwa: zakladamy konto i od razu je kasujemy. Odczyt
- * `GET /v1/account` tego nie rozstrzyga — blokada weryfikacji platformy nie
- * pokazuje sie w `requirements` wlasnego konta, tylko wychodzi dopiero przy
- * `POST /v1/accounts`. Probujemy raz na dobe, w cronie raportu, i tylko dopoki
- * odpowiedz jest odmowna.
+ * **Probujemy Accounts v2**, nie v1. Sprawdzone 2026-10-01 w trybie testowym:
+ * `POST /v1/accounts` jest odrzucane dla nowych integracji ("Stripe no longer
+ * recommends Accounts v1"), a `POST /v2/core/accounts` przechodzi. Nasz
+ * `createConnectAccount` nadal uzywa v1 i dlatego wymaga migracji — proba
+ * sprawdza wiec te droge, ktora ma dzialac, a nie te, ktora mamy w kodzie.
  *
- * Konto testowe kasujemy w `finally`: swiezo zalozone, bez salda, wiec
- * `DELETE` przechodzi. Gdyby nie przeszlo, id trafia do logu — lepszy slad
- * w logu niz sierota w panelu Connect, o ktorej nikt nie wie.
+ * Odczyt `GET /v1/account` tego nie rozstrzyga: blokada weryfikacji platformy
+ * nie pokazuje sie w `requirements` wlasnego konta, wychodzi dopiero przy
+ * probie zalozenia konta polaczonego.
+ *
+ * Konto probne zamykamy w `finally` (v2 nie ma kasowania, ma `/close`).
+ * Gdyby zamkniecie nie przeszlo, id trafia do logu — lepszy slad w logu niz
+ * sierota w panelu Connect, o ktorej nikt nie wie.
  */
 export type StanConnect =
   | { mozna: true }
   | { mozna: false; powod: string }
 
+const API_WERSJA = '2026-04-22.dahlia'
+
 export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
   const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
   if (!klucz) return null
 
-  const stripe = getStripe()
+  const naglowki = {
+    Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64'),
+    'Content-Type': 'application/json',
+    'Stripe-Version': API_WERSJA,
+  }
+
   let id: string | null = null
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    const konto = await stripe.accounts.create({
-      type: 'express',
-      email: 'probe+connect@nobooking.eu',
-      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
-      business_type: 'individual',
+    const odp = await fetch('https://api.stripe.com/v2/core/accounts', {
+      method: 'POST',
+      headers: naglowki,
+      body: JSON.stringify({
+        contact_email: 'probe@nobooking.eu',
+        display_name: 'Proba agenta zdrowia',
+      }),
     })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    id = konto.id as string
+    const dane = await odp.json() as { id?: string; error?: { code?: string; message?: string } }
+
+    if (!odp.ok || dane.error) {
+      const e = dane.error ?? {}
+      const powod = [e.code, e.message].filter(Boolean).join(': ') || `HTTP ${odp.status}`
+      return { mozna: false, powod: powod.slice(0, 300) }
+    }
+
+    id = dane.id ?? null
     return { mozna: true }
 
   } catch (err) {
-    const e = err as { message?: string; code?: string; type?: string }
-    const powod = [e.code, e.message].filter(Boolean).join(': ') || 'nieznany blad'
-    return { mozna: false, powod: powod.slice(0, 300) }
+    return { mozna: false, powod: (err instanceof Error ? err.message : String(err)).slice(0, 300) }
 
   } finally {
     if (id) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        await stripe.accounts.del(id)
+        const z = await fetch(`https://api.stripe.com/v2/core/accounts/${id}/close`, {
+          method: 'POST',
+          headers: naglowki,
+          body: JSON.stringify({ applied_configurations: [] }),
+        })
+        if (!z.ok) throw new Error(`HTTP ${z.status}`)
       } catch (err) {
         console.error(
-          `[connect-probe] nie udalo sie skasowac konta probnego ${id} — skasuj recznie:`,
+          `[connect-probe] nie udalo sie zamknac konta probnego ${id} — zamknij recznie:`,
           err instanceof Error ? err.message : String(err),
         )
       }
