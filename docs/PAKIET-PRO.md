@@ -16,29 +16,39 @@ odbywa się zmianą wartości w bazie.
 
 ## 1. Powiadomienia SMS
 
-**Obietnica:** właściciel dostaje SMS, gdy gość złoży rezerwację albo wyśle
-wiadomość.
+**Obietnica:** właściciel dostaje SMS, gdy gość złoży rezerwację.
 
-**Co jest w kodzie:** numer telefonu zbierany w onboardingu do
-`orders.ob_sms_phone`, pokazywany w panelu administracyjnym Michała. Pole
-formularza pojawia się tylko dla planu Pro (`OnboardingForm.tsx`).
+**Stan: działa.** Kanał sprawdzony wysyłką 2026-10-01 — Twilio potwierdził
+`delivered`, nadawca zachowany.
 
-**Czego brakuje:** wszystkiego poza zbieraniem numeru — dostawcy, konfiguracji
-i samej wysyłki. Szczegóły w dokumencie weryfikacyjnym.
+**Jak to działa:**
 
-**Co trzeba dobudować** (szacunek, nie plan):
+- Dostawca: **Twilio**, na **osobnym subkoncie** Nobookinga
+  (`AC98af98e0…`), oddzielonym od konta Casa Sol — tak samo jak przy Stripe.
+- Nadawca to nazwa, nie numer: `Nobooking`. W Polsce Alphanumeric Sender ID
+  działa bez rejestracji, bez dodatkowej opłaty i **bez kupowania numeru**.
+  Jest jednokierunkowy (odbiorca nie odpowie), co tu niczego nie psuje: te
+  SMS-y idą do właściciela, nie do gościa.
+- Numer odbiorcy siedzi w `sites.sms_phone`, nie w configu — config bywa
+  nadpisywany przy regeneracji strony. Właściciel zmienia go w panelu razem
+  z wyłącznikiem (`owner/settings`, bramka planu po stronie serwera).
+- Wysyłka: `src/lib/smsSend.ts`, podpięta w webhooku Stripe obok
+  `sendOwnerBookingNotification`. Zwraca wynik zamiast rzucać — nieudany SMS
+  nie może przerwać potwierdzania rezerwacji.
+- Treść bez polskich ogonków (`bezOgonkow`): diakrytyki przełączają kodowanie
+  na UCS-2 i tną limit ze 160 znaków na 70, czyli jeden SMS robi się trzema.
+- Kontrola kosztu: limit **30 SMS-ów na dobę na stronę**, liczony z `sms_log`.
+  Przy błędzie odczytu licznika zawodzimy **na zamknięto** — lepiej nie wysłać
+  jednego SMS-a niż wysłać tyle, ile przyjdzie zdarzeń.
 
-- dostawca: **Twilio** - ten sam, którego używa Casa Sol, ale z osobnymi
-  poświadczeniami (własne konto albo subkonto), żeby oba produkty pozostały
-  niezależne;
-- `sites.sms_phone` — dziś numer siedzi w `orders`, a wysyłką zajmuje się kod
-  operujący na `sites`;
-- funkcja wysyłki obok `src/lib/email.ts`, z tą samą zasadą: awaria musi być
-  widoczna dla agenta zdrowia (niezmiennik 13), a nie ginąć w cichym `catch`;
-- podpięcie w webhooku Stripe, w tym samym miejscu, w którym idzie
-  `sendOwnerBookingNotification`;
-- kontrola kosztu: SMS kosztuje za sztukę, więc limit dzienny na stronę
-  i wyłącznik w ustawieniach właściciela.
+**Co pilnuje agent zdrowia:** odrzucone poświadczenia Twilio, nieprawidłowego
+nadawcę (sprawdzany bez wysyłania czegokolwiek, więc wyjdzie **przed**
+pierwszą rezerwacją) i nieudane wysyłki z ostatniej doby, pogrupowane po
+powodzie.
+
+**Czego nie ma:** SMS-a przy wiadomości od gościa — portal gościa nie ma
+skrzynki, tylko dane kontaktowe właściciela. Obietnica powyżej mówi o tym
+zbyt szeroko i zostanie zawężona przy najbliższej zmianie oferty.
 
 ## 2. Online check-in
 

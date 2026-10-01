@@ -336,3 +336,68 @@ Prześledzone od zamówienia do gotowej strony:
 powstanie, maile wyjdą, panel zadziała — ale płatności zwrócą 402, dopóki
 właściciel nie podepnie Stripe'a, a tego nie da się zrobić przed odblokowaniem
 weryfikacji tożsamości platformy.
+
+---
+
+# Uzupełnienie — 2026-10-01, wieczór
+
+## SMS: z obietnicy w działającą funkcję
+
+`PAKIET-PRO.md` do dziś mówił „czego brakuje: wszystkiego poza zbieraniem
+numeru". To już nieprawda i zostało poprawione.
+
+| Element | Stan | Jak sprawdzone |
+|---|---|---|
+| Subkonto Twilio `AC98af98e0…` | oddzielone od konta Casa Sol | API: typ `Full`, uwierzytelnia się własnymi poświadczeniami |
+| Poświadczenia w Vercelu | przyjmowane z produkcji | raport stanu: `smsDziala: true` |
+| Nadawca `Nobooking` | przechodzi walidację | raport stanu: `smsNadawcaOk: true` |
+| Doręczenie | **`delivered`**, nadawca zachowany | wysyłka na numer Michała, SID `SM4c81d6dd…` |
+
+Nadawca alfanumeryczny zamiast numeru: w Polsce działa bez rejestracji,
+bez dodatkowej opłaty i bez kupowania numeru — czyli nie ma comiesięcznego
+kosztu, który rósłby z liczbą klientów. Jednokierunkowość nie przeszkadza,
+bo te SMS-y idą do właściciela, nie do gościa.
+
+**Niesprawdzone zostaje ostatnie ogniwo:** webhook → `powiadomORezerwacji` →
+Twilio. Nie da się go dziś uruchomić, bo SMS-y są funkcją Pro, a jedyna strona
+w bazie jest na planie `basic`. To należy do Etapu 2.
+
+**Znalezione przy okazji, dotyczy Casa Sol, nie Nobookinga:** ostatni SMS
+z tamtego konta wyszedł 3 czerwca, a od tego czasu były trzy potwierdzone
+rezerwacje z numerem telefonu. Konto było bez środków, a `sendSms` przy błędzie
+tylko loguje do konsoli — cztery miesiące ciszy wyglądały jak brak rezerwacji.
+Dodatkowo błąd `21408` z maja pokazuje, że **Hiszpania jest zablokowana
+w uprawnieniach geograficznych** — dla apartamentu w Torrevieja to znaczy,
+że hiszpańscy goście nie dostają SMS-ów w ogóle.
+
+## Twardnienie — trzy rzeczy, które nie są widoczne dla klienta
+
+**Limity żądań na wspólnym magazynie.** Licznik siedział w pamięci instancji,
+a Vercel uruchamia ich wiele — „10 prób logowania na 5 minut" znaczyło tyle
+razy więcej, ile instancji akurat działało. Sprawdzone na produkcji: siedem
+żądań na `/api/orders`, piąte przechodzi, szóste dostaje 429, a w bazie stoi
+`ile: 5` — bo szóste i siódme odciął licznik lokalny i nigdy nie dotarły do
+bazy. Dwustopniowość działa tak, jak miała.
+
+Przy okazji usunięty wyciek: mapa licznika rosła bez końca, więc skan z wielu
+adresów — to, przed czym limit ma bronić — wypychał instancję z pamięci.
+
+**Cykl ponawiania provisioningu.** Zaklepanie wygasa po 15 minutach, więc cron
+brał zamówienie ponownie co minutę. Zamówienie, które nie mogło się udać,
+próbowało bez końca, a każda próba to płatne wywołanie modelu. Teraz pięć prób,
+powód ostatniej porażki w bazie i wpis krytyczny w raporcie.
+
+**Ślady po cronach.** Jedyna klasa awarii, której nie wykryje ani Sentry (brak
+uruchomienia nie rzuca wyjątku), ani żaden z objawowych wykrywaczy. Sprawdzone
+na żywo: raport wypisał dokładnie te dwa crony, których nie uruchomiłem,
+i zamilkł po ich uruchomieniu.
+
+## Strona sprzedażowa
+
+Przegląd treści pod zasadę Z1 — przed puszczeniem na nią ruchu z reklamy.
+Usunięte: wymyślone opinie trzech osób z nazwiskami i kwotami oszczędności,
+liczba „124 właścicieli" przy zerowej liczbie klientów, obietnica faktury
+w portalu gościa (której nie ma w kodzie) i nieaktualne FAQ o braku panelu CMS.
+Kalkulator przestał pokazywać jako oszczędność całą prowizję Booking.com —
+teraz właściciel ustawia, jaką część rezerwacji przejmie, a od przejętych
+odchodzą opłaty Stripe.

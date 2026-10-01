@@ -255,8 +255,11 @@ wymagałyby zbierania ruchu, czyli osobnego podsystemu i zgód cookie.
 - maile o anulowaniu rezerwacji i przypomnienie przed przyjazdem (obiecane
   w siatce funkcji);
 - analityka sprawdzana po stronie serwera, jak kody rabatowe;
-- nazwa crona `review-requests` — pyta właścicieli o opinię o Nobookingu, nie
-  gości o apartament; zmienić nazwę albo opis, bo myli przy czytaniu kodu.
+- ✅ nazwa crona `review-requests` — pyta właścicieli o opinię o Nobookingu,
+  nie gości o apartament. Nagłówek pliku mówi to wprost i odsyła do
+  `guest-reminders`, który zbiera opinie gości. Samej ścieżki nie zmieniamy:
+  wpis w `vercel.json` i trasa muszą się zmienić jednocześnie, a między
+  wdrożeniami powstałoby okno, w którym cron wali w nieistniejący adres.
 
 ---
 
@@ -298,13 +301,29 @@ z zapisanym wynikiem każdego kroku.
 Rzeczy, które nie są widoczne dla klienta, ale decydują, czy system przetrwa
 wzrost.
 
+> **Stan 2026-10-01: trzy z czterech zamknięte.** Zostaje CI (czeka na
+> `gh auth refresh -h github.com -s workflow`) i wyprowadzka repo z iCloud,
+> która jest decyzją, nie zadaniem.
+
 - **CI** — `tsc` i testy na każdym pull requeście (odblokowane w Etapie 0);
 - **repo poza iCloud** — dziś iCloud tworzy duplikaty plików psujące `tsc`,
   problem wraca w każdej sesji;
-- **agent provisioningu (A1)** — krok weryfikacji już działa; został cykl
-  z ponowieniem i raportowaniem;
-- **przegląd limitów żądań** przed wzrostem ruchu — dziś licznik jest w pamięci
-  instancji, co przy jednym kliencie wystarcza, a przy stu nie.
+- ✅ **agent provisioningu (A1)** — krok weryfikacji działał już wcześniej;
+  2026-10-01 doszedł cykl z ponowieniem: licznik prób (limit pięć, wspólna
+  stała dla obu cronów), powód ostatniej porażki zapisywany w bazie i wpis
+  **krytyczny** w raporcie po wyczerpaniu prób. Wcześniej zamówienie, które
+  nie mogło się udać, próbowało w nieskończoność — a każda próba to płatne
+  wywołanie modelu;
+- ✅ **limity żądań** — 2026-10-01 przeniesione na wspólny magazyn
+  (`rate_limits` + funkcja `sprawdz_limit`). Licznik w pamięci instancji
+  zostaje jako pierwszy, darmowy stopień; baza realizuje limit, który
+  obiecują reguły. Przy awarii bazy przepuszczamy — limit nie może być
+  kolejnym pojedynczym punktem awarii;
+- ✅ **ślady po cronach** (dołożone, nie było w planie) — `cron_runs`
+  z wpisem przy każdym uruchomieniu. To jedyna klasa awarii, której nie
+  wykryje ani Sentry (brak uruchomienia nie rzuca wyjątku), ani żaden
+  z objawowych wykrywaczy. Sprawdzone: raport wypisał dokładnie te dwa crony,
+  których nie uruchomiłem, i zamilkł po ich uruchomieniu.
 
 ---
 
