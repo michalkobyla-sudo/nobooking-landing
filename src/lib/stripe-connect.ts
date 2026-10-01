@@ -274,7 +274,9 @@ async function zaleglosciPlatformy(klucz: string): Promise<string> {
     const r = await fetch('https://api.stripe.com/v1/account', {
       headers: { Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64') },
     })
-    if (!r.ok) return ''
+    // Klucz restrykcyjny moze nie miec prawa czytania konta platformy.
+    // Cisza wygladalaby wtedy jak "nic nie brakuje", co byloby mylace.
+    if (!r.ok) return `odczytu konta nie udalo sie wykonac (HTTP ${r.status})`
     const d = await r.json() as {
       requirements?: { currently_due?: string[]; past_due?: string[]; disabled_reason?: string | null }
       charges_enabled?: boolean
@@ -289,7 +291,7 @@ async function zaleglosciPlatformy(klucz: string): Promise<string> {
       d.charges_enabled === false ? 'platnosci wylaczone' : '',
     ].filter(Boolean)
     return czesci.join(' | ')
-  } catch {
-    return ''
+  } catch (err) {
+    return `odczyt konta sie nie powiodl: ${err instanceof Error ? err.message : String(err)}`
   }
 }
