@@ -233,7 +233,11 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
     if (!odp.ok || dane.error) {
       const e = dane.error ?? {}
       const powod = [e.code, e.message].filter(Boolean).join(': ') || `HTTP ${odp.status}`
-      return { mozna: false, powod: powod.slice(0, 300) }
+      // Sam komunikat odmowy mowi "aktywuj konto", ale nie mowi CZEGO brakuje.
+      // Lista zalegolsci jest w `requirements` konta platformy — bez niej
+      // zostaje klikanie po panelu na slepo.
+      const braki = await zaleglosciPlatformy(klucz)
+      return { mozna: false, powod: (powod + (braki ? ` | brakuje: ${braki}` : '')).slice(0, 500) }
     }
 
     id = dane.id ?? null
@@ -258,5 +262,34 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
         )
       }
     }
+  }
+}
+
+/**
+ * Czego Stripe zada od konta platformy. Pusty ciag, gdy nic albo gdy odczyt
+ * sie nie powiodl — to funkcja pomocnicza do komunikatu, nie zrodlo prawdy.
+ */
+async function zaleglosciPlatformy(klucz: string): Promise<string> {
+  try {
+    const r = await fetch('https://api.stripe.com/v1/account', {
+      headers: { Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64') },
+    })
+    if (!r.ok) return ''
+    const d = await r.json() as {
+      requirements?: { currently_due?: string[]; past_due?: string[]; disabled_reason?: string | null }
+      charges_enabled?: boolean
+      details_submitted?: boolean
+    }
+    const req = d.requirements ?? {}
+    const czesci = [
+      d.details_submitted === false ? 'wniosek niezlozony' : '',
+      req.disabled_reason ? `powod blokady: ${req.disabled_reason}` : '',
+      (req.past_due ?? []).length ? `po terminie: ${(req.past_due ?? []).join(', ')}` : '',
+      (req.currently_due ?? []).length ? `do uzupelnienia: ${(req.currently_due ?? []).join(', ')}` : '',
+      d.charges_enabled === false ? 'platnosci wylaczone' : '',
+    ].filter(Boolean)
+    return czesci.join(' | ')
+  } catch {
+    return ''
   }
 }
