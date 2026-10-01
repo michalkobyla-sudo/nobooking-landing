@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { czyPrzekroczono, type Wpis } from '@/lib/rateLimit'
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'nobooking.eu'
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
-// In-memory, per edge node. "Best-effort" — good enough for current scale.
-// Upgrade to Upstash Redis at 500+ clients.
-
-interface RateLimitEntry { count: number; resetAt: number }
-const rateLimitStore = new Map<string, RateLimitEntry>()
-
-function isRateLimited(key: string, maxRequests: number, windowMs: number): boolean {
-  const now = Date.now()
-  const entry = rateLimitStore.get(key)
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
-    return false // not limited
-  }
-  if (entry.count >= maxRequests) return true // limited
-  entry.count++
-  return false // not limited
-}
+// W pamięci instancji, „najlepszy wysiłek" — wystarczające przy obecnej skali.
+// Przy 500+ klientach wspólny magazyn (tabela w bazie albo Redis).
+//
+// Sama logika liczenia siedzi w `src/lib/rateLimit.ts` i jest pokryta testami;
+// tutaj zostaje mapa, reguły i decyzja o odpowiedzi.
+const rateLimitStore = new Map<string, Wpis>()
 
 function clientIp(req: NextRequest): string {
   return (
@@ -73,7 +62,7 @@ function applyRateLimit(request: NextRequest): NextResponse | null {
 
   for (const [pattern, max, windowMs, retryAfter] of RATE_RULES) {
     if (pattern.test(path)) {
-      if (isRateLimited(`${path}:${ip}`, max, windowMs)) {
+      if (czyPrzekroczono(rateLimitStore, `${path}:${ip}`, max, windowMs)) {
         console.warn(`[rate-limit] blocked ${ip} → ${path}`)
         return NextResponse.json(
           { error: 'too_many_requests' },

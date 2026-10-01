@@ -50,7 +50,15 @@ function buildPrompt(order: Order): string {
       seasonsText = parsed
         .map(s => `  - ${s.label}: ${s.from} → ${s.to}, ${s.price} ${order.ob_currency?.toUpperCase() ?? 'EUR'}/noc, min ${s.minNights} noce`)
         .join('\n')
-    } catch { /* ignore */ }
+    } catch (err) {
+      // Sezony przepadaly po cichu: model dostawal „(nie podano)" i wymyslal
+      // wlasne, a klient dostawal strone z cenami, ktorych nigdy nie podal.
+      // Teraz trafia to do Sentry — od 2026-09-30 faktycznie zbiera zgloszenia.
+      console.error(
+        `[generate-site] zamowienie ${order.id}: nie udalo sie odczytac ob_seasons —`,
+        err instanceof Error ? err.message : String(err),
+      )
+    }
   }
 
   return `Generate a vacation apartment website config as a JSON object.
