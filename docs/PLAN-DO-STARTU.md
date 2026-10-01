@@ -302,12 +302,17 @@ Rzeczy, które nie są widoczne dla klienta, ale decydują, czy system przetrwa
 wzrost.
 
 > **Stan 2026-10-01: trzy z czterech zamknięte.** Zostaje CI (czeka na
-> `gh auth refresh -h github.com -s workflow`) i wyprowadzka repo z iCloud,
-> która jest decyzją, nie zadaniem.
+> `gh auth refresh -h github.com -s workflow`). Repo wyprowadzone z iCloud
+> tego samego dnia.
 
 - **CI** — `tsc` i testy na każdym pull requeście (odblokowane w Etapie 0);
-- **repo poza iCloud** — dziś iCloud tworzy duplikaty plików psujące `tsc`,
-  problem wraca w każdej sesji;
+- ✅ **repo poza iCloud** — przeniesione 2026-10-01 do `~/Developer/nobooking-landing`
+  (świeży klon z GitHuba, przeniesione `.env.local` i `.vercel/`). iCloud tworzył
+  duplikaty plików w `.next/types/` (`routes.d 2.ts`), przez co `tsc` zgłaszał
+  „Duplicate identifier" w poprawnym kodzie i przed każdym sprawdzeniem typów
+  trzeba było uruchamiać `find . -name "* 2.*" -delete`. Po przeprowadzce `tsc`,
+  testy i build przechodzą bez żadnego sprzątania. Stara kopia została na miejscu
+  ze znacznikiem `PRZENIESIONE.md` — do skasowania decyzją Michała;
 - ✅ **agent provisioningu (A1)** — krok weryfikacji działał już wcześniej;
   2026-10-01 doszedł cykl z ponowieniem: licznik prób (limit pięć, wspólna
   stała dla obu cronów), powód ostatniej porażki zapisywany w bazie i wpis
