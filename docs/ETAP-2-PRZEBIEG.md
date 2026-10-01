@@ -12,13 +12,12 @@ tylko wygląda na pracę.
 
 ## Zanim zaczniemy
 
-- [ ] `POST /v1/accounts` tworzy żywe konto Express (dziś: blokada)
-- [ ] `./scripts/sprawdz-produkcje.sh` — wszystko zielone
-- [ ] Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
-      w Vercelu, **osobne od Casa Sol**
-
-Bez Twilio kroki SMS-owe zostają pominięte — kod nie wysyła nic i mówi o tym
-w logu, więc przebieg się nie wywróci, tylko będzie niepełny.
+- [ ] `POST /v1/accounts` tworzy żywe konto Express — **jedyne, co zostało**;
+      Stripe analizuje weryfikację tożsamości (sprawa `sco_VM2a5pB7AWY2PO`)
+- [x] `./scripts/sprawdz-produkcje.sh` — zielone
+- [x] Twilio: trzy zmienne w Vercelu, subkonto `AC98af98e0…` **osobne od
+      Casa Sol**, nadawca `Nobooking`. Kanał sprawdzony wysyłką 2026-10-01
+      (`delivered`), więc kroki SMS-owe wykonujemy, nie pomijamy.
 
 ---
 
@@ -158,4 +157,5 @@ Sprawdzić:
 - [ ] wynik każdego kroku zapisany w tym pliku albo w commicie
 - [ ] agent zdrowia przez siedem dni bez znalezisk (warunek Etapu 5)
 
-Dopiero wtedy Etap 3 i marketing.
+Potem marketing. Etap 3 (twardnienie operacyjne) zrobiony wcześniej, poza
+kolejnością — nic w nim nie zależało od Stripe'a, więc nie było powodu czekać.
