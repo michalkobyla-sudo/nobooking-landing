@@ -34,7 +34,9 @@ nie zgaduje. Kosztuje jedną instrukcję `if`, a chroni przed każdym przyszłym
 zlaniem źródeł.
 
 Nobooking jest platformą Connect; konta właścicieli apartamentów powstają jako
-konta połączone (Express) pod `acct_1UKa8vBYbNUONJ2O`. Casa Sol **nie jest** i nie
+konta połączone pod `acct_1UKa8vBYbNUONJ2O` — od 2026-10-01 w konfiguracji
+odpowiadającej kontu Standard (pełny panel, opłaty Stripe po stronie właściciela),
+nie Express. Casa Sol **nie jest** i nie
 ma być jednym z nich — to osobne, samodzielne konto Stripe.
 
 ---
@@ -72,12 +74,19 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
    prowizję Stripe i w pierwszej kolejności odpowiada za zwroty i chargebacki.
    Nie wracać do `transfer_data.destination` — przy nim koszt prowizji ponosiła
    platforma.
-   **Zastrzeżenie:** Stripe wymaga od platformy Connect podpisania
-   *Refunds and chargebacks liability acknowledgement*. Jeśli konto właściciela
-   wyjdzie na minus i nie da się tego pokryć z jego salda ani rachunku, obciążenie
-   spada na Nobooking. Tego nie da się wyłączyć — to warunek korzystania
-   z Connect. Ryzyko jest realne przy wynajmie: chargeback trafia zwykle po
-   pobycie, gdy właściciel zdążył już wypłacić środki.
+   **Sprostowanie 2026-10-01:** stało tu, że odpowiedzialność platformy za ujemne
+   saldo konta właściciela jest warunkiem korzystania z Connect i nie da się jej
+   wyłączyć. To była prawda dla kont **Express**, które zakładaliśmy do tego dnia
+   (`controller.losses.payments = application`), ale nie dla Connect w ogóle.
+   Konta tworzone teraz mają `losses_collector: stripe` — za ujemne saldo konta
+   właściciela odpowiada Stripe, nie Nobooking. Platforma nadal odpowiada za
+   ujemne saldo **własnego** konta.
+
+   Przy Expressie ta sama konfiguracja przerzucała na platformę także **opłaty
+   za obsługę płatności** (`fees.payer = application_express`) — czyli model
+   opisany powyżej jako „właściciel płaci prowizję Stripe" nie był tym, co
+   robił kod. Na danych Casa Sol to 370–590 zł rocznie na klienta przy ~400 zł
+   rocznego przychodu z pakietu Basic.
 8. **Dwa terminy nie mogą się nakładać.** Gwarantuje to constraint
    `bookings_no_overlap` w bazie. Sprawdzenie w kodzie ma okno wyścigu i nie wystarcza.
 

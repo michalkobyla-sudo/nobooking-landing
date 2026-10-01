@@ -246,7 +246,11 @@ plus `stripe_account` — wtedy część kwoty trafia na konto platformy. Dziś:
 `GET /api/sites/[slug]/owner/connect` (po kliknięciu „Połącz Stripe →"):
 
 1. Sprawdza czy `site.stripe_account_id` istnieje
-2. Jeśli nie — wywołuje `stripe.accounts.create({ type: 'express', email: owner_email })`
+2. Jeśli nie — zakłada konto przez `POST /v2/core/accounts` (Accounts v2;
+   v1 jest od 2026 odrzucane dla nowych integracji). Konfiguracja odpowiada
+   kontu Standard: pełny panel Stripe, `fees_collector: stripe`
+   (opłaty ściąga Stripe wprost z konta właściciela) i `losses_collector: stripe`
+   (platforma nie odpowiada za ujemne saldo klienta)
 3. Zapisuje `stripe_account_id` w bazie
 4. Generuje link onboardingowy (`stripe.accountLinks.create`)
 5. Przekierowuje właściciela na stronę Stripe (podaje dane firmy, konto bankowe)

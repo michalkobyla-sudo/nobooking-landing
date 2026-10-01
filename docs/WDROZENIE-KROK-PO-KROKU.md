@@ -321,8 +321,9 @@ na `GET /v1/account`, nie przez baner w panelu (baner pokazuje poprzednią prób
 
 **Do zrobienia po odblokowaniu Connect:**
 
-1. Test end-to-end: konto Express → link onboardingowy → sesja checkout na tym
-   koncie → skasowanie konta testowego.
+1. Test end-to-end: konto połączone (Accounts v2) → link onboardingowy → sesja
+   checkout na tym koncie → zamknięcie konta testowego (v2 nie ma kasowania,
+   ma `/close`).
 2. Wyłączenie starego celu webhooka Nobookinga na koncie Casa Sol.
 3. Onboarding Connect właściciela `apart-sunny` (dziś `stripe_account_id` jest
    puste, więc rezerwacje zwracają 402).

@@ -11,10 +11,10 @@ interface Params {
  * GET /api/sites/[slug]/owner/connect
  *
  * Protected by owner session cookie.
- * - If site has no stripe_account_id: creates a new Express Connect account,
+ * - If site has no stripe_account_id: creates a new connected account (Accounts v2),
  *   saves it, then generates an onboarding link.
  * - If site has stripe_account_id but not onboarded: generates a fresh onboarding link.
- * - Redirects owner to Stripe Express onboarding.
+ * - Redirects owner to Stripe onboarding (full dashboard, fees on the owner).
  */
 export async function GET(request: NextRequest, { params }: Params) {
   const { slug } = await params

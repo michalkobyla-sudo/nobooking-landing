@@ -12,8 +12,11 @@ tylko wygląda na pracę.
 
 ## Zanim zaczniemy
 
-- [ ] `POST /v1/accounts` tworzy żywe konto Express — **jedyne, co zostało**;
-      Stripe analizuje weryfikację tożsamości (sprawa `sco_VM2a5pB7AWY2PO`)
+- [ ] **Aktywacja konta platformy Nobooking** — jedyne, co zostało.
+      `POST /v2/core/accounts` z konfiguracją `merchant` zwraca dziś
+      `account_create_activation_required`. Formularz:
+      https://dashboard.stripe.com/account/onboarding (konto Nobooking, nie Casa Sol).
+      Raport stanu sprawdza to codziennie i sam zgłosi, gdy przejdzie.
 - [x] `./scripts/sprawdz-produkcje.sh` — zielone
 - [x] Twilio: trzy zmienne w Vercelu, subkonto `AC98af98e0…` **osobne od
       Casa Sol**, nadawca `Nobooking`. Kanał sprawdzony wysyłką 2026-10-01
@@ -83,7 +86,9 @@ Sprawdzić po kolei — to rzeczy, których dotąd nie dało się zobaczyć:
 
 ## 5. Stripe Connect właściciela
 
-6. „Połącz Stripe" → przejść onboarding Express do końca.
+6. „Połącz Stripe" → przejść onboarding do końca. Właściciel zakłada przy tym
+   **pełne konto Stripe** (nie uproszczony panel Express), bo tylko taka
+   konfiguracja pozwala, żeby to on płacił opłaty za obsługę płatności.
 
 **Dowodzi:** `createConnectAccount`, `createOnboardingLink`, callback ustawia
 `stripe_onboarded`. To jest ten fragment, który dziś blokuje Stripe.

@@ -4,7 +4,7 @@ import { createOnboardingLink } from '@/lib/stripe-connect'
 
 // GET /api/connect/onboard?slug=casa-sol
 // Called from admin panel "Connect Stripe" button or from welcome email link.
-// Redirects owner to Stripe Connect Express onboarding.
+// Redirects owner to Stripe Connect onboarding.
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get('slug')
 
