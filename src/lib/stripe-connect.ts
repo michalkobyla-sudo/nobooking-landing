@@ -122,3 +122,63 @@ export async function createBookingCheckout(params: {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   return session.url as string
 }
+
+/**
+ * Czy platforma moze dzis zakladac konta polaczone.
+ *
+ * Powstalo, bo odpowiedz na to pytanie przychodzila dotad mailem od wsparcia
+ * Stripe'a — czyli wtedy, gdy ktos akurat odpisal. Sam stan konta zmienia sie
+ * niezaleznie od korespondencji, a od niego zalezy caly Etap 2.
+ *
+ * Proba jest prawdziwa: zakladamy konto i od razu je kasujemy. Odczyt
+ * `GET /v1/account` tego nie rozstrzyga — blokada weryfikacji platformy nie
+ * pokazuje sie w `requirements` wlasnego konta, tylko wychodzi dopiero przy
+ * `POST /v1/accounts`. Probujemy raz na dobe, w cronie raportu, i tylko dopoki
+ * odpowiedz jest odmowna.
+ *
+ * Konto testowe kasujemy w `finally`: swiezo zalozone, bez salda, wiec
+ * `DELETE` przechodzi. Gdyby nie przeszlo, id trafia do logu — lepszy slad
+ * w logu niz sierota w panelu Connect, o ktorej nikt nie wie.
+ */
+export type StanConnect =
+  | { mozna: true }
+  | { mozna: false; powod: string }
+
+export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
+  const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
+  if (!klucz) return null
+
+  const stripe = getStripe()
+  let id: string | null = null
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    const konto = await stripe.accounts.create({
+      type: 'express',
+      email: 'probe+connect@nobooking.eu',
+      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+      business_type: 'individual',
+    })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    id = konto.id as string
+    return { mozna: true }
+
+  } catch (err) {
+    const e = err as { message?: string; code?: string; type?: string }
+    const powod = [e.code, e.message].filter(Boolean).join(': ') || 'nieznany blad'
+    return { mozna: false, powod: powod.slice(0, 300) }
+
+  } finally {
+    if (id) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        await stripe.accounts.del(id)
+      } catch (err) {
+        console.error(
+          `[connect-probe] nie udalo sie skasowac konta probnego ${id} — skasuj recznie:`,
+          err instanceof Error ? err.message : String(err),
+        )
+      }
+    }
+  }
+}

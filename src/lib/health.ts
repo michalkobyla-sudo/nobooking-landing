@@ -40,6 +40,10 @@ export interface StanSystemu {
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
   stronyBezStripe: string[]
+  /** Czy platforma może zakładać konta połączone. `null` = nie sprawdzono. */
+  connectDziala: boolean | null
+  /** Powód odmowy ze Stripe'a, gdy `connectDziala` jest `false`. */
+  connectPowod: string
   /** Strony, które wciąż mają w galerii zdjęcia zastępcze z generatora. */
   stronyZeZdjeciamiZastepczymi: string[]
   /** Strony z datą wygaśnięcia w ciągu 60 dni. */
@@ -233,6 +237,26 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       szczegol: c.godzinTemu === null
         ? 'Nie ma po nim ani jednego uruchomienia. Sprawdź harmonogram w vercel.json i limity planu Vercel.'
         : `Ostatnie uruchomienie ${Math.round(c.godzinTemu)} h temu — dłużej, niż pozwala harmonogram.`,
+    })
+  }
+
+  // Od tego zalezy caly Etap 2, a odpowiedz przychodzila dotad mailem od
+  // wsparcia — czyli wtedy, gdy ktos akurat odpisal. Teraz system sprawdza sam.
+  if (s.connectDziala === false) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Stripe nadal blokuje zakładanie kont połączonych',
+      szczegol: `Bez tego nowy klient nie przyjmie płatności, a Etap 2 nie ruszy. Odpowiedź Stripe: ${s.connectPowod || 'nie zapisano'}`,
+    })
+  }
+
+  // Osobny wpis, bo to zmiana stanu na lepsze — ma byc widoczna tego samego
+  // dnia, a nie czekac, az ktos zajrzy do panelu Stripe'a.
+  if (s.connectDziala === true) {
+    z.push({
+      waga: 'info',
+      tytul: 'Stripe odblokował konta połączone',
+      szczegol: 'Platforma zakłada konta Express. Etap 2 (pełny przebieg) może ruszyć — runbook w docs/ETAP-2-PRZEBIEG.md.',
     })
   }
 

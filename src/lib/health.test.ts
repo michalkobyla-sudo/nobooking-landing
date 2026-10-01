@@ -13,6 +13,8 @@ const zdrowy: StanSystemu = {
   przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
+  connectDziala: null,
+  connectPowod: '',
   stronyZeZdjeciamiZastepczymi: [],
   wygasajaceSubskrypcje: [],
   zdarzeniaStripe7dni: 3,
@@ -288,5 +290,32 @@ describe('ocenStan - crony, ktore stanely', () => {
 
   it('milczy, gdy wszystkie chodza', () => {
     expect(ocenStan({ ...zdrowy, cronyMilczace: [] })).toEqual([])
+  })
+})
+
+describe('ocenStan - blokada Connect', () => {
+  it('zglasza blokade razem z odpowiedzia Stripe', () => {
+    const z = ocenStan({
+      ...zdrowy,
+      connectDziala: false,
+      connectPowod: 'account_invalid: You must complete your platform profile',
+    })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].szczegol).toContain('platform profile')
+  })
+
+  // Zmiana na lepsze tez musi byc widoczna tego samego dnia — bez tego
+  // odblokowanie wyszloby dopiero wtedy, gdy ktos zajrzy do panelu.
+  it('zglasza odblokowanie jako informacje', () => {
+    const z = ocenStan({ ...zdrowy, connectDziala: true })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('info')
+    expect(z[0].szczegol).toContain('ETAP-2')
+    expect(wymagaUwagi(z)).toBe(false)
+  })
+
+  it('milczy, gdy proby nie wykonano', () => {
+    expect(ocenStan({ ...zdrowy, connectDziala: null })).toEqual([])
   })
 })

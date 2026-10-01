@@ -5,6 +5,7 @@ import { odnotujPrzebieg, milczaceCrony } from '@/lib/cronHeartbeat'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
+import { czyMoznaZakladacKonta } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
@@ -112,6 +113,20 @@ export async function GET(request: NextRequest) {
     })),
     przebiegiRaportu,
   )
+
+  // Czy Stripe pozwala juz zakladac konta polaczone. Proba jest prawdziwa
+  // (zalozenie konta i skasowanie go), wiec robimy ja raz na dobe, tutaj.
+  let connectDziala: boolean | null = null
+  let connectPowod = ''
+  try {
+    const stan = await czyMoznaZakladacKonta()
+    if (stan) {
+      connectDziala = stan.mozna
+      if (!stan.mozna) connectPowod = stan.powod
+    }
+  } catch (err) {
+    console.error('[health] proba Connect nie powiodla sie:', err)
+  }
 
   // ── Kopia zapasowa ─────────────────────────────────────────────────────────
   let ostatniaKopiaGodzinTemu: number | null = null
@@ -344,6 +359,8 @@ export async function GET(request: NextRequest) {
     przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
+    connectDziala,
+    connectPowod,
     stronyZeZdjeciamiZastepczymi,
     wygasajaceSubskrypcje,
     zdarzeniaStripe7dni: zdarzeniaStripe7dni ?? 0,
