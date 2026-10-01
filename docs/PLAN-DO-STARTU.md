@@ -329,8 +329,30 @@ i `utm_content`, żeby raporty dało się grupować.
 - **wyliczenie oszczędności** — konkretna kwota prowizji przy danym obłożeniu,
   nie hasło „bez prowizji";
 - **demo** — istnieje, ale nie jest eksponowane;
-- **opinie** — obecne w ofercie są przykładowe; przed reklamą potrzebne
-  prawdziwe albo usunięte.
+- **opinie** — ✅ *usunięte 2026-10-01.* Nie były „przykładowe", tylko wymyślone:
+  trzy osoby z nazwiskami, miejscowościami, pięcioma gwiazdkami i konkretnymi
+  kwotami oszczędności, przy zerowej liczbie klientów. Razem z nimi poszła
+  liczba „124 właścicieli już korzysta z Nobooking" z nagłówka. Sekcja opinii
+  chowa się, dopóki tablica `testimonials` jest pusta — pierwsza prawdziwa
+  opinia wraca tam jednym wpisem.
+
+### 4b′. Przegląd treści strony sprzedażowej *(2026-10-01)*
+
+Zasada Z1 dotyczy też strony głównej, nie tylko opisu pakietów. Poprawione przy
+okazji opinii:
+
+- **Kalkulator** pokazywał jako oszczędność całą roczną prowizję Booking.com,
+  czyli zakładał, że każdy gość z portalu zarezerwuje bezpośrednio. Teraz
+  właściciel sam ustawia, jaką część rezerwacji przejmie, a od przejętych
+  odchodzą opłaty Stripe (1,5% + 1 zł) — przy direct charges płaci je on.
+  Przy wartościach domyślnych wynik spadł z 15 708 zł na 7 142 zł.
+- **„Portal gościa: pobiera fakturę"** — żadnej faktury nie ma w kodzie.
+- **FAQ „panel CMS w przygotowaniu"** — nieaktualne od dziś.
+
+**Do Twojej decyzji:** cennik sprzedaje dziś pakiet Pro, którego powiadomienia
+SMS nie mogą zadziałać, dopóki Twilio jest zawieszone. Plan mówi „dopóki trwa
+Etap 1, nie sprzedajemy Pro" — ale przycisk *Kup Pro* na stronie działa.
+Albo doładowanie Twilio, albo zdjęcie Pro ze sprzedaży do tego czasu.
 
 ### 4c. Kanały
 
