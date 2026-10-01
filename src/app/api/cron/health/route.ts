@@ -5,6 +5,7 @@ import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU } from '@/lib/provisionCheck'
 import { DNI_RETENCJI } from '@/lib/checkin'
+import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
 
 export const runtime = 'nodejs'
@@ -102,10 +103,13 @@ export async function GET(request: NextRequest) {
   // Komplet zmiennych albo nic: brak konfiguracji to null, nie awaria, bo
   // SMS-y są funkcją pakietu Pro i dopóki nikt go nie ma, są zbędne.
   let smsDziala: boolean | null = null
+  let smsNadawcaOk: boolean | null = null
   try {
     const sid = (process.env.TWILIO_ACCOUNT_SID ?? '').trim()
     const token = (process.env.TWILIO_AUTH_TOKEN ?? '').trim()
     const from = (process.env.TWILIO_FROM_NUMBER ?? '').trim()
+
+    if (from) smsNadawcaOk = sprawdzNadawce(from).ok
 
     if (sid && token && from) {
       const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
@@ -291,6 +295,7 @@ export async function GET(request: NextRequest) {
     stronyDoPrzegladu,
     smsNieudane,
     smsDziala,
+    smsNadawcaOk,
     checkinyPoRetencji,
     przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,

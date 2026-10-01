@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
-  normalizujNumer, trescRezerwacji, mozeWyslac, bezOgonkow,
+  normalizujNumer, trescRezerwacji, mozeWyslac, bezOgonkow, sprawdzNadawce,
   type RezerwacjaDoSms,
 } from '@/lib/sms'
 
@@ -26,7 +26,7 @@ import {
 
 export type WynikSms =
   | { stan: 'wyslano'; numer: string }
-  | { stan: 'pominieto'; powod: 'brak_konfiguracji' | 'wylaczone' | 'brak_numeru' | 'limit_dzienny' }
+  | { stan: 'pominieto'; powod: 'brak_konfiguracji' | 'zly_nadawca' | 'wylaczone' | 'brak_numeru' | 'limit_dzienny' }
   | { stan: 'blad'; powod: string }
 
 /** Ile udanych wysyłek miała ta strona w bieżącej dobie. */
@@ -73,6 +73,17 @@ export async function wyslijSms(
   const token = (process.env.TWILIO_AUTH_TOKEN ?? '').trim()
   const from  = (process.env.TWILIO_FROM_NUMBER ?? '').trim()
   if (!sid || !token || !from) return { stan: 'pominieto', powod: 'brak_konfiguracji' }
+
+  // Zly nadawca to blad konfiguracji, nie pojedynczej wysylki: Twilio odrzuci
+  // tak samo kazda nastepna wiadomosc. Zatrzymujemy sie tutaj, zeby nie
+  // produkowac serii identycznych bledow, a raport stanu systemu sprawdza to
+  // samo raz na dobe — zanim przyjdzie pierwsza rezerwacja.
+  const nadawca = sprawdzNadawce(from)
+  if (!nadawca.ok) {
+    console.error(`[sms] TWILIO_FROM_NUMBER jest nieprawidlowy (${nadawca.blad}) — nie wysylam`)
+    return { stan: 'pominieto', powod: 'zly_nadawca' }
+  }
+
   if (!params.wlaczone) return { stan: 'pominieto', powod: 'wylaczone' }
 
   const numer = normalizujNumer(params.numerSurowy)
@@ -89,7 +100,7 @@ export async function wyslijSms(
 
   const ciało = new URLSearchParams({
     To: numer.numer,
-    From: from,
+    From: nadawca.wartosc,
     Body: bezOgonkow(params.tresc),
   })
 

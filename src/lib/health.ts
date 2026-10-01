@@ -28,6 +28,8 @@ export interface StanSystemu {
   smsNieudane: Array<{ powod: string; ile: number }>
   /** Czy poświadczenia Twilio są ważne. `null` = SMS-y nieskonfigurowane. */
   smsDziala: boolean | null
+  /** Czy `TWILIO_FROM_NUMBER` jest poprawnym nadawca. `null` = nieskonfigurowane. */
+  smsNadawcaOk: boolean | null
   /** Formularze check-in trzymane dłużej, niż pozwala retencja (RODO). */
   checkinyPoRetencji: number
   /** Rezerwacje, którym wczoraj minął termin przypomnienia, a nic nie poszło. */
@@ -163,6 +165,17 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Powiadomienia SMS nie działają',
       szczegol: 'Twilio odrzuca poświadczenia. Właściciele z planem Pro nie dostaną SMS-ów o rezerwacjach, a nic ich o tym nie poinformuje.',
+    })
+  }
+
+  // Zly nadawca odrzuca kazda wiadomosc tak samo, wiec to awaria konfiguracji,
+  // nie pojedynczej wysylki. Sprawdzamy ja bez wysylania czegokolwiek, zeby
+  // wyszla przed pierwsza rezerwacja, a nie przy niej.
+  if (s.smsNadawcaOk === false) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Nadawca SMS jest nieprawidłowy',
+      szczegol: 'TWILIO_FROM_NUMBER musi być numerem w formacie +48… albo nazwą do 11 znaków (litery, cyfry, spacja — co najmniej jedna litera). Przy obecnej wartości Twilio odrzuci każdą wiadomość.',
     })
   }
 

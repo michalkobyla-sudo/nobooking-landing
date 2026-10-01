@@ -111,3 +111,50 @@ export function bezOgonkow(tekst: string): string {
 export function mozeWyslac(wyslanoDzis: number): boolean {
   return wyslanoDzis < MAX_SMS_DZIENNIE
 }
+
+/**
+ * Nadawca SMS-a — numer albo nazwa alfanumeryczna.
+ *
+ * Twilio przyjmuje w polu `From` dwie rzeczy i sprawdzic je mozna dopiero przy
+ * wysylce, osobno dla kazdej wiadomosci. Przy zlej wartosci kazdy SMS konczy
+ * sie bledem, a wlasciciel widzi to tak samo jak brak rezerwacji: cisza.
+ * Dlatego sprawdzamy sam nadawce z gory — raport stanu systemu robi to raz
+ * na dobe, bez wysylania czegokolwiek.
+ *
+ * Zasady z dokumentacji Twilio (alphanumeric sender ID):
+ * - do 11 znakow, litery, cyfry i spacja, co najmniej jedna litera;
+ * - same cyfry bez `+` nie sa poprawnym nadawca — Twilio potraktuje je jak
+ *   nazwe i operator podmieni je na „unknown" albo zablokuje wiadomosc;
+ * - w Polsce nazwy generyczne („SMS", „Info") bywaja filtrowane przez
+ *   operatorow, wiec nadawca powinien byc marka.
+ *
+ * Nazwa alfanumeryczna dziala **tylko w jedna strone** — odbiorca nie
+ * odpowie. Dla powiadomien wlasciciela o rezerwacji to bez znaczenia.
+ */
+export type Nadawca =
+  | { ok: true; rodzaj: 'numer' | 'nazwa'; wartosc: string }
+  | { ok: false; blad: 'pusty' | 'zly_numer' | 'za_dlugi' | 'same_cyfry' | 'zle_znaki' }
+
+/** Maksymalna dlugosc nazwy alfanumerycznej u Twilio. */
+export const MAX_DL_NADAWCY = 11
+
+export function sprawdzNadawce(surowy: string | null | undefined): Nadawca {
+  const v = String(surowy ?? '').trim()
+  if (!v) return { ok: false, blad: 'pusty' }
+
+  if (v.startsWith('+')) {
+    // E.164: plus i od 8 do 15 cyfr.
+    return /^\+[1-9]\d{7,14}$/.test(v)
+      ? { ok: true, rodzaj: 'numer', wartosc: v }
+      : { ok: false, blad: 'zly_numer' }
+  }
+
+  // Sam ciag cyfr to najczestsza pomylka: numer wklejony bez plusa.
+  if (/^\d+$/.test(v)) return { ok: false, blad: 'same_cyfry' }
+
+  if (v.length > MAX_DL_NADAWCY) return { ok: false, blad: 'za_dlugi' }
+  if (!/^[A-Za-z0-9 ]+$/.test(v)) return { ok: false, blad: 'zle_znaki' }
+  if (!/[A-Za-z]/.test(v)) return { ok: false, blad: 'zle_znaki' }
+
+  return { ok: true, rodzaj: 'nazwa', wartosc: v }
+}

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   normalizujNumer, trescRezerwacji, bezOgonkow, mozeWyslac,
-  MAX_SMS_DZIENNIE, MAX_ZNAKOW, type RezerwacjaDoSms,
+  MAX_SMS_DZIENNIE, MAX_ZNAKOW, sprawdzNadawce, type RezerwacjaDoSms,
 } from './sms'
 
 describe('normalizujNumer', () => {
@@ -111,5 +111,49 @@ describe('normalizujNumer — granica doklejania prefiksu', () => {
 
   it('dokleja tylko przy długości numeru krajowego', () => {
     expect(normalizujNumer('600123456')).toEqual({ ok: true, numer: '+48600123456' })
+  })
+})
+
+describe('sprawdzNadawce', () => {
+  it('przyjmuje numer w E.164', () => {
+    expect(sprawdzNadawce('+48732126373')).toEqual({ ok: true, rodzaj: 'numer', wartosc: '+48732126373' })
+    expect(sprawdzNadawce(' +48732126373 ')).toMatchObject({ ok: true, rodzaj: 'numer' })
+  })
+
+  it('odrzuca zly numer', () => {
+    for (const v of ['+48', '+0123456789', '+4873212637300000']) {
+      expect(sprawdzNadawce(v)).toMatchObject({ ok: false, blad: 'zly_numer' })
+    }
+  })
+
+  // Najczestsza pomylka: numer wklejony bez plusa. Twilio potraktuje go jak
+  // nazwe alfanumeryczna, a operator podmieni na "unknown" albo zablokuje.
+  it('odrzuca same cyfry bez plusa', () => {
+    expect(sprawdzNadawce('48732126373')).toMatchObject({ ok: false, blad: 'same_cyfry' })
+    expect(sprawdzNadawce('12345')).toMatchObject({ ok: false, blad: 'same_cyfry' })
+  })
+
+  it('przyjmuje nazwe alfanumeryczna', () => {
+    expect(sprawdzNadawce('Nobooking')).toEqual({ ok: true, rodzaj: 'nazwa', wartosc: 'Nobooking' })
+    expect(sprawdzNadawce('Casa Sol')).toMatchObject({ ok: true, rodzaj: 'nazwa' })
+    expect(sprawdzNadawce('Apart24')).toMatchObject({ ok: true, rodzaj: 'nazwa' })
+  })
+
+  it('pilnuje limitu jedenastu znakow Twilio', () => {
+    expect(sprawdzNadawce('Nobooking12')).toMatchObject({ ok: true })       // 11
+    expect(sprawdzNadawce('Nobooking123')).toMatchObject({ ok: false, blad: 'za_dlugi' })  // 12
+  })
+
+  // Polskie ogonki i znaki specjalne nie przechodza przez Twilio w polu From.
+  it('odrzuca znaki spoza zakresu', () => {
+    for (const v of ['Noclegi!', 'Mój dom', 'a_b', 'Casa-Sol']) {
+      expect(sprawdzNadawce(v)).toMatchObject({ ok: false, blad: 'zle_znaki' })
+    }
+  })
+
+  it('odrzuca pusty nadawce', () => {
+    for (const v of ['', '   ', null, undefined]) {
+      expect(sprawdzNadawce(v)).toMatchObject({ ok: false, blad: 'pusty' })
+    }
   })
 })

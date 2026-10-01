@@ -7,6 +7,7 @@ const zdrowy: StanSystemu = {
   stronyDoPrzegladu: [],
   smsNieudane: [],
   smsDziala: null,
+  smsNadawcaOk: null,
   checkinyPoRetencji: 0,
   przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,
@@ -225,5 +226,19 @@ describe('ocenStan - zdjecia zastepcze', () => {
 
   it('milczy, gdy wszystkie strony maja wlasne zdjecia', () => {
     expect(ocenStan({ ...zdrowy, stronyZeZdjeciamiZastepczymi: [] })).toEqual([])
+  })
+})
+
+describe('ocenStan - nadawca SMS', () => {
+  it('zglasza zly nadawce jako ostrzezenie', () => {
+    const z = ocenStan({ ...zdrowy, smsNadawcaOk: false })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].szczegol).toContain('TWILIO_FROM_NUMBER')
+  })
+
+  it('milczy, gdy nadawca jest poprawny albo nieskonfigurowany', () => {
+    expect(ocenStan({ ...zdrowy, smsNadawcaOk: true })).toEqual([])
+    expect(ocenStan({ ...zdrowy, smsNadawcaOk: null })).toEqual([])
   })
 })
