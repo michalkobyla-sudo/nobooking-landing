@@ -9,7 +9,7 @@ export const TR: Record<Lang, {
   heroSub: string
   heroPrimary: string
   heroSecondary: string
-  heroSocialProof: string
+  heroTrust: string[]
   // Calculator
   calcTitle: string
   calcSubtitle: string
@@ -29,6 +29,8 @@ export const TR: Record<Lang, {
   calcLossLabel: string
   calcSavingLabel: string
   calcRoiNote: string
+  calcDirectLabel: string
+  calcAssumptions: string
   // HowItWorks
   howTitle: string
   howStep1Title: string
@@ -94,7 +96,11 @@ export const TR: Record<Lang, {
     heroSub: 'Własna profesjonalna strona rezerwacji gotowa w 7 dni. Jednorazowa opłata — zero prowizji na zawsze.',
     heroPrimary: 'Zamów stronę — od 799 zł →',
     heroSecondary: 'Zobacz demo działającej strony',
-    heroSocialProof: '124 właścicieli już korzysta z Nobooking',
+    heroTrust: [
+      'Zero prowizji od rezerwacji',
+      'Płatność gościa trafia wprost na Twoje konto Stripe',
+      'Ceny, kalendarz i galerię zmieniasz sam w panelu',
+    ],
     calcTitle: 'Ile tracisz na prowizjach?',
     calcSubtitle: 'Wpisz swoje dane i sprawdź ile Booking.com pobiera od Ciebie rocznie.',
     calcRateLabel: 'Średnia cena za noc (PLN)',
@@ -110,9 +116,11 @@ export const TR: Record<Lang, {
     calcPain3Desc: 'Ceny, zasady, widoczność — decyduje platforma',
     calcNightsLabel: 'Liczba nocy w miesiącu',
     calcCommissionLabel: 'Prowizja Booking.com (%)',
-    calcLossLabel: 'Tracisz rocznie na prowizjach:',
-    calcSavingLabel: 'Z Nobooking oszczędzasz rocznie:',
+    calcLossLabel: 'Prowizja Booking.com rocznie:',
+    calcSavingLabel: 'Zostaje u Ciebie rocznie:',
     calcRoiNote: 'Nobooking Basic kosztuje 799 zł jednorazowo. Zwrot inwestycji w ~{days} dni.',
+    calcDirectLabel: 'Ile rezerwacji przejmiesz bezpośrednio (%)',
+    calcAssumptions: 'Liczymy tylko te rezerwacje, które przejdą na Twoją stronę — resztę nadal przyprowadza Booking.com i pobiera za nie prowizję. Od przejętych odejmujemy opłaty Stripe ({fee}, stawka standardowa dla kart europejskich; zależy od Twojego konta i kraju karty gościa) i zakładamy średnio 7 nocy na rezerwację.',
     howTitle: 'Jak to działa?',
     howStep1Title: 'Wybierz plan i zapłać',
     howStep1Desc: 'Płatność kartą, BLIK lub Przelewy24. Bezpiecznie przez Stripe.',
@@ -123,9 +131,9 @@ export const TR: Record<Lang, {
     featuresTitle: 'Co dostajesz?',
     features: [
       { icon: '📅', title: 'Kalendarz dostępności', desc: 'Goście widzą wolne terminy w czasie rzeczywistym' },
-      { icon: '💳', title: 'Płatności Stripe', desc: 'Karta, BLIK, Przelewy24 i inne — pieniądze prosto do Ciebie' },
-      { icon: '🖥️', title: 'Panel admina', desc: 'Rezerwacje, goście, cennik, opinie — wszystko w jednym miejscu' },
-      { icon: '👤', title: 'Portal gościa', desc: 'Gość sprawdza rezerwację, pobiera fakturę, pisze do Ciebie' },
+      { icon: '💳', title: 'Płatności Stripe', desc: 'Metody zależne od Twojego konta Stripe — pieniądze prosto do Ciebie' },
+      { icon: '🖥️', title: 'Panel właściciela', desc: 'Rezerwacje, kalendarz, cennik, galeria, opinie — wszystko w jednym miejscu' },
+      { icon: '👤', title: 'Portal gościa', desc: 'Szczegóły pobytu, check-in online, adres z mapą i kontakt do Ciebie' },
       { icon: '⭐', title: 'System opinii', desc: 'Email → formularz → moderacja → karuzela na stronie głównej' },
       { icon: '📧', title: 'Powiadomienia email', desc: 'Potwierdzenie, anulowanie, przypomnienie przed przyjazdem' },
       { icon: '🌍', title: '4 języki', desc: 'Polski, angielski, hiszpański, niemiecki — automatycznie' },
@@ -179,23 +187,10 @@ export const TR: Record<Lang, {
       'Dashboard analityczny',
     ],
     testimonialsTitle: 'Co mówią właściciele',
-    testimonials: [
-      {
-        text: 'W pierwszym miesiącu zaoszczędziłam ponad 1200 zł na prowizjach. Strona działa lepiej niż myślałam, goście chętnie rezerwują bezpośrednio.',
-        author: 'Anna K.',
-        location: 'Apartament w Zakopanem',
-      },
-      {
-        text: 'Setup w 7 dni to nie ściema — dostałem gotową stronę w 5 dni roboczych. Teraz 60% moich rezerwacji to bezpośrednie.',
-        author: 'Marek W.',
-        location: '3 apartamenty, Sopot',
-      },
-      {
-        text: 'Miałem obawy czy goście będą chcieli płacić przez nieznaną stronę. Okazało się że większość woli — bo cena niższa bez prowizji.',
-        author: 'Piotr M.',
-        location: 'Apartament w Krakowie',
-      },
-    ],
+    // Puste, dopoki nie ma prawdziwych opinii klientow. Sekcja sama sie chowa.
+    // Wczesniej staly tu trzy wymyslone opinie z nazwiskami, miejscowosciami
+    // i konkretnymi kwotami oszczednosci — przy zerowej liczbie klientow.
+    testimonials: [],
     demoText: 'Nie jesteś pewien? Przetestuj wszystko sam — bez rejestracji.',
     demoCta: 'Otwórz demo →',
     faqTitle: 'Często zadawane pytania',
@@ -206,7 +201,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'Czy mogę sam zmienić zdjęcia i opisy?',
-        a: 'Na razie zmiany wykonujemy my na Twoje zlecenie (zazwyczaj w ciągu 24h). Panel CMS do samodzielnej edycji jest w przygotowaniu.',
+        a: 'Zdjęcia, filmy, ceny, kalendarz, dane kontaktowe i opinie zmieniasz sam w panelu — od razu, bez pytania nas. Teksty strony (opis apartamentu, udogodnienia, okolica) poprawiamy my: w cenie masz cztery rundy poprawek po odbiorze strony.',
       },
       {
         q: 'Co się dzieje po 2 latach?',
@@ -238,7 +233,11 @@ export const TR: Record<Lang, {
     heroSub: 'Your own professional booking site ready in 7 days. One-time fee — zero commissions forever.',
     heroPrimary: 'Order your site — from €199 →',
     heroSecondary: 'See a live demo',
-    heroSocialProof: '124 apartment owners already use Nobooking',
+    heroTrust: [
+      'No commission on bookings',
+      'Guest payments go straight to your own Stripe account',
+      'You change prices, calendar and gallery yourself',
+    ],
     calcTitle: 'How much are you losing to commissions?',
     calcSubtitle: 'Enter your numbers and see how much Booking.com takes from you annually.',
     calcRateLabel: 'Average nightly rate (PLN)',
@@ -254,9 +253,11 @@ export const TR: Record<Lang, {
     calcPain3Desc: 'Prices, rules, visibility — the platform decides',
     calcNightsLabel: 'Nights per month',
     calcCommissionLabel: 'Booking.com commission (%)',
-    calcLossLabel: 'You lose per year in commissions:',
-    calcSavingLabel: 'With Nobooking you save per year:',
+    calcLossLabel: 'Booking.com commission per year:',
+    calcSavingLabel: 'Stays with you per year:',
     calcRoiNote: 'Nobooking Basic costs €199 one-time. ROI in ~{days} days.',
+    calcDirectLabel: 'Share of bookings you take direct (%)',
+    calcAssumptions: 'We only count bookings that move to your own site — the rest still come through Booking.com and still pay its commission. From the ones you take direct we subtract Stripe fees ({fee}, standard rate for European cards; it depends on your account and the card country) and assume 7 nights per booking on average.',
     howTitle: 'How does it work?',
     howStep1Title: 'Choose plan and pay',
     howStep1Desc: 'Payment by card, BLIK or Przelewy24. Securely via Stripe.',
@@ -267,9 +268,9 @@ export const TR: Record<Lang, {
     featuresTitle: 'What do you get?',
     features: [
       { icon: '📅', title: 'Availability calendar', desc: 'Guests see free dates in real time' },
-      { icon: '💳', title: 'Stripe payments', desc: 'Card, BLIK, Przelewy24 and more — money straight to you' },
-      { icon: '🖥️', title: 'Admin panel', desc: 'Bookings, guests, pricing, reviews — all in one place' },
-      { icon: '👤', title: 'Guest portal', desc: 'Guest checks booking, downloads invoice, messages you' },
+      { icon: '💳', title: 'Stripe payments', desc: 'Methods depend on your own Stripe account — money straight to you' },
+      { icon: '🖥️', title: 'Owner panel', desc: 'Bookings, calendar, pricing, gallery, reviews — all in one place' },
+      { icon: '👤', title: 'Guest portal', desc: 'Stay details, online check-in, address with map and your contact details' },
       { icon: '⭐', title: 'Review system', desc: 'Email → form → moderation → carousel on homepage' },
       { icon: '📧', title: 'Email notifications', desc: 'Confirmation, cancellation, pre-arrival reminder' },
       { icon: '🌍', title: '4 languages', desc: 'Polish, English, Spanish, German — automatically' },
@@ -323,23 +324,10 @@ export const TR: Record<Lang, {
       'Analytics dashboard',
     ],
     testimonialsTitle: 'What owners say',
-    testimonials: [
-      {
-        text: 'In the first month I saved over €280 in commissions. The site works better than I expected, guests happily book directly.',
-        author: 'Anna K.',
-        location: 'Apartment in Zakopane',
-      },
-      {
-        text: '7-day setup is not a lie — I got my site in 5 working days. Now 60% of my bookings are direct.',
-        author: 'Marek W.',
-        location: '3 apartments, Sopot',
-      },
-      {
-        text: "I was worried guests wouldn't trust an unknown site. Turns out most prefer it — because the price is lower without commissions.",
-        author: 'Piotr M.',
-        location: 'Apartment in Krakow',
-      },
-    ],
+    // Puste, dopoki nie ma prawdziwych opinii klientow. Sekcja sama sie chowa.
+    // Wczesniej staly tu trzy wymyslone opinie z nazwiskami, miejscowosciami
+    // i konkretnymi kwotami oszczednosci — przy zerowej liczbie klientow.
+    testimonials: [],
     demoText: 'Not sure? Try everything yourself — no registration needed.',
     demoCta: 'Open demo →',
     faqTitle: 'Frequently asked questions',
@@ -350,7 +338,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'Can I change photos and descriptions myself?',
-        a: 'For now, we make changes on your request (usually within 24h). A self-service CMS panel is in development.',
+        a: 'Photos, videos, prices, calendar, contact details and reviews you change yourself in the owner panel — instantly, without asking us. Page copy (apartment description, amenities, the area) we edit for you: four rounds of revisions are included after handover.',
       },
       {
         q: 'What happens after 2 years?',

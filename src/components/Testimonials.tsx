@@ -22,9 +22,20 @@ function Stars() {
   )
 }
 
+/**
+ * Opinie klientow.
+ *
+ * Sekcja chowa sie, dopoki nie ma czego pokazac. Do 2026-10-01 staly tu trzy
+ * wymyslone opinie — z nazwiskami, miejscowosciami, piecioma gwiazdkami
+ * i konkretnymi kwotami oszczednosci — przy zerowej liczbie klientow. Pusta
+ * sekcja jest lepsza niz wymyslona: pierwsza prawdziwa opinia wraca tu przez
+ * `TR[lang].testimonials` i nic wiecej nie trzeba zmieniac.
+ */
 export default function Testimonials() {
   const { lang } = useLang()
   const t = TR[lang]
+
+  if (t.testimonials.length === 0) return null
 
   return (
     <section className="section-wrap section-wrap--alt">

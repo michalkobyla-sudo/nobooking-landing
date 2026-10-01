@@ -104,40 +104,24 @@ export default function Hero() {
             </a>
           </div>
 
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-            <div style={{ display: 'flex' }}>
-              {[
-                { initials: 'AK', bg: '#DBEAFE', color: '#1D4ED8' },
-                { initials: 'MW', bg: '#FCE7F3', color: '#BE185D' },
-                { initials: 'PM', bg: '#FEF3C7', color: '#B45309' },
-                { initials: '+',  bg: 'var(--color-accent-light)', color: 'var(--color-accent)' },
-              ].map((item, i) => (
-                <div key={item.initials} style={{
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  border: '2.5px solid white',
-                  background: item.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.62rem', fontWeight: 800,
-                  color: item.color,
-                  marginLeft: i === 0 ? 0 : '-7px',
-                  zIndex: 4 - i,
-                  position: 'relative',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                }}>
-                  {item.initials}
-                </div>
-              ))}
-            </div>
-            <div>
-              <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>
-                <strong style={{ fontWeight: 800 }}>124 </strong>
-                <span style={{ color: 'var(--color-text-muted)' }}>
-                  {t.heroSocialProof.replace('124 ', '')}
-                </span>
-              </span>
-            </div>
-          </div>
+          {/*
+            Trzy sprawdzalne fakty o ofercie.
+
+            Stalo tu „124 wlascicieli juz korzysta z Nobooking" razem z czterema
+            awatarami (AK, MW, PM, +) pasujacymi do wymyslonych opinii nizej.
+            Klientow bylo zero. Liczby, ktorej nie da sie pokazac, nie piszemy —
+            zwlaszcza na stronie, na ktora zaraz pojdzie ruch z reklamy.
+          */}
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            {t.heroTrust.map(punkt => (
+              <li key={punkt} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '0.15rem' }}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {punkt}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* RIGHT: Browser mockup */}
