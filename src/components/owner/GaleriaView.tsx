@@ -25,6 +25,19 @@ import { naOsadzenie, MAX_ZDJEC, MIN_ZDJEC, MAX_WIDEO, MAX_DL_TYTULU } from '@/l
 const PRIMARY = '#1A5276'
 const CARD_BD = '#E5E7EB'
 
+/** Na telefonie wiersz lamie sie na dwa poziomy — adres zdjecia jest dlugi
+ *  i w waskim polu obok miniatury widac z niego kilkanascie znakow. */
+function useWaski(prog = 720) {
+  const [waski, setWaski] = useState(false)
+  useEffect(() => {
+    const sprawdz = () => setWaski(window.innerWidth < prog)
+    sprawdz()
+    window.addEventListener('resize', sprawdz)
+    return () => window.removeEventListener('resize', sprawdz)
+  }, [prog])
+  return waski
+}
+
 interface Zdjecie { url: string; alt: string }
 interface WideoWpis { embedUrl: string; title: string; thumbnail: string }
 
@@ -85,6 +98,7 @@ function Miniatura({ url }: { url: string }) {
 }
 
 export function GaleriaView({ slug }: { slug: string }) {
+  const waski = useWaski()
   const [zdjecia, setZdjecia]   = useState<Zdjecie[]>([])
   const [wideo, setWideo]       = useState<WideoWpis[]>([])
   const [wczytane, setWczytane] = useState(false)
@@ -178,22 +192,40 @@ export function GaleriaView({ slug }: { slug: string }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {zdjecia.map((z, i) => (
-            <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.5rem', border: `1px solid ${CARD_BD}`, borderRadius: 10, background: '#FCFCFD' }}>
-              <span style={{ width: 18, textAlign: 'center', fontSize: '0.75rem', color: '#9CA3AF', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{i + 1}</span>
-              <Miniatura url={z.url.trim()} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: 0 }}>
+            <div key={i} style={{ display: 'flex', flexDirection: waski ? 'column' : 'row', gap: '0.6rem', alignItems: waski ? 'stretch' : 'center', padding: '0.5rem', border: `1px solid ${CARD_BD}`, borderRadius: 10, background: '#FCFCFD' }}>
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', order: waski ? 1 : 0 }}>
+                <span style={{ width: 18, textAlign: 'center', fontSize: '0.75rem', color: '#9CA3AF', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{i + 1}</span>
+                <Miniatura url={z.url.trim()} />
+                {waski && <span style={{ flex: 1 }} />}
+                <div style={{ display: waski ? 'flex' : 'none', gap: '0.25rem' }}>
+                  <button onClick={() => przesun(i, -1)} disabled={i === 0} title="W górę" style={{ ...przycisk, opacity: i === 0 ? 0.35 : 1 }}>↑</button>
+                  <button onClick={() => przesun(i, 1)} disabled={i === zdjecia.length - 1} title="W dół" style={{ ...przycisk, opacity: i === zdjecia.length - 1 ? 0.35 : 1 }}>↓</button>
+                  <button
+                    onClick={() => { setZapisano(false); setZdjecia(lista => lista.filter((_, j) => j !== i)) }}
+                    title="Usuń zdjęcie"
+                    style={{ ...przycisk, borderColor: '#FECACA', color: '#DC2626' }}
+                  >✕</button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: 0, order: waski ? 2 : 0 }}>
                 <input value={z.url} onChange={e => zmien(i, { url: e.target.value })} placeholder="https://…/salon.jpg" style={pole} />
                 <input value={z.alt} onChange={e => zmien(i, { alt: e.target.value })} placeholder="Opis, np. Salon z widokiem na morze" style={{ ...pole, fontSize: '0.78rem', color: '#4B5563' }} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flexShrink: 0 }}>
-                <button onClick={() => przesun(i, -1)} disabled={i === 0} title="W górę" style={{ ...przycisk, height: 22, opacity: i === 0 ? 0.35 : 1 }}>↑</button>
-                <button onClick={() => przesun(i, 1)} disabled={i === zdjecia.length - 1} title="W dół" style={{ ...przycisk, height: 22, opacity: i === zdjecia.length - 1 ? 0.35 : 1 }}>↓</button>
-              </div>
-              <button
-                onClick={() => { setZapisano(false); setZdjecia(lista => lista.filter((_, j) => j !== i)) }}
-                title="Usuń zdjęcie"
-                style={{ ...przycisk, borderColor: '#FECACA', color: '#DC2626' }}
-              >✕</button>
+
+              {!waski && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flexShrink: 0 }}>
+                    <button onClick={() => przesun(i, -1)} disabled={i === 0} title="W górę" style={{ ...przycisk, height: 22, opacity: i === 0 ? 0.35 : 1 }}>↑</button>
+                    <button onClick={() => przesun(i, 1)} disabled={i === zdjecia.length - 1} title="W dół" style={{ ...przycisk, height: 22, opacity: i === zdjecia.length - 1 ? 0.35 : 1 }}>↓</button>
+                  </div>
+                  <button
+                    onClick={() => { setZapisano(false); setZdjecia(lista => lista.filter((_, j) => j !== i)) }}
+                    title="Usuń zdjęcie"
+                    style={{ ...przycisk, borderColor: '#FECACA', color: '#DC2626' }}
+                  >✕</button>
+                </>
+              )}
             </div>
           ))}
         </div>
