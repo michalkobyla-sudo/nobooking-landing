@@ -195,3 +195,109 @@ Rozstrzyga ryzyko, że klient zapłaci za coś, czego nie dostanie.
 
 Pozycje 2–5 to praca inżynierska. Pozycja 1 to decyzja biznesowa i tylko Ty
 możesz ją podjąć.
+
+
+---
+
+# Przegląd kontrolny — 2026-10-01
+
+Powtórzenie weryfikacji po zamknięciu Etapu 1, rozszerzone o dwa pytania:
+czy agent zdrowia pilnuje każdego newralgicznego punktu i czy system jest gotowy
+wygenerować komplet dla nowego klienta.
+
+## Funkcje — stan na produkcji
+
+Każda trasa odpytana na żywo. Wszystkie odpowiadają zgodnie z oczekiwaniem,
+łącznie z odmowami tam, gdzie mają odmawiać.
+
+| Sprawdzenie | Oczekiwane | Wynik |
+|---|---|---|
+| Strona apartamentu, kalendarz, zamówienie | 200 | 200 |
+| Portal gościa z nieznanym id | odmowa | odmowa |
+| Check-in na planie Basic | 403 | 403 |
+| Opinia z nieznanym id | 404 | 404 |
+| Kody rabatowe, analityka, statystyki bez sesji | 401 | 401 |
+| Poprawki z nieznanym tokenem | `found:false` | `found:false` |
+| Wycena i rezerwacja | 402 `stripe_not_connected` | 402, bez śmiecia w bazie |
+
+Sekcje renderowane na stronie: galeria, kalendarz, opinie, mapa, udogodnienia,
+cennik sezonowy, formularz rezerwacji.
+
+## Znalezione w tym przeglądzie
+
+### Regeneracja cofała zdjęcia do zastępczych — naprawione
+
+`generate-site.ts` ustawia `config.photos = PLACEHOLDER_PHOTOS` przy **każdej**
+generacji, bo model nie potrafi wytworzyć prawdziwych zdjęć. Ochrona przy
+scalaniu obejmowała tylko `pricing` i `contact`.
+
+Łańcuch: klient dostaje stronę ze zdjęciami z Unsplasha → zdjęcia zostają
+podmienione na prawdziwe → klient wysyła poprawkę opisu → **zdjęcia wracają do
+stockowych**. Do 2026-09-29 nieszkodliwe, bo regeneracja w ogóle nie trafiała na
+stronę; od naprawy — realne.
+
+`photos` i `videos` dołączone do gałęzi chronionych.
+
+### Lista kontrolna schematu była nieaktualna — naprawione
+
+`WYMAGANE` w agencie zdrowia kończyło się na wpisach z 25 września: sześć
+pozycji. Nie obejmowało kolumn poprawek, znacznika prośby o opinię, tabel SMS,
+check-inu, powiadomień gości ani atrybucji — czyli **żadnej z funkcji dodanych
+później**. Agent nie wyłapałby ani jednej z trzech awarii znalezionych ręcznie
+30 września.
+
+Rozszerzone do 19 pozycji, pogrupowanych tematycznie. Tabele bota celowo
+pominięte: mają nie istnieć do etapu 4.
+
+### Brak kontroli retencji RODO — dodane
+
+Formularze check-in zawierają numery dokumentów i mają znikać tydzień po
+wyjeździe. Kasuje je cron sprzątający; gdyby przestał działać, nic by tego nie
+pokazało, bo nikt nie zagląda do tabeli, której nie używa. Agent zdrowia liczy
+teraz formularze trzymane po terminie i zgłasza je jako **krytyczne**.
+
+### Brak kontroli zaciętego crona powiadomień — dodane
+
+`guest-reminders` kończy się sukcesem także wtedy, gdy nic nie wyśle. Agent
+sprawdza teraz rezerwacje, którym **wczoraj** minął termin przypomnienia i nie
+mają śladu w `guest_notifications`. Wczorajszy, nie dzisiejszy — cron chodzi
+o 08:00, a raport o 06:00.
+
+## Rozjazdy oferty, nie usterki
+
+Dwie rzeczy działają inaczej, niż sugeruje opis pakietu:
+
+**„Galeria zdjęć i wideo"** — mechanizm wideo działa (modal z odtwarzaczem), ale
+generator nie produkuje pola `videos` i **nie ma ścieżki, którą właściciel mógłby
+dodać film**. Dla Casa Sol config powstał ręcznie; nowy klient nie dostanie tej
+części.
+
+**Zdjęcia** — nowy klient dostaje sześć zdjęć zastępczych z Unsplasha. Nie ma
+w panelu właściciela miejsca na wgranie własnych; jedyna ścieżka to
+`orders.ob_photos_link` i ręczna podmiana. To usługa, nie automat, i tak
+powinna być opisywana.
+
+Obie są świadomymi brakami, nie awariami — ale zasada Z1 mówi, że oferta opisuje
+to, co działa.
+
+## Gotowość do obsługi nowego klienta
+
+Prześledzone od zamówienia do gotowej strony:
+
+| Element | Stan |
+|---|---|
+| `revision_token` | nadawany automatycznie przez bazę (`gen_random_uuid()`) |
+| `revision_count` | `0`, limit czterech rund czytany z kodu |
+| `review_request_sent_at` | puste → prośba o opinię pójdzie po trzech dniach |
+| Hasło tymczasowe | generowane z CSPRNG, trafia do maila powitalnego |
+| `sites.sms_phone` | kopiowane z onboardingu, znormalizowane do E.164 |
+| Config | komplet pól poza `videos` |
+| Zdjęcia | sześć zastępczych, próg weryfikacji spełniony |
+| Konto Stripe Connect | tworzone, błąd nie przerywa provisioningu |
+| Mail „strona gotowa" | zawiera token poprawek (źródło: `select('*')`) |
+| Krok weryfikacji | sprawdza config i to, czy strona się otwiera |
+
+**Jedyna rzecz, która dziś zatrzyma nowego klienta, to Connect.** Strona
+powstanie, maile wyjdą, panel zadziała — ale płatności zwrócą 402, dopóki
+właściciel nie podepnie Stripe'a, a tego nie da się zrobić przed odblokowaniem
+weryfikacji tożsamości platformy.

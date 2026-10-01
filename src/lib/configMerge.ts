@@ -13,8 +13,20 @@
  * to, co zmieniono ręcznie.
  */
 
-/** Gałęzie configu, które właściciel edytuje w panelu (`owner/settings`). */
-export const POLA_WLASCICIELA = ['pricing', 'contact'] as const
+/**
+ * Gałęzie configu, których regeneracja nie może dotknąć.
+ *
+ * Dwie grupy, z różnych powodów:
+ *
+ * - `pricing`, `contact` — właściciel edytuje je w panelu (`owner/settings`),
+ *   a regeneracja budowałaby je z niezmiennych danych onboardingowych.
+ * - `photos`, `videos` — **model nie potrafi ich wytworzyć.** Generator wstawia
+ *   sześć zdjęć zastępczych z Unsplasha przy każdej generacji
+ *   (`config.photos = PLACEHOLDER_PHOTOS` w `generate-site.ts`), a wideo nie
+ *   produkuje wcale. Bez tej ochrony pierwsza poprawka klienta cofałaby
+ *   prawdziwe zdjęcia apartamentu do stockowych.
+ */
+export const POLA_WLASCICIELA = ['pricing', 'contact', 'photos', 'videos'] as const
 
 export type PoleWlasciciela = (typeof POLA_WLASCICIELA)[number]
 

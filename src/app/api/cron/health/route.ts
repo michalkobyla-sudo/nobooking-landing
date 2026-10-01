@@ -4,17 +4,51 @@ import { requireCron } from '@/lib/cronAuth'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU } from '@/lib/provisionCheck'
+import { DNI_RETENCJI } from '@/lib/checkin'
 
 export const runtime = 'nodejs'
 
 /** Kolumny i tabele, bez których części systemu przestają działać.
  *  Sprawdzane wprost, bo nieuruchomiona migracja objawia się dopiero
  *  wtedy, gdy ktoś zapłaci i nie dostanie strony. */
+/**
+ * Kolumny i tabele, bez których jakaś funkcja przestaje działać — po cichu.
+ *
+ * Lista musi rosnąć razem z funkcjami. Do 2026-10-01 kończyła się na wpisach
+ * z 25 września, więc agent zdrowia nie wyłapał ani brakujących kolumn poprawek
+ * (cztery rundy reklamowane klientowi w mailu), ani znacznika prośby o opinię,
+ * ani tabel SMS-ów. Wszystkie trzy trzeba było znaleźć ręcznie, porównując kod
+ * z bazą.
+ *
+ * Tabele bota celowo pominięte: nie istnieją i mają nie istnieć do etapu 4,
+ * a alarm powtarzany codziennie przestaje być czytany.
+ */
 const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
+  // Strony i odnowienia
   ['sites', 'expires_at'],
   ['sites', 'renewal_price_pln'],
+  ['sites', 'sms_phone'],
+  ['sites', 'sms_enabled'],
+
+  // Zamówienia, provisioning i poprawki
   ['orders', 'provisioning_started_at'],
+  ['orders', 'revision_token'],
+  ['orders', 'revision_count'],
+  ['orders', 'review_request_sent_at'],
+  ['orders', 'utm_source'],
+  ['orders', 'click_id'],
+
+  // Płatności
   ['stripe_webhook_events', 'event_id'],
+  ['discount_codes', 'uses_count'],
+
+  // Funkcje pakietu Pro i obieg gościa
+  ['sms_log', 'udane'],
+  ['checkin_forms', 'guests_data'],
+  ['guest_notifications', 'rodzaj'],
+  ['reviews', 'published'],
+
+  // Pozostałe
   ['bot_processed_messages', 'mid'],
   ['renewal_reminders', 'id'],
 ]
@@ -161,6 +195,47 @@ export async function GET(request: NextRequest) {
     }, {}),
   ).map(([powod, ile]) => ({ powod, ile }))
 
+  // ── Retencja danych check-in (RODO) ───────────────────────────────────────
+  const granicaRetencji = new Date(teraz - (DNI_RETENCJI + 1) * 86_400_000)
+    .toISOString().slice(0, 10)
+
+  const { data: zakonczone } = await db
+    .from('bookings')
+    .select('id')
+    .lt('check_out', granicaRetencji)
+
+  let checkinyPoRetencji = 0
+  if (zakonczone && zakonczone.length > 0) {
+    const { count } = await db
+      .from('checkin_forms')
+      .select('id', { count: 'exact', head: true })
+      .in('booking_id', zakonczone.map(b => b.id))
+    checkinyPoRetencji = count ?? 0
+  }
+
+  // ── Zaległe przypomnienia przed przyjazdem ────────────────────────────────
+  // Patrzymy na wczorajszy termin, nie dzisiejszy: cron przypomnień chodzi
+  // o 08:00, a ten raport o 06:00 — dzisiejsze wysyłki jeszcze nie poszły.
+  const wczorajszyTermin = new Date(teraz + (7 - 1) * 86_400_000).toISOString().slice(0, 10)
+
+  const { data: doPrzypomnienia } = await db
+    .from('bookings')
+    .select('id')
+    .eq('status', 'confirmed')
+    .eq('check_in', wczorajszyTermin)
+
+  let przypomnieniaZalegle = 0
+  if (doPrzypomnienia && doPrzypomnienia.length > 0) {
+    const { data: wyslane } = await db
+      .from('guest_notifications')
+      .select('booking_id')
+      .eq('rodzaj', 'przed_przyjazdem')
+      .in('booking_id', doPrzypomnienia.map(b => b.id))
+
+    const maSlad = new Set((wyslane ?? []).map(w => w.booking_id as string))
+    przypomnieniaZalegle = doPrzypomnienia.filter(b => !maSlad.has(b.id as string)).length
+  }
+
   const { count: rezerwacjePendingStare } = await db
     .from('bookings')
     .select('id', { count: 'exact', head: true })
@@ -201,6 +276,8 @@ export async function GET(request: NextRequest) {
     stronyDoPrzegladu,
     smsNieudane,
     smsDziala,
+    checkinyPoRetencji,
+    przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
     wygasajaceSubskrypcje,

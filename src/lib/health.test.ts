@@ -7,6 +7,8 @@ const zdrowy: StanSystemu = {
   stronyDoPrzegladu: [],
   smsNieudane: [],
   smsDziala: null,
+  checkinyPoRetencji: 0,
+  przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
   wygasajaceSubskrypcje: [],
@@ -182,5 +184,28 @@ describe('ocenStan — poswiadczenia Twilio', () => {
 
   it('milczy, gdy dzialaja', () => {
     expect(ocenStan({ ...zdrowy, smsDziala: true })).toEqual([])
+  })
+})
+
+describe('ocenStan — retencja i zaleglosci', () => {
+  // Numery dokumentow po pobycie nie sluza niczemu, a ich trzymanie jest samym
+  // ryzykiem. Nikt nie zaglada do tabeli, ktorej nie uzywa, wiec zacięty cron
+  // sprzatajacy bylby niewidoczny.
+  it('zglasza dane check-in trzymane po terminie jako krytyczne', () => {
+    const z = ocenStan({ ...zdrowy, checkinyPoRetencji: 3 })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('krytyczne')
+    expect(z[0].tytul).toContain('3')
+  })
+
+  it('zglasza zalegle przypomnienia jako ostrzezenie', () => {
+    const z = ocenStan({ ...zdrowy, przypomnieniaZalegle: 2 })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].szczegol).toContain('guest-reminders')
+  })
+
+  it('milczy, gdy obie liczby sa zerowe', () => {
+    expect(ocenStan({ ...zdrowy, checkinyPoRetencji: 0, przypomnieniaZalegle: 0 })).toEqual([])
   })
 })

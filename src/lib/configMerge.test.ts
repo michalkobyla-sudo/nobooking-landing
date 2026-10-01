@@ -43,10 +43,13 @@ describe('scalPoRegeneracji', () => {
     expect(w.zachowane).toEqual(['contact'])
   })
 
-  it('zachowuje obie gałęzie naraz', () => {
+  it('zachowuje kilka gałęzi naraz', () => {
     const biezacy = { ...wygenerowany, pricing: cennik(180), contact: { email: 'z@x.pl' } }
     const w = scalPoRegeneracji(wygenerowany, biezacy, wygenerowany)
-    expect(w.zachowane.sort()).toEqual([...POLA_WLASCICIELA].sort())
+    // Zachowane mają być dokładnie te zmienione — nie cała lista chronionych.
+    expect(w.zachowane.sort()).toEqual(['contact', 'pricing'])
+    expect(POLA_WLASCICIELA).toContain('pricing')
+    expect(POLA_WLASCICIELA).toContain('contact')
   })
 
   // Bez poprzedniej wersji nie da się odróżnić edycji właściciela od tego, co
@@ -112,5 +115,40 @@ describe('scalPoRegeneracji — dwie rundy poprawek', () => {
     // Błędny wariant: punktem odniesienia jest config scalony.
     const zly = scalPoRegeneracji(generowany, runda1.config, runda1.config)
     expect(zly.config.pricing).toEqual(cennik(100))
+  })
+})
+
+describe('scalPoRegeneracji — zdjecia i wideo', () => {
+  const zastepcze = [{ url: 'https://unsplash/1.jpg', alt: 'Apartament' }]
+  const prawdziwe = [
+    { url: 'https://klient/salon.jpg', alt: 'Salon' },
+    { url: 'https://klient/taras.jpg', alt: 'Taras', videoUrl: 'https://youtube.com/embed/x' },
+  ]
+
+  /**
+   * Generator wstawia te same zdjecia zastepcze przy KAZDEJ generacji, bo model
+   * nie potrafi wytworzyc prawdziwych. Bez ochrony pierwsza poprawka klienta
+   * cofalaby zdjecia apartamentu do stockowych z Unsplasha.
+   */
+  it('nie cofa prawdziwych zdjec do zastepczych', () => {
+    const generowany = { ...wygenerowany, photos: zastepcze }
+    const naStronie = { ...wygenerowany, photos: prawdziwe }
+
+    const w = scalPoRegeneracji(generowany, naStronie, generowany)
+    expect(w.config.photos).toEqual(prawdziwe)
+    expect(w.zachowane).toContain('photos')
+  })
+
+  it('przepuszcza zastepcze, gdy nikt zdjec nie podmienil', () => {
+    const generowany = { ...wygenerowany, photos: zastepcze }
+    const w = scalPoRegeneracji(generowany, { ...generowany }, generowany)
+    expect(w.config.photos).toEqual(zastepcze)
+    expect(w.zachowane).not.toContain('photos')
+  })
+
+  it('chroni wideo, ktorego generator nie produkuje wcale', () => {
+    const wideo = [{ url: 'https://youtube.com/embed/abc', title: 'Spacer' }]
+    const w = scalPoRegeneracji(wygenerowany, { ...wygenerowany, videos: wideo }, wygenerowany)
+    expect(w.config.videos).toEqual(wideo)
   })
 })

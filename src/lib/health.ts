@@ -28,6 +28,10 @@ export interface StanSystemu {
   smsNieudane: Array<{ powod: string; ile: number }>
   /** Czy poświadczenia Twilio są ważne. `null` = SMS-y nieskonfigurowane. */
   smsDziala: boolean | null
+  /** Formularze check-in trzymane dłużej, niż pozwala retencja (RODO). */
+  checkinyPoRetencji: number
+  /** Rezerwacje, którym wczoraj minął termin przypomnienia, a nic nie poszło. */
+  przypomnieniaZalegle: number
   /** Rezerwacje `pending` starsze niż 3 h — cron sprzątający powinien je anulować. */
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
@@ -124,6 +128,27 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       szczegol: s.stronyDoPrzegladu
         .map((p) => `${p.slug} — ${p.powod}`)
         .join('; ') + '. Klient nie dostał danych logowania. Popraw config i wyślij ręcznie.',
+    })
+  }
+
+  // Dane dokumentu tożsamości po pobycie nie służą już niczemu, a ich trzymanie
+  // jest samym ryzykiem. Kasuje je cron sprzątający — jeśli przestanie działać,
+  // nic tego nie pokaże, bo nikt nie zagląda do tabeli, której nie używa.
+  if (s.checkinyPoRetencji > 0) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: `Dane check-in po terminie retencji: ${s.checkinyPoRetencji}`,
+      szczegol: 'Formularze z numerami dokumentów powinny zniknąć tydzień po wyjeździe. Sprawdź cron cleanup-pending-bookings.',
+    })
+  }
+
+  // Cron powiadomień kończy się sukcesem także wtedy, gdy nic nie wyśle —
+  // zaległość widać dopiero po tym, że termin minął, a śladu wysyłki nie ma.
+  if (s.przypomnieniaZalegle > 0) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: `Niewysłane przypomnienia przed przyjazdem: ${s.przypomnieniaZalegle}`,
+      szczegol: 'Rezerwacjom minął wczoraj termin przypomnienia, a w guest_notifications nie ma śladu wysyłki. Sprawdź cron guest-reminders.',
     })
   }
 
