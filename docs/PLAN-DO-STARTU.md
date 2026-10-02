@@ -263,7 +263,16 @@ wymagałyby zbierania ruchu, czyli osobnego podsystemu i zgód cookie.
 
 ---
 
-## Etap 2 — Pełny przebieg na prawdziwych danych
+## Etap 2 — Pełny przebieg na prawdziwych danych ✅ WYKONANY 2026-10-02
+
+> **Dziesięć kroków, dziesięć zaliczonych.** Przebieg lokalny na kluczach
+> testowych Stripe (live blokuje odrzucony dokument tożsamości platformy).
+> Znalezionych i naprawionych **sześć błędów**, z których żadnego nie
+> wyłapałby test jednostkowy — zawodziły styki między warstwami, nie warstwy.
+> Wynik i pułapki środowiska: koniec pliku `ETAP-2-PRZEBIEG.md`.
+>
+> Po odblokowaniu Stripe zostaje **jeden przebieg kontrolny na koncie live**,
+> nie cały etap: różnią się tylko kroki dotyczące prawdziwych pieniędzy.
 
 > **Runbook:** `ETAP-2-PRZEBIEG.md` — dziesięć kroków z opisem, czego każdy
 > dowodzi. Przygotowany 2026-09-30, czeka na odblokowanie Connecta.
@@ -424,7 +433,7 @@ Ruszamy, gdy wszystkie poniższe są prawdziwe:
 
 - [ ] każda funkcja z `PAKIET-BASIC.md` i `PAKIET-PRO.md` działa i została
       sprawdzona na produkcji (Etapy 1–2);
-- [ ] pełny przebieg od zamówienia do odnowienia przeszedł raz (Etap 2);
+- [x] pełny przebieg od zamówienia do odnowienia przeszedł raz (Etap 2) — 2026-10-02, w trybie testowym;
 - [x] CI pilnuje testów i typów (Etap 3) — od 2026-10-01;
 - [ ] agent zdrowia raportuje czysto przez siedem dni z rzędu;
 - [ ] kopia zapasowa powstaje codziennie i ma niezerową treść;

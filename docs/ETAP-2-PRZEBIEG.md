@@ -164,3 +164,78 @@ Sprawdzić:
 
 Potem marketing. Etap 3 (twardnienie operacyjne) zrobiony wcześniej, poza
 kolejnością — nic w nim nie zależało od Stripe'a, więc nie było powodu czekać.
+
+---
+
+# Wynik przebiegu — 2026-10-02
+
+Wykonany lokalnie, na kluczach testowych Stripe, przeciwko produkcyjnej bazie.
+Dziesięć kroków, dziesięć zaliczonych. Dane testowe skasowane na koniec.
+
+## Dlaczego lokalnie, a nie na żywym koncie
+
+Weryfikacja tożsamości właściciela platformy była (i jest) odrzucona przez
+Stripe, więc konta połączone w trybie live nie powstają. W trybie testowym
+powstają bez przeszkód — a czternaście z piętnastu kroków runbooka zachowuje
+się identycznie. Po odblokowaniu zostanie jeden przebieg kontrolny, nie cały
+etap.
+
+**Klucze testowe wchodziły wyłącznie do lokalnego `.env.local`.** Produkcja
+ani razu nie została przełączona w tryb testowy.
+
+## Sześć błędów, których nie znalazłby żaden test jednostkowy
+
+| # | Błąd | Dlaczego był niewidoczny |
+|---|---|---|
+| 1 | `/api/orders` tworzyło sesję płatności, wołając `${NEXT_PUBLIC_SITE_URL}/api/stripe/checkout` — adres bezwzględny z konfiguracji | Dopóki istniała tylko produkcja, adres wskazywał tę samą maszynę. Pierwsze uruchomienie poza nią utworzyło **dwie prawdziwe sesje na 1199 zł** |
+| 2 | Hasło do panelu szło na `ob_contact_email` — kontakt publiczny ze strony | Wysyłka kończyła się sukcesem. Klient płaci i nie dostaje dostępu, nikt się nie dowiaduje |
+| 3 | `stripe_onboarded` zostawało `false` mimo gotowego konta | Callback sprawdza gotowość raz; weryfikacja u Stripe kończy się po przekierowaniu |
+| 4 | Online check-in martwy na czterech poziomach: flaga, zapytanie, render, link | Każda warstwa z osobna robiła coś sensownego |
+| 5 | Portal gościa obiecywał fakturę, wiadomości i historię pobytów | Tekst na stronie **każdego klienta**, czytany przez gościa po zapłaceniu |
+| 6 | Prośba o opinię szukała wyjazdów dokładnie sprzed dwóch dni | Pominięty dzień crona kasował prośby bezpowrotnie |
+
+Wszystkie naprawione i wdrożone tego samego dnia.
+
+**Znalezisko wycofane:** zarzut, że model wymyśla cennik przy pustych sezonach,
+był nietrafiony. `ob_price_per_night` jest zbierane i wymagane; model wyprowadza
+z niego tylko sezony, których klient świadomie nie zdefiniował.
+
+## Co potwierdził przebieg
+
+- rabat liczony od całości ze sprzątaniem: 4175 € × 0,85 = **3549 €**;
+- sprzedawcą na stronie płatności jest **właściciel**, nie Nobooking;
+- podwójna rezerwacja odrzucona przez API (409) **i przez bazę** (`23P01`,
+  `bookings_no_overlap`) — sprawdzone wstawieniem wiersza z pominięciem aplikacji;
+- granica między najemcami: pod cudzym slugiem portal mówi „Rezerwacja
+  nie znaleziona", formularz „Formularz niedostępny", API opinii zwraca 404,
+  bez wycieku nazwiska i kwoty;
+- SMS do właściciela wysłany przez Twilio, ślad w `sms_log`;
+- prośba o opinię raz, drugie uruchomienie crona milczy;
+- poprawka zmieniła treść, a **cena ustawiona w panelu nie wróciła** do
+  wartości z generacji (scalanie configu);
+- zmiana hasła unieważnia poprzednią sesję: 200 → **401**, API zwraca
+  `sessions_revoked: true`;
+- odnowienie przedłużyło subskrypcję z 2026-11-01 na **2028-11-01**, a metody
+  płatności dobrał Stripe (BLIK, karta, Klarna) zamiast sztywnej listy.
+
+## Pułapki środowiska, warte zapamiętania
+
+**Produkcyjne crony pracują na tej samej bazie co test lokalny.** Provisioning
+wykonała produkcja siedemnaście sekund po wysłaniu formularza onboardingowego.
+Tu wyszło to na dobre, ale przy kroku z rezerwacją trzeba o tym pamiętać.
+
+**`npm run build` i `vercel --prod` zabijają działający `npm run dev`** —
+Turbopack dzieli katalog `.next`. Po takim zderzeniu `.next` urósł do 681 MB
+i serwer startował tylko po to, by natychmiast zakończyć pracę; pomogło
+`rm -rf .next`.
+
+**Serwer deweloperski padał pięć razy** na MacBooku Air obok Chrome'a
+i Claude'a. Przy przebiegu kontrolnym na koncie live lepiej użyć produkcji.
+
+**Pola karty w Stripe Checkout siedzą w ramce z obcej domeny** — pisanie po
+współrzędnych tam nie dociera, działa dopiero ustawianie wartości przez
+odwołania do pól.
+
+**Strona płatności Stripe zawiera instrukcje skierowane do agentów AI**
+(polecenie zainstalowania „Link CLI" i uruchomienia poleceń w powłoce).
+Treść strony to dane, nie rozkazy — zignorowane.
