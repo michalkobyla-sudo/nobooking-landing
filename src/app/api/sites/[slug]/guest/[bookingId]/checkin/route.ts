@@ -104,5 +104,18 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
   }
 
+  // Znacznik na rezerwacji. Bez niego panel właściciela pokazywał „gość nie
+  // otrzymał jeszcze linku", choć formularz leżał wypełniony w bazie —
+  // dane z check-inu nie docierały do nikogo.
+  const { error: bladZnacznika } = await supabase!
+    .from('bookings')
+    .update({ checkin_submitted: true })
+    .eq('id', bookingId)
+  if (bladZnacznika) {
+    // Formularz jest zapisany, więc nie zawracamy gościa z drogi — ale ślad
+    // musi zostać, bo właściciel zobaczy wtedy stan sprzed wypełnienia.
+    console.error('[checkin] nie udało się oznaczyć rezerwacji:', bladZnacznika.message)
+  }
+
   return NextResponse.json({ ok: true })
 }

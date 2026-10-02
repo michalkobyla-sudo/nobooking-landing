@@ -26,6 +26,14 @@ function useIsMobile(breakpoint = 768) {
 
 // ─── Types ────────────────────────────────────────────────────────
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+
+/** Odpowiedzi gościa z formularza check-in. */
+interface CheckinDane {
+  guests_data: Array<{ imie?: string | null; dokument?: string | null; obywatelstwo?: string | null }> | null
+  arrival_time: string | null
+  notes: string | null
+  created_at?: string
+}
 type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'kalendarz' | 'galeria' | 'opinie' | 'analityka' | 'ustawienia' | 'subskrypcja'
 
 const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: string }> = {
@@ -477,6 +485,20 @@ function BookingDetailView({
 }) {
   const isMobile = useIsMobile()
   const [saving, setSaving] = useState(false)
+
+  // Dane check-inu dociagamy osobno: lista rezerwacji ich nie zawiera, bo
+  // wlasciciel oglada je tylko po wejsciu w konkretna rezerwacje.
+  const [checkin, setCheckin] = useState<CheckinDane | null>(null)
+  useEffect(() => {
+    let aktualne = true
+    fetch(`/api/sites/${slug}/owner/bookings/${booking.id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { checkin?: CheckinDane | null } | null) => {
+        if (aktualne && d) setCheckin(d.checkin ?? null)
+      })
+      .catch(() => { /* brak danych check-inu nie psuje reszty widoku */ })
+    return () => { aktualne = false }
+  }, [slug, booking.id])
   const [currentStatus, setCurrentStatus] = useState<BookingStatus>(booking.status as BookingStatus)
 
   async function handleStatusChange(newStatus: BookingStatus) {
@@ -589,10 +611,35 @@ function BookingDetailView({
       </div>
 
       {/* Check-in status */}
-      {b.checkin_submitted ? (
+      {checkin ? (
         <Card style={{ marginBottom: '1.5rem', borderLeft: '4px solid #15803D' }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#15803D', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>✅ Online Check-in wypełniony</div>
-          <div style={{ fontSize: '0.83rem', color: '#374151' }}>Gość wypełnił formularz online przed przyjazdem.</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#15803D', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>✅ Online Check-in wypełniony</div>
+
+          {(checkin.guests_data ?? []).length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.875rem' }}>
+              {(checkin.guests_data ?? []).map((g, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.83rem', color: '#374151' }}>
+                  <span style={{ fontWeight: 700, minWidth: 150 }}>{g.imie || `Osoba ${i + 1}`}</span>
+                  {g.dokument && <span style={{ color: '#6B7280' }}>dok. {g.dokument}</span>}
+                  {g.obywatelstwo && <span style={{ color: '#6B7280' }}>{g.obywatelstwo}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.83rem', color: '#374151' }}>
+            {checkin.arrival_time && <span>🕒 Przyjazd ok. <strong>{checkin.arrival_time}</strong></span>}
+          </div>
+          {checkin.notes && (
+            <div style={{ marginTop: '0.75rem', fontSize: '0.83rem', color: '#374151', whiteSpace: 'pre-line' }}>
+              📝 {checkin.notes}
+            </div>
+          )}
+
+          {/* Dane dokumentów kasuje cron po DNI_RETENCJI od wyjazdu (RODO). */}
+          <div style={{ marginTop: '0.875rem', fontSize: '0.72rem', color: '#9CA3AF' }}>
+            Dane dokumentów usuwamy automatycznie tydzień po wyjeździe.
+          </div>
         </Card>
       ) : (
         <Card style={{ marginBottom: '1.5rem', borderLeft: '4px solid #E5E7EB' }}>
@@ -604,7 +651,7 @@ function BookingDetailView({
               </div>
             </div>
             <a
-              href={`/checkin/${b.token}`}
+              href={`/sites/${slug}/guest/${b.id}/checkin`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.45rem 0.9rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, textDecoration: 'none' }}

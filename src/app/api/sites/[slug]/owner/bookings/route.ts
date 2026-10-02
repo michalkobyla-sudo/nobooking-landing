@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const supabase = createServiceClient()
   const { data: bookings, error } = await supabase
     .from('bookings')
-    .select('id, guest_name, guest_email, guest_phone, check_in, check_out, nights, guests_count, total_price, currency, status, stripe_paid, created_at, notes')
+    .select('id, guest_name, guest_email, guest_phone, check_in, check_out, nights, guests_count, total_price, currency, status, stripe_paid, created_at, notes, checkin_sent, checkin_submitted')
     .eq('site_id', site.id)
     .order('check_in', { ascending: true })
 
