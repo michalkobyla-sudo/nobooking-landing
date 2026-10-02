@@ -12,6 +12,11 @@ const DNI_PRZED_PRZYJAZDEM = 7
 /** Ile dni po wyjeździe pytamy o opinię. Za wcześnie — gość jeszcze w drodze. */
 const DNI_PO_WYJEZDZIE = 2
 
+/** Jak daleko wstecz sięgamy, żeby nadrobić pominięte uruchomienia.
+ *  Tydzień: po tym czasie prośba o opinię przestaje mieć sens, bo gość
+ *  pamięta pobyt coraz słabiej, a mail wygląda jak zaległość. */
+const DNI_POWIADOMIENIA_WSTECZ = 9
+
 type Rodzaj = 'przed_przyjazdem' | 'prosba_o_opinie'
 
 function przesunDni(ile: number): string {
@@ -103,12 +108,23 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Prośba o opinię ─────────────────────────────────────────────────────────
-  const poWyjezdzie = przesunDni(-DNI_PO_WYJEZDZIE)
+  //
+  // Zakres, nie jeden dzień. Wcześniej szukaliśmy wyjazdów **dokładnie** sprzed
+  // dwóch dni — więc jedno pominięte uruchomienie crona kasowało prośby o opinię
+  // z tamtego dnia bezpowrotnie. Ślady uruchomień, które dołożyliśmy, wykryją
+  // ciszę, ale nie nadrobią zaległości.
+  //
+  // Powtórek nie będzie: `zaklep` opiera się na kluczu unikalnym
+  // (booking_id, rodzaj), więc rezerwacja raz zapytana nie dostanie prośby
+  // drugi raz, choćby trafiała w okno przez cały tydzień.
+  const poWyjezdzieOd = przesunDni(-DNI_POWIADOMIENIA_WSTECZ)
+  const poWyjezdzieDo = przesunDni(-DNI_PO_WYJEZDZIE)
   const { data: wyjazdy } = await db
     .from('bookings')
     .select('id, site_id, guest_name, guest_email, check_in, check_out, total_price, currency, discount_code')
     .in('status', ['confirmed', 'completed'])
-    .eq('check_out', poWyjezdzie)
+    .gte('check_out', poWyjezdzieOd)
+    .lte('check_out', poWyjezdzieDo)
 
   for (const b of wyjazdy ?? []) {
     const { data: strona } = await db
