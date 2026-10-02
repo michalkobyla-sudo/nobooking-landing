@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { sendNewOrderNotification } from '@/lib/email'
 import { zBody, opisZrodla } from '@/lib/attribution'
 import type { Order } from '@/lib/types'
+import { utworzSesjeZamowienia } from '@/lib/checkoutZamowienia'
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -82,21 +83,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
   }
 
-  // Create Stripe session
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu')
-    .trim()
-    .replace(/\/$/, '')
-
-  const checkoutRes = await fetch(`${siteUrl}/api/stripe/checkout`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ plan: order.plan, currency: order.currency, order_id: order.id }),
+  // Sesja platnosci — wywolanie bezposrednie, bez wychodzenia na siec.
+  //
+  // Wczesniej szlo tu zadanie HTTP na `${NEXT_PUBLIC_SITE_URL}/api/stripe/checkout`,
+  // czyli pod adres bezwzgledny z konfiguracji. Lokalnie wskazywal on produkcje,
+  // wiec serwer deweloperski zapisywal zamowienie u siebie, a sesje platnosci
+  // tworzyl na produkcji, kluczem live.
+  const wynikSesji = await utworzSesjeZamowienia({
+    plan: order.plan as 'basic' | 'pro',
+    currency: order.currency as 'pln' | 'eur',
+    orderId: order.id as string,
+    adresPowrotu: request.nextUrl.origin,
   })
 
-  const checkoutData = await checkoutRes.json() as { url?: string; error?: string }
-
-  if (!checkoutData.url) {
-    console.error('[orders] Stripe checkout error:', checkoutData.error)
+  if (!wynikSesji.ok) {
+    console.error('[orders] Stripe checkout error:', wynikSesji.blad)
     return NextResponse.json({ error: 'stripe_error' }, { status: 500 })
   }
 
@@ -105,5 +106,5 @@ export async function POST(request: NextRequest) {
     console.error('[orders] notification email error:', err)
   )
 
-  return NextResponse.json({ order_id: order.id, stripe_url: checkoutData.url })
+  return NextResponse.json({ order_id: order.id, stripe_url: wynikSesji.url })
 }
