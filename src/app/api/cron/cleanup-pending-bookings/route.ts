@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
+import { odswiezStatusConnect } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
 
 // GET /api/cron/cleanup-pending-bookings
@@ -44,8 +45,16 @@ export async function GET(request: NextRequest) {
   // o wiersz na kazdy adres IP, ktory kiedykolwiek dotknal chronionej trasy.
   const usunieteLimity = await skasujWygasleLimity(supabase)
 
+  // Konta polaczone, ktorych weryfikacja u Stripe skonczyla sie juz PO
+  // powrocie wlasciciela z onboardingu. Bez tego ich strony zostawaly
+  // na zawsze oznaczone jako nieprzyjmujace platnosci.
+  const connectPodniesione = await odswiezStatusConnect(supabase)
+  if (connectPodniesione.length > 0) {
+    console.log('[cleanup-pending] Stripe gotowy dla:', connectPodniesione.join(', '))
+  }
+
   if (!stale || stale.length === 0) {
-    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity })
+    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, connect_gotowe: connectPodniesione })
   }
 
   const ids = stale.map(b => b.id)
@@ -62,7 +71,7 @@ export async function GET(request: NextRequest) {
 
   console.log(`[cleanup-pending] cancelled ${ids.length} stale pending bookings:`, ids)
 
-  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity })
+  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, connect_gotowe: connectPodniesione })
 }
 
 /**

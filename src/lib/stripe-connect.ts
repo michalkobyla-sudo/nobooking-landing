@@ -295,3 +295,58 @@ async function zaleglosciPlatformy(klucz: string): Promise<string> {
     return `odczyt konta sie nie powiodl: ${err instanceof Error ? err.message : String(err)}`
   }
 }
+
+/**
+ * Dociaga status kont polaczonych, ktore zglosily sie jako nieukonczone.
+ *
+ * `/api/connect/callback` sprawdza gotowosc konta **raz**, w chwili powrotu
+ * wlasciciela ze Stripe. Weryfikacja u Stripe jest asynchroniczna: potrafi
+ * zapalic `charges_enabled` kilka sekund albo kilka minut pozniej. Jesli
+ * trafi po przekierowaniu, flaga zostaje na `false` i **nic jej nigdy nie
+ * przestawia**.
+ *
+ * Dla klienta wyglada to tak: zrobil wszystko poprawnie, Stripe ma go za
+ * gotowego, a jego strona dalej pokazuje gosciom dane kontaktowe zamiast
+ * platnosci. Nie ma z tego wyjscia poza ponownym klikniecem "Polacz Stripe".
+ *
+ * Wylapane przy pierwszym pelnym przebiegu (Etap 2, 2026-10-02).
+ *
+ * Zwraca slugi stron, ktorym status zostal podniesiony.
+ */
+export async function odswiezStatusConnect(
+  db: { from: (t: string) => any },   // eslint-disable-line @typescript-eslint/no-explicit-any
+): Promise<string[]> {
+  /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
+  const { data, error } = await db
+    .from('sites')
+    .select('slug, stripe_account_id')
+    .eq('active', true)
+    .eq('stripe_onboarded', false)
+    .not('stripe_account_id', 'is', null)
+
+  if (error || !data) return []
+
+  const podniesione: string[] = []
+
+  for (const s of data as Array<{ slug: string; stripe_account_id: string }>) {
+    try {
+      if (!(await isConnectAccountReady(s.stripe_account_id))) continue
+      const { error: bladZapisu } = await db
+        .from('sites')
+        .update({ stripe_onboarded: true })
+        .eq('slug', s.slug)
+      if (bladZapisu) {
+        console.error(`[connect] nie udalo sie zapisac statusu dla ${s.slug}:`, bladZapisu.message)
+        continue
+      }
+      podniesione.push(s.slug)
+    } catch (err) {
+      // Konto moze byc z innego trybu (testowe vs live) — wtedy klucz go nie
+      // widzi. To nie powod, zeby przerwac sprawdzanie pozostalych.
+      console.error(`[connect] nie udalo sie sprawdzic ${s.slug}:`, err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  return podniesione
+  /* eslint-enable */
+}
