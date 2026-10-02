@@ -122,12 +122,31 @@ async function insertSiteWithFreeSlug(
  *   3. Row in `sites` table
  * Returns credentials for the welcome email.
  */
+/**
+ * Adres wlasciciela: ten, ktory kupil, a nie kontakt publiczny ze strony.
+ *
+ * Do 2026-10-02 bylo tu `order.ob_contact_email ?? order.email`, czyli adres,
+ * ktory gosc widzi przy rezerwacji. Bywa nim wspolna skrzynka, alias albo
+ * adres, ktory jeszcze nie istnieje — a wlasnie tam szlo **haslo do panelu**,
+ * powiadomienia o rezerwacjach i konto do logowania. Klient nie dostawal
+ * danych logowania, a wysylka z naszej strony konczyla sie sukcesem, wiec
+ * nikt sie o tym nie dowiadywal. Wyszlo przy pierwszym pelnym przebiegu
+ * (Etap 2), gdy kontakt wskazywal nieistniejaca skrzynke.
+ *
+ * `order.email` jest sprawdzony: na niego poszedl link onboardingowy i klient
+ * z niego skorzystal, skoro wypelnil formularz. Kontakt publiczny zostaje
+ * w `config.contact`. Wlasciciel moze pozniej zmienic swoj adres w panelu.
+ */
+export function adresWlasciciela(order: Pick<Order, 'email'>): string {
+  return (order.email ?? '').toLowerCase().trim()
+}
+
 export async function provisionSite(
   order: Order,
   configJson: string,
 ): Promise<ProvisionResult> {
   const supabase = createServiceClient()
-  const ownerEmail = (order.ob_contact_email ?? order.email).toLowerCase().trim()
+  const ownerEmail = adresWlasciciela(order)
 
   // ── 0. Czy to zamówienie ma już stronę? ─────────────────────────────────────
   // Provisioning bywa wznawiany (błąd sieci, timeout funkcji). Bez tej kontroli

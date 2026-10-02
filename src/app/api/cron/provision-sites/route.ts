@@ -150,7 +150,9 @@ export async function GET(request: NextRequest) {
       }
 
       // 6. Welcome email (credentials + Stripe Connect link)
-      const ownerEmail = (typedOrder.ob_contact_email ?? typedOrder.email).toLowerCase().trim()
+      // Haslo idzie do kupujacego, nie na kontakt publiczny ze strony —
+      // powod opisany w provision-site.ts.
+      const ownerEmail = typedOrder.email.toLowerCase().trim()
       await sendOwnerWelcomeEmail({
         email: ownerEmail,
         first_name: typedOrder.first_name,
