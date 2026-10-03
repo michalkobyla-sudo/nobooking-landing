@@ -361,8 +361,12 @@ Atrybucja działa od 2026-09-29: pierwsze dotknięcie zapisywane przy wejściu,
 `utm_*`, `fbclid`/`gclid` i referrer trafiają do `orders`. Bez tego nie dałoby
 się powiedzieć, która kampania przyniosła klienta.
 
-Do ustalenia przed pierwszą kampanią: **konwencja nazw** `utm_campaign`
-i `utm_content`, żeby raporty dało się grupować.
+✅ **Konwencja nazw ustalona** — `ATRYBUCJA-NAZEWNICTWO.md`: zamknięta lista
+wartości dla `utm_source` i `utm_medium`, zasada „jedna kampania = jeden
+zamiar" dla `utm_campaign`, warianty kreacji w `utm_content`, gotowe linki
+i zapytanie zliczające. Wraz z tym, czego ta atrybucja **nie** powie: nie
+mierzymy odwiedzin, więc koszt pozyskania klienta policzysz dopiero
+w zestawieniu z panelem Meta.
 
 ### 4b. Materiały
 
@@ -370,7 +374,11 @@ i `utm_content`, żeby raporty dało się grupować.
   rezerwacjami; najmocniejszy argument, dziś niewykorzystany;
 - **wyliczenie oszczędności** — konkretna kwota prowizji przy danym obłożeniu,
   nie hasło „bez prowizji";
-- **demo** — istnieje, ale nie jest eksponowane;
+- ✅ **demo** — eksponowane i sprawne. Oba warianty linkowane ze strony
+  głównej: `/demo` (strona apartamentu) i `/demo-panelu/zamowienia` (panel
+  właściciela). Ten drugi prowadził do 2026-10-03 pod `/admin/demo/...`,
+  czyli pod ochronę proxy — odwiedzający lądował na ekranie logowania
+  administratora;
 - **opinie** — ✅ *usunięte 2026-10-01.* Nie były „przykładowe", tylko wymyślone:
   trzy osoby z nazwiskami, miejscowościami, pięcioma gwiazdkami i konkretnymi
   kwotami oszczędności, przy zerowej liczbie klientów. Razem z nimi poszła
