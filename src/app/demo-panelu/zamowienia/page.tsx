@@ -36,29 +36,29 @@ const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: stri
 
 // ─── Data ─────────────────────────────────────────────────────────
 const BOOKINGS = [
-  { id: 'b-1', status: 'new'              as BookingStatus, arrival: '2026-06-14', departure: '2026-06-21', nights: 7, guests: 4, name: 'Katarzyna Malinowska',  email: 'k.malinowska@gmail.com', phone: '+48 601 234 567',   country: '🇵🇱 Polska',    total: 2940, currency: 'zł', deposit: 0,   discount: '',      checkin_done: false, message: 'Czy możliwa jest dostawka dla dziecka?', created_at: '2026-05-07T18:42:00Z' },
-  { id: 'b-2', status: 'confirmed'        as BookingStatus, arrival: '2026-06-28', departure: '2026-07-05', nights: 7, guests: 2, name: 'Thomas Müller',         email: 'thomas.m@gmail.de',      phone: '+49 151 9876543',    country: '🇩🇪 Niemcy',     total: 1155, currency: '€', deposit: 350, discount: '',      checkin_done: false, message: '',                                       created_at: '2026-05-06T10:15:00Z' },
-  { id: 'b-3', status: 'awaiting_payment' as BookingStatus, arrival: '2026-07-12', departure: '2026-07-19', nights: 7, guests: 3, name: 'Joanna Wieczorek',      email: 'j.wieczorek@wp.pl',      phone: '+48 724 555 888',    country: '🇵🇱 Polska',    total: 2660, currency: 'zł', deposit: 0,   discount: 'PROMO10', checkin_done: false, message: 'Przyjeżdżamy z psem, czy to problem?',   created_at: '2026-05-06T14:30:00Z' },
-  { id: 'b-4', status: 'checked_in'       as BookingStatus, arrival: '2026-05-03', departure: '2026-05-10', nights: 7, guests: 2, name: 'Sophie Martin',         email: 'sophie.m@free.fr',       phone: '+33 6 12 34 56 78',  country: '🇫🇷 Francja',   total: 980,  currency: '€', deposit: 294, discount: '',      checkin_done: true,  message: "Merci pour l'accueil chaleureux!",        created_at: '2026-04-28T09:00:00Z' },
-  { id: 'b-5', status: 'completed'        as BookingStatus, arrival: '2026-04-19', departure: '2026-04-26', nights: 7, guests: 4, name: 'Piotr i Anna Kamińscy', email: 'p.kaminski@onet.pl',     phone: '+48 509 111 222',    country: '🇵🇱 Polska',    total: 2800, currency: 'zł', deposit: 840, discount: '',      checkin_done: true,  message: '',                                       created_at: '2026-04-10T11:20:00Z' },
-  { id: 'b-6', status: 'completed'        as BookingStatus, arrival: '2026-04-05', departure: '2026-04-12', nights: 7, guests: 2, name: 'Carlos García',         email: 'c.garcia@gmail.es',      phone: '+34 612 345 678',    country: '🇪🇸 Hiszpania', total: 910,  currency: '€', deposit: 273, discount: '',      checkin_done: true,  message: 'Perfecto apartamento, volveremos!',       created_at: '2026-03-20T16:45:00Z' },
-  { id: 'b-7', status: 'cancelled'        as BookingStatus, arrival: '2026-05-24', departure: '2026-05-31', nights: 7, guests: 3, name: 'Marta Kowalczyk',       email: 'm.kowalczyk@gmail.com',  phone: '+48 789 000 123',    country: '🇵🇱 Polska',    total: 2380, currency: 'zł', deposit: 0,   discount: '',      checkin_done: false, message: 'Niestety zmiana planów, przepraszam.',    created_at: '2026-04-15T08:30:00Z' },
+  { id: 'b-1', status: 'new'              as BookingStatus, arrival: '2026-06-14', departure: '2026-06-21', nights: 7, guests: 4, name: 'Katarzyna Malinowska',  email: 'k.malinowska@example.com', phone: '+48 790 000 001',   country: '🇵🇱 Polska',    total: 2940, currency: 'zł', deposit: 0,   discount: '',      checkin_done: false, message: 'Czy możliwa jest dostawka dla dziecka?', created_at: '2026-05-07T18:42:00Z' },
+  { id: 'b-2', status: 'confirmed'        as BookingStatus, arrival: '2026-06-28', departure: '2026-07-05', nights: 7, guests: 2, name: 'Thomas Müller',         email: 'thomas.m@example.de',      phone: '+49 30 123456789',    country: '🇩🇪 Niemcy',     total: 1155, currency: '€', deposit: 350, discount: '',      checkin_done: false, message: '',                                       created_at: '2026-05-06T10:15:00Z' },
+  { id: 'b-3', status: 'awaiting_payment' as BookingStatus, arrival: '2026-07-12', departure: '2026-07-19', nights: 7, guests: 3, name: 'Joanna Wieczorek',      email: 'j.wieczorek@example.pl',      phone: '+48 790 000 002',    country: '🇵🇱 Polska',    total: 2660, currency: 'zł', deposit: 0,   discount: 'PROMO10', checkin_done: false, message: 'Przyjeżdżamy z psem, czy to problem?',   created_at: '2026-05-06T14:30:00Z' },
+  { id: 'b-4', status: 'checked_in'       as BookingStatus, arrival: '2026-05-03', departure: '2026-05-10', nights: 7, guests: 2, name: 'Sophie Martin',         email: 'sophie.m@example.fr',       phone: '+33 1 23 45 67 89',  country: '🇫🇷 Francja',   total: 980,  currency: '€', deposit: 294, discount: '',      checkin_done: true,  message: "Merci pour l'accueil chaleureux!",        created_at: '2026-04-28T09:00:00Z' },
+  { id: 'b-5', status: 'completed'        as BookingStatus, arrival: '2026-04-19', departure: '2026-04-26', nights: 7, guests: 4, name: 'Piotr i Anna Kamińscy', email: 'p.kaminski@example.pl',     phone: '+48 790 000 003',    country: '🇵🇱 Polska',    total: 2800, currency: 'zł', deposit: 840, discount: '',      checkin_done: true,  message: '',                                       created_at: '2026-04-10T11:20:00Z' },
+  { id: 'b-6', status: 'completed'        as BookingStatus, arrival: '2026-04-05', departure: '2026-04-12', nights: 7, guests: 2, name: 'Carlos García',         email: 'c.garcia@example.es',      phone: '+34 900 000 000',    country: '🇪🇸 Hiszpania', total: 910,  currency: '€', deposit: 273, discount: '',      checkin_done: true,  message: 'Perfecto apartamento, volveremos!',       created_at: '2026-03-20T16:45:00Z' },
+  { id: 'b-7', status: 'cancelled'        as BookingStatus, arrival: '2026-05-24', departure: '2026-05-31', nights: 7, guests: 3, name: 'Marta Kowalczyk',       email: 'm.kowalczyk@example.com',  phone: '+48 790 000 004',    country: '🇵🇱 Polska',    total: 2380, currency: 'zł', deposit: 0,   discount: '',      checkin_done: false, message: 'Niestety zmiana planów, przepraszam.',    created_at: '2026-04-15T08:30:00Z' },
 ]
 
 const DEMO_EMAILS: Record<string, Array<{ date: string; from: string; subject: string; body: string }>> = {
   'b-1': [
-    { date: '2026-05-07 18:42', from: 'k.malinowska@gmail.com', subject: 'Zapytanie o rezerwację 14–21 czerwca', body: 'Dzień dobry, chciałabym zapytać o dostępność apartamentu w dniach 14–21 czerwca dla 4 osób. Czy możliwa jest dostawka dla dziecka 2-letniego? Pozdrawiam, Katarzyna' },
-    { date: '2026-05-07 19:10', from: 'michal@casasol.eu',       subject: 'Re: Zapytanie o rezerwację 14–21 czerwca', body: 'Dzień dobry Katarzyno, termin jest dostępny. Dostawka – oczywiście, bez dodatkowej opłaty. Łączna kwota: 2 940 zł. Rezerwuję dla Pani?' },
+    { date: '2026-05-07 18:42', from: 'k.malinowska@example.com', subject: 'Zapytanie o rezerwację 14–21 czerwca', body: 'Dzień dobry, chciałabym zapytać o dostępność apartamentu w dniach 14–21 czerwca dla 4 osób. Czy możliwa jest dostawka dla dziecka 2-letniego? Pozdrawiam, Katarzyna' },
+    { date: '2026-05-07 19:10', from: 'wlasciciel@example.com',       subject: 'Re: Zapytanie o rezerwację 14–21 czerwca', body: 'Dzień dobry Katarzyno, termin jest dostępny. Dostawka – oczywiście, bez dodatkowej opłaty. Łączna kwota: 2 940 zł. Rezerwuję dla Pani?' },
   ],
   'b-2': [
-    { date: '2026-05-06 10:15', from: 'thomas.m@gmail.de',  subject: 'Booking request 28 Jun – 5 Jul',          body: 'Hello, I would like to book the apartment from June 28 to July 5 for 2 adults. Please confirm availability. Best, Thomas' },
-    { date: '2026-05-06 11:00', from: 'michal@casasol.eu',  subject: 'Re: Booking request 28 Jun – 5 Jul',      body: 'Dear Thomas, the apartment is available. Total: €1155. I sent you a payment link for a 30% deposit. Kind regards, Michał' },
+    { date: '2026-05-06 10:15', from: 'thomas.m@example.de',  subject: 'Booking request 28 Jun – 5 Jul',          body: 'Hello, I would like to book the apartment from June 28 to July 5 for 2 adults. Please confirm availability. Best, Thomas' },
+    { date: '2026-05-06 11:00', from: 'wlasciciel@example.com',  subject: 'Re: Booking request 28 Jun – 5 Jul',      body: 'Dear Thomas, the apartment is available. Total: €1155. I sent you a payment link for a 30% deposit. Kind regards, Michał' },
     { date: '2026-05-06 14:22', from: 'noreply@stripe.com', subject: '✅ Płatność €350 otrzymana',               body: 'Płatność zaliczkowa €350 od Thomas Müller została zaksięgowana. Rezerwacja b-2 potwierdzona.' },
   ],
   'b-4': [
-    { date: '2026-04-28 09:00', from: 'sophie.m@free.fr',          subject: 'Réservation du 3 au 10 mai',                        body: 'Bonjour, je souhaite réserver du 3 au 10 mai pour 2 personnes. Merci!' },
-    { date: '2026-04-28 10:30', from: 'michal@casasol.eu',          subject: 'Re: Réservation du 3 au 10 mai',                    body: 'Bonjour Sophie! Disponible. Total €980. Lien de paiement ci-joint. À bientôt!' },
-    { date: '2026-05-02 20:15', from: 'noreply@nobooking.eu',       subject: '📋 Sophie Martin — online check-in wypełniony',     body: 'Gość Sophie Martin wypełniła formularz check-in. Paszport FR1234567, przylot 15:30, lot FR2891. Kod dostępu wysłany SMS.' },
+    { date: '2026-04-28 09:00', from: 'sophie.m@example.fr',          subject: 'Réservation du 3 au 10 mai',                        body: 'Bonjour, je souhaite réserver du 3 au 10 mai pour 2 personnes. Merci!' },
+    { date: '2026-04-28 10:30', from: 'wlasciciel@example.com',          subject: 'Re: Réservation du 3 au 10 mai',                    body: 'Bonjour Sophie! Disponible. Total €980. Lien de paiement ci-joint. À bientôt!' },
+    { date: '2026-05-02 20:15', from: 'noreply@nobooking.eu',       subject: '📋 Sophie Martin — online check-in wypełniony',     body: 'Gość Sophie Martin wypełniła formularz check-in. Paszport XX0000000, przylot 15:30, lot FR2891. Kod dostępu wysłany SMS.' },
   ],
   'b-5': [
     { date: '2026-04-26 16:00', from: 'noreply@nobooking.eu', subject: '⭐ Nowa opinia od Piotr i Anna Kamińscy', body: 'Gość wystawił opinię 5/5: „Trzeci raz w tym apartamencie i jak zawsze – perfekcyjnie. Polecamy serdecznie!"' },
@@ -86,8 +86,8 @@ const DEMO_CHAT: Record<string, Array<{ side: 'host' | 'guest'; text: string; ti
 }
 
 const DEMO_CHECKIN: Record<string, { passport: string; arrival_time: string; flight: string; people: string; notes: string }> = {
-  'b-4': { passport: 'FR1234567', arrival_time: '15:30', flight: 'FR2891',               people: '2 dorosłych',                      notes: 'Alergiczna na koty – brak problemu' },
-  'b-5': { passport: 'PL9876543', arrival_time: '12:00', flight: 'lot własny (samochód)', people: '2 dorosłych + 2 dzieci 8 i 11 lat', notes: 'Prośba o fotelik rowerowy' },
+  'b-4': { passport: 'XX0000000', arrival_time: '15:30', flight: 'FR2891',               people: '2 dorosłych',                      notes: 'Alergiczna na koty – brak problemu' },
+  'b-5': { passport: 'XX0000001', arrival_time: '12:00', flight: 'lot własny (samochód)', people: '2 dorosłych + 2 dzieci 8 i 11 lat', notes: 'Prośba o fotelik rowerowy' },
 }
 
 const REVIEWS = [
@@ -205,7 +205,7 @@ function Sidebar({ activeTab, setTab, collapsed, setCollapsed }: {
       {/* Footer */}
       {!collapsed && (
         <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #1F2937' }}>
-          <div style={{ fontSize: '0.7rem', color: '#4B5563', marginBottom: '0.3rem' }}>michal@casasol.eu</div>
+          <div style={{ fontSize: '0.7rem', color: '#4B5563', marginBottom: '0.3rem' }}>wlasciciel@example.com</div>
           <div style={{ fontSize: '0.65rem', color: '#374151' }}>Powered by <span style={{ color: GOLD, fontWeight: 700 }}>Nobooking</span></div>
         </div>
       )}
@@ -808,7 +808,7 @@ function UstawieniaView() {
           {[
             { label: 'Nazwa apartamentu', value: 'Casa Sol Torrevieja',              type: 'text'  },
             { label: 'Adres',             value: 'Calle del Mar 15, 03181 Torrevieja', type: 'text'  },
-            { label: 'Email kontaktowy',  value: 'michal@casasol.eu',                type: 'email' },
+            { label: 'Email kontaktowy',  value: 'wlasciciel@example.com',                type: 'email' },
             { label: 'Telefon',           value: '+48 600 123 456',                  type: 'tel'   },
           ].map(f => (
             <div key={f.label} style={{ marginBottom: '0.9rem' }}>
@@ -940,7 +940,7 @@ export default function AdminDemoPage() {
               <a href="/demo" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 700, textDecoration: 'none', border: '1px solid #BBF7D0', background: '#F0FDF4', borderRadius: 8, padding: '0.28rem 0.6rem', whiteSpace: 'nowrap' }}>
                 🌐 {isMobile ? 'Strona' : 'Moja strona ↗'}
               </a>
-              {!isMobile && <span style={{ fontSize: '0.76rem', color: '#9CA3AF' }}>michal@casasol.eu</span>}
+              {!isMobile && <span style={{ fontSize: '0.76rem', color: '#9CA3AF' }}>wlasciciel@example.com</span>}
             </div>
           </div>
 
