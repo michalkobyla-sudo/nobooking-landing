@@ -45,6 +45,11 @@ const RATE_RULES: Array<[RegExp, number, number, number]> = [
   // Enumeracja tokenów onboardingu.
   [/^\/api\/onboarding\/[^/]+$/, 20, 10 * 60_000, 600],
 
+  // Każde wejście tworzy nowy link onboardingowy w Stripe. Trasa wymaga sesji
+  // właściciela (od 2026-10-03), więc to już nie jest furtka dla obcych —
+  // ale odświeżanie strony nie ma powodu wołać Stripe bez ograniczeń.
+  [/^\/api\/connect\/onboard$/, 20, 10 * 60_000, 600],
+
   // Portal gościa: check-in i opinia. Chroni je wyłącznie znajomość
   // identyfikatora rezerwacji, więc enumeracja jest tu tym samym, czym
   // zgadywanie tokenu — a obie trasy piszą do bazy.

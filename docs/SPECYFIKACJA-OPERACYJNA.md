@@ -166,6 +166,15 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
     o rezerwacjach i konto do logowania idą na `orders.email` — ten jest
     sprawdzony, bo klient odebrał na nim link onboardingowy.
     Implementacja: `adresWlasciciela` w `src/lib/provision-site.ts`.
+24. **Slug nie jest uprawnieniem.** Slug to publiczny adres strony apartamentu
+    — każdy, kto widział link do oferty, go zna. Trasa, która na podstawie
+    samego sluga oddaje cokolwiek dotyczącego właściciela, jest trasą otwartą
+    dla wszystkich. Zasada powstała 2026-10-03: `GET /api/connect/onboard?slug=`
+    nie sprawdzała niczego i przekierowywała na świeżo wygenerowany link
+    onboardingowy Stripe Connect **do konta wskazanego przez slug** — czyli do
+    panelu, w którym ustawia się konto bankowe do wypłat. Trasa istniała jako
+    zapasowy odnośnik w mailu powitalnym. Teraz wymaga sesji właściciela,
+    a bez niej odsyła na logowanie, żeby odnośnik z maila dalej działał.
 
 ---
 
