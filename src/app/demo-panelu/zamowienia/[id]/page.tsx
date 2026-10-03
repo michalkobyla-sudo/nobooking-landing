@@ -99,7 +99,7 @@ export default function DemoBookingDetailPage() {
       <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 60 }}>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <button
-            onClick={() => router.push('/admin/demo/zamowienia')}
+            onClick={() => router.push('/demo-panelu/zamowienia')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', color: '#6B7280', fontFamily: 'inherit', padding: 0 }}
           >
             ← Rezerwacje

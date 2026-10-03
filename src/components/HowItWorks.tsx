@@ -142,7 +142,7 @@ export default function HowItWorks() {
             </svg>
             {lang === 'pl' ? 'Demo strony apartamentu' : 'Apartment site demo'}
           </a>
-          <a href="/admin/demo/zamowienia" style={{
+          <a href="/demo-panelu/zamowienia" style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
             border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
             padding: '0.7rem 1.375rem', fontSize: '0.875rem', fontWeight: 600,
