@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase'
 import { createOnboardingLink } from '@/lib/stripe-connect'
+import { verifyOwnerSession } from '@/lib/ownerAuth'
 
-// GET /api/connect/onboard?slug=casa-sol
-// Called from admin panel "Connect Stripe" button or from welcome email link.
-// Redirects owner to Stripe Connect onboarding.
+/**
+ * GET /api/connect/onboard?slug=casa-sol
+ *
+ * Przekierowuje właściciela na onboarding Stripe Connect. Wywoływane z panelu
+ * i z zapasowego odnośnika w mailu powitalnym (gdy przy provisioningu nie udało
+ * się wygenerować linku bezpośrednio).
+ *
+ * **Wymaga sesji właściciela.** Do 2026-10-03 trasa była publiczna: brała slug
+ * z adresu, odczytywała `stripe_account_id` tej strony i oddawała link
+ * onboardingowy do **cudzego konta połączonego**. Slug jest publiczny — to
+ * adres strony apartamentu — więc wystarczyło go znać. Link onboardingowy
+ * prowadzi do panelu, w którym ustawia się dane właściciela i **konto bankowe
+ * do wypłat**, czyli miejsce, gdzie trafiają pieniądze z rezerwacji.
+ *
+ * Bez sesji odsyłamy na logowanie zamiast zwracać 401: odnośnik z maila ma
+ * dalej działać, tylko po zalogowaniu.
+ */
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get('slug')
 
@@ -12,14 +26,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'missing_slug' }, { status: 400 })
   }
 
-  const supabase = createServiceClient()
-  const { data: site, error } = await supabase
-    .from('sites')
-    .select('stripe_account_id')
-    .eq('slug', slug)
-    .single()
+  const site = await verifyOwnerSession(slug, request.headers.get('cookie'))
+  if (!site) {
+    return NextResponse.redirect(new URL(`/sites/${slug}/admin/login`, request.nextUrl.origin))
+  }
 
-  if (error || !site?.stripe_account_id) {
+  if (!site.stripe_account_id) {
     return NextResponse.json({ error: 'site_not_found_or_no_stripe_account' }, { status: 404 })
   }
 
