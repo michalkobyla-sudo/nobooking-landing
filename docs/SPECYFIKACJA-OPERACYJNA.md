@@ -145,6 +145,27 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
     agent zdrowia zgłasza sprawę. Zasada powstała, bo cron raportował sukces
     także dla strony z zerem zdjęć albo ceną 0 za noc — a klient dowiadywał się
     pierwszy. Implementacja: `src/lib/provisionCheck.ts`.
+21. **Zdjęcie czegoś spod ochrony to zmiana progu zaufania, nie zmiana trasy.**
+    Zanim adres stanie się publiczny, trzeba obejrzeć nie tylko to, czy działa,
+    ale co ze sobą niesie: dane, adresy, identyfikatory, treści przygotowane
+    w założeniu, że zobaczy je wyłącznie zalogowany. Zasada powstała
+    2026-10-03: demo panelu przeniesione spod `/admin` (bo odwiedzający lądował
+    na ekranie logowania) wystawiło do internetu adresy wyglądające na
+    prawdziwe skrzynki, numery paszportów i adres właściciela. Dane zastąpione
+    pulami zarezerwowanymi na przykłady (RFC 2606).
+22. **Żadne środowisko nie zleca operacji finansowej innemu.** Trasy nie wołają
+    siebie nawzajem po adresie bezwzględnym z konfiguracji — logika idzie
+    bezpośrednio, a adresy powrotu biorą się z bieżącego żądania. Zasada
+    powstała 2026-10-02: `/api/orders` tworzyło sesję płatności, wołając
+    `${NEXT_PUBLIC_SITE_URL}/api/stripe/checkout`, więc serwer deweloperski
+    zapisywał zamówienie u siebie, a po sesję szedł na produkcję — kluczem
+    live. Powstały dwie prawdziwe sesje na 1199 zł.
+23. **Adres właściciela to adres kupującego, nie kontakt publiczny ze strony.**
+    `ob_contact_email` wyświetla się gościom i bywa wspólną skrzynką, aliasem
+    albo adresem, który jeszcze nie istnieje. Hasło do panelu, powiadomienia
+    o rezerwacjach i konto do logowania idą na `orders.email` — ten jest
+    sprawdzony, bo klient odebrał na nim link onboardingowy.
+    Implementacja: `adresWlasciciela` w `src/lib/provision-site.ts`.
 
 ---
 
