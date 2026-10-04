@@ -68,7 +68,7 @@ export default async function SitePage({ params }: Props) {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, config, active, stripe_onboarded')
+    .select('id, config, active, stripe_onboarded, plan')
     .eq('slug', slug)
     .eq('active', true)
     .single()
@@ -134,6 +134,7 @@ export default async function SitePage({ params }: Props) {
       slug={slug}
       showDemoBanner={false}
       stripeEnabled={site.stripe_onboarded === true}
+      kodyRabatowe={site.plan === 'pro'}
     />
   )
 }

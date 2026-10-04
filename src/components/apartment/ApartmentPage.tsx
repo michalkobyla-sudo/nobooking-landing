@@ -816,9 +816,9 @@ function MapSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Booking form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled }: {
+function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled, kodyRabatowe }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
-  siteId: string; slug: string; stripeEnabled: boolean
+  siteId: string; slug: string; stripeEnabled: boolean; kodyRabatowe: boolean
 }) {
   void lang
   const [form, setForm] = useState({ arrival: '', departure: '', guests: '2', name: '', email: '', phone: '', message: '', discount: '' })
@@ -981,7 +981,13 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled 
               <textarea value={form.message} onChange={set('message')} rows={3} style={{ ...inputStyle, height: 'auto', resize: 'vertical' }} />
             </div>
 
-            {/* Discount code */}
+            {/* Kod rabatowy — tylko Pro.
+                Pole stało wcześniej na każdej stronie, także w pakiecie Basic,
+                gdzie `/api/sites/[slug]/discount` z założenia odpowiada
+                `valid: false`. Gość wpisywał kod otrzymany od właściciela
+                i czytał „Nieprawidłowy kod rabatowy" — komunikat sugerujący,
+                że pomylił znaki, choć funkcji po prostu nie ma w tym pakiecie. */}
+            {kodyRabatowe && (
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem' }}>🏷️ {ui.bookDiscount}</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -993,6 +999,7 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled 
               {discountValid === true && <p style={{ fontSize: '0.78rem', color: '#16A34A', marginTop: '0.3rem' }}>✓ Kod aktywny — {discountPct}% zniżki</p>}
               {discountValid === false && <p style={{ fontSize: '0.78rem', color: '#DC2626', marginTop: '0.3rem' }}>✗ Nieprawidłowy kod rabatowy</p>}
             </div>
+            )}
 
             {/* Live price preview */}
             {pricePreview && (
@@ -1077,12 +1084,14 @@ function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui:
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false, stripeEnabled = true }: {
+export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false, stripeEnabled = true, kodyRabatowe = false }: {
   config: ApartmentConfig
   siteId?: string
   slug?: string
   showDemoBanner?: boolean
   stripeEnabled?: boolean
+  /** Czy pokazywać pole kodu rabatowego. Kody są wyłącznie w pakiecie Pro. */
+  kodyRabatowe?: boolean
 }) {
   const [lang, setLang] = useState<Lang>('pl')
   const isMobile = useIsMobile()
@@ -1120,7 +1129,7 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
       <Reviews config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <GuestPortal config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <MapSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} />
+      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} kodyRabatowe={kodyRabatowe} />
       <ApartmentFooter config={config} ui={ui} primary={primary} />
     </div>
   )
