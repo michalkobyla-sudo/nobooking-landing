@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { bezpiecznyPowrot } from '@/lib/powrotPoLogowaniu'
 
 export default function OwnerLoginPage() {
   const router = useRouter()
@@ -29,7 +30,24 @@ export default function OwnerLoginPage() {
       return
     }
 
-    router.push(`/sites/${slug}/admin`)
+    // `powrot` pochodzi z adresu, więc przed użyciem jest sprawdzany —
+    // inaczej byłby to otwarty przekierowywacz pod naszą domeną.
+    // Czytamy wprost z adresu, nie przez `useSearchParams` — ten wymusza
+    // otoczenie strony `<Suspense>`, a tutaj parametr jest potrzebny dopiero
+    // w obsłudze zdarzenia, gdy przeglądarka i tak już działa.
+    const cel = bezpiecznyPowrot(
+      new URLSearchParams(window.location.search).get('powrot'),
+      slug,
+    )
+
+    // Trasy API odpowiadają przekierowaniem, nie stroną Reacta; `router.push`
+    // ich nie obsłuży.
+    if (cel.startsWith('/api/')) {
+      window.location.href = cel
+      return
+    }
+
+    router.push(cel)
     router.refresh()
   }
 

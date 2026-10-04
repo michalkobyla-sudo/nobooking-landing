@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
 
   const site = await verifyOwnerSession(slug, request.headers.get('cookie'))
   if (!site) {
-    return NextResponse.redirect(new URL(`/sites/${slug}/admin/login`, request.nextUrl.origin))
+    // Z `powrot` ekran logowania odeśle tu z powrotem. Bez tego właściciel,
+    // któremu wygasł link onboardingowy, lądował w panelu i musiał sam
+    // odnaleźć przycisk, od którego zaczął.
+    const logowanie = new URL(`/sites/${slug}/admin/login`, request.nextUrl.origin)
+    logowanie.searchParams.set('powrot', request.nextUrl.pathname + request.nextUrl.search)
+    return NextResponse.redirect(logowanie)
   }
 
   if (!site.stripe_account_id) {
