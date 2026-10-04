@@ -331,16 +331,20 @@ export async function czyMoznaZakladacKonta(wymusZapis = false): Promise<StanCon
     // Falszywe "zdrowy" jest gorsze od braku sprawdzenia: licznik siedmiu
     // czystych raportow ruszylby na nieprawdzie.
     if (naZywo) {
-      // Udany odczyt NIE jest dowodem, ze zapis przejdzie. Sprawdzone
-      // 2026-10-04 na koncie produkcyjnym: `GET` zwracal 200, a `POST`
-      // odmawial z `account_create_activation_required`. Aktywacja, o ktora
-      // chodzi Stripe'owi, to aktywacja platformy Connect — nie ta, ktora
-      // widac w `details_submitted` i `charges_enabled` konta.
+      // Sam fakt, ze odczyt przeszedl, NIE dowodzi, ze zapis przejdzie.
+      // Sprawdzone 2026-10-04 na koncie produkcyjnym: `GET` zwracal 200,
+      // a `POST` odmawial z `account_create_activation_required`. Aktywacja,
+      // o ktora chodzi Stripe'owi, to aktywacja platformy Connect — nie ta,
+      // ktora widac w `details_submitted` i `charges_enabled` konta.
       //
-      // Dlatego na zywo mowimy "nie wiem", a nie "dziala". Falszywe zdrowie
-      // jest gorsze od jego braku: licznik siedmiu czystych raportow, od
-      // ktorego zalezy start, ruszylby na nieprawdzie.
-      return { mozna: null, powod: 'odczyt przechodzi; zapisu nie sprawdzamy na żywo, żeby nie zostawiać kont-sierot w panelu Connect (jednorazowo: /api/cron/health?zapis=1)' }
+      // Ale **lista kont polaczonych juz to rozstrzyga**: skoro jakiekolwiek
+      // istnieje, platforma kiedys je zalozyla. To dowod z rzeczywistosci,
+      // nie z proby, i nie kosztuje ani jednego zapisu. Gdyby Stripe pozniej
+      // cofnal uprawnienie, odczyt odmowilby — a to lapiemy wyzej.
+      const lista = (dane as { data?: unknown[] }).data
+      if (Array.isArray(lista) && lista.length > 0) return { mozna: true }
+
+      return { mozna: null, powod: 'odczyt przechodzi, ale nie ma jeszcze ani jednego konta połączonego, więc nie wiadomo, czy zapis przejdzie; jednorazowe sprawdzenie: /api/cron/health?zapis=1' }
     }
 
     return { mozna: true }
