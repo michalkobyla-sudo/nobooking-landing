@@ -325,6 +325,10 @@ export async function GET(request: NextRequest) {
     .filter(s => s.stripe_onboarded !== true)
     .map(s => s.slug as string)
 
+  // Dowod z rzeczywistosci: skoro ktoras strona ma ukonczony Connect, to
+  // platforma potrafi zakladac konta polaczone. Lepszy to dowod niz proba.
+  const stronyZeStripe = (strony ?? []).filter(s => s.stripe_onboarded === true).length
+
   // Zdjecia zastepcze z generatora (`PLACEHOLDER_PHOTOS` w generate-site.ts)
   // poznaje sie po hoscie. Strona z nimi dziala, tylko pokazuje cudzy
   // apartament — stad `info`, a nie ostrzezenie.
@@ -359,6 +363,7 @@ export async function GET(request: NextRequest) {
     przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
     stronyBezStripe,
+    stronyZeStripe,
     connectDziala,
     connectPowod,
     stripeKonto: await tozsamoscStripe(),

@@ -220,6 +220,8 @@ export async function createBookingCheckout(params: {
 export type StanConnect =
   | { mozna: true }
   | { mozna: false; powod: string }
+  /** Odczyt przeszedl, ale zapisu na zywo nie sprawdzamy — patrz nizej. */
+  | { mozna: null; powod: string }
 
 /**
  * Z ktorym kontem Stripe rozmawia to srodowisko i w jakim trybie.
@@ -317,13 +319,16 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
     // Falszywe "zdrowy" jest gorsze od braku sprawdzenia: licznik siedmiu
     // czystych raportow ruszylby na nieprawdzie.
     if (naZywo) {
-      const kto = await tozsamoscStripe()
-      if (kto && !kto.aktywne) {
-        return {
-          mozna: false,
-          powod: `konto ${kto.konto} nie ukonczylo aktywacji — ${await zaleglosciPlatformy(klucz) || 'brak szczegolow'}`.slice(0, 500),
-        }
-      }
+      // Udany odczyt NIE jest dowodem, ze zapis przejdzie. Sprawdzone
+      // 2026-10-04 na koncie produkcyjnym: `GET` zwracal 200, a `POST`
+      // odmawial z `account_create_activation_required`. Aktywacja, o ktora
+      // chodzi Stripe'owi, to aktywacja platformy Connect — nie ta, ktora
+      // widac w `details_submitted` i `charges_enabled` konta.
+      //
+      // Dlatego na zywo mowimy "nie wiem", a nie "dziala". Falszywe zdrowie
+      // jest gorsze od jego braku: licznik siedmiu czystych raportow, od
+      // ktorego zalezy start, ruszylby na nieprawdzie.
+      return { mozna: null, powod: 'odczyt przechodzi; zapisu nie sprawdzamy na żywo, żeby nie zostawiać kont-sierot w panelu Connect' }
     }
 
     return { mozna: true }

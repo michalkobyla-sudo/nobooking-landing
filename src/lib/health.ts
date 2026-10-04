@@ -40,6 +40,8 @@ export interface StanSystemu {
   rezerwacjePendingStare: number
   /** Aktywne strony bez ukończonego Stripe Connect — nie przyjmą płatności. */
   stronyBezStripe: string[]
+  /** Ile aktywnych stron ma ukończony Connect. Niezerowe = platforma dowiodła, że umie zakładać konta. */
+  stronyZeStripe: number
   /** Czy platforma może zakładać konta połączone. `null` = nie sprawdzono. */
   connectDziala: boolean | null
   /** Powód odmowy ze Stripe'a, gdy `connectDziala` jest `false`. */
@@ -249,6 +251,22 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Stripe nadal blokuje zakładanie kont połączonych',
       szczegol: `Bez tego nowy klient nie przyjmie płatności, a Etap 2 nie ruszy. Odpowiedź Stripe: ${s.connectPowod || 'nie zapisano'}`,
+    })
+  }
+
+  // `null` z niepustym powodem znaczy: odczyt przeszedl, ale zapisu na zywo
+  // nie sprawdzamy (zostawialby konta-sieroty w panelu Connect). To nie jest
+  // zdrowie — to brak wiedzy. Wage rozstrzyga rzeczywistosc: jesli ktorakolwiek
+  // strona ma juz ukonczony Connect, platforma dowiodla, ze umie zakladac
+  // konta, i nie ma czego pilnowac. Jesli zadna, przed startem to wciaz
+  // otwarte pytanie i ma byc widoczne.
+  if (s.connectDziala === null && s.connectPowod) {
+    z.push({
+      waga: s.stronyZeStripe > 0 ? 'info' : 'ostrzezenie',
+      tytul: 'Zakładanie kont połączonych niepotwierdzone na żywo',
+      szczegol: s.stronyZeStripe > 0
+        ? `${s.stronyZeStripe} stron(y) mają ukończony Connect, więc platforma działa. ${s.connectPowod}.`
+        : `Żadna strona nie ma jeszcze ukończonego Connect, więc nie mamy dowodu, że platforma założy konto klientowi. ${s.connectPowod}. Pełna próba przechodzi w trybie testowym.`,
     })
   }
 

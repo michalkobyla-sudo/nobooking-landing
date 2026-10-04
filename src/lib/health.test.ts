@@ -13,6 +13,7 @@ const zdrowy: StanSystemu = {
   przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,
   stronyBezStripe: [],
+  stronyZeStripe: 1,
   connectDziala: null,
   connectPowod: '',
   stripeKonto: null,
@@ -355,5 +356,34 @@ describe('opisSrodowiska i stopka raportu', () => {
 
   it('bez stopki raport wygląda jak dotąd', () => {
     expect(raportHtml([], '2026-10-04')).toBe('<p>Raport z 2026-10-04: nic nie wymaga uwagi.</p>')
+  })
+})
+
+describe('Connect niepotwierdzony na żywo', () => {
+  const nieWiadomo = { connectDziala: null, connectPowod: 'odczyt przechodzi' } as const
+
+  // Przed startem brak dowodu jest pytaniem otwartym, nie zdrowiem.
+  it('ostrzega, gdy żadna strona nie ma jeszcze Connect', () => {
+    const z = ocenStan({ ...zdrowy, ...nieWiadomo, stronyZeStripe: 0 })
+      .find(x => x.tytul.includes('niepotwierdzone'))
+    expect(z?.waga).toBe('ostrzezenie')
+  })
+
+  // Działająca strona klienta jest lepszym dowodem niż jakakolwiek próba.
+  it('schodzi do info, gdy któraś strona ma ukończony Connect', () => {
+    const z = ocenStan({ ...zdrowy, ...nieWiadomo, stronyZeStripe: 2 })
+      .find(x => x.tytul.includes('niepotwierdzone'))
+    expect(z?.waga).toBe('info')
+  })
+
+  // `null` bez powodu znaczy "proby nie uruchomiono" — o tym nie ma co pisać.
+  it('milczy, gdy próby w ogóle nie było', () => {
+    const z = ocenStan({ ...zdrowy, connectDziala: null, connectPowod: '', stronyZeStripe: 0 })
+      .find(x => x.tytul.includes('niepotwierdzone'))
+    expect(z).toBeUndefined()
+  })
+
+  it('brak dowodu blokuje czysty raport', () => {
+    expect(wymagaUwagi(ocenStan({ ...zdrowy, ...nieWiadomo, stronyZeStripe: 0 }))).toBe(true)
   })
 })
