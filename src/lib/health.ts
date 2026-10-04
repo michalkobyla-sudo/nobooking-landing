@@ -44,8 +44,8 @@ export interface StanSystemu {
   connectDziala: boolean | null
   /** Powód odmowy ze Stripe'a, gdy `connectDziala` jest `false`. */
   connectPowod: string
-  /** Konto Stripe, z którym rozmawia to środowisko, i tryb klucza. */
-  stripeKonto: { konto: string; tryb: 'live' | 'test' } | null
+  /** Konto Stripe, z którym rozmawia to środowisko: identyfikator, tryb, aktywacja. */
+  stripeKonto: { konto: string; tryb: 'live' | 'test'; aktywne: boolean } | null
   /** Strony, które wciąż mają w galerii zdjęcia zastępcze z generatora. */
   stronyZeZdjeciamiZastepczymi: string[]
   /** Strony z datą wygaśnięcia w ciągu 60 dni. */
@@ -324,7 +324,8 @@ export function tematRaportu(znaleziska: Znalezisko[]): string {
 export function opisSrodowiska(stripeKonto: StanSystemu['stripeKonto']): string {
   if (!stripeKonto) return 'Stripe: nie udało się odczytać konta.'
   const tryb = stripeKonto.tryb === 'live' ? 'tryb live' : 'tryb testowy'
-  return `Stripe: ${stripeKonto.konto} (${tryb}).`
+  const akt = stripeKonto.aktywne ? 'aktywne' : 'NIEAKTYWNE'
+  return `Stripe: ${stripeKonto.konto} (${tryb}, ${akt}).`
 }
 
 export function raportHtml(znaleziska: Znalezisko[], data: string, stopka = ''): string {

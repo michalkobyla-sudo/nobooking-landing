@@ -230,7 +230,14 @@ export type StanConnect =
  * systemu zamykaja to pytanie raz na zawsze — tym bardziej, ze pomylka
  * srodowisk kosztowala juz dwie prawdziwe sesje platnosci na 1199 zl.
  */
-export async function tozsamoscStripe(): Promise<{ konto: string; tryb: 'live' | 'test' } | null> {
+export interface TozsamoscStripe {
+  konto: string
+  tryb: 'live' | 'test'
+  /** Czy konto przeszlo aktywacje. Nieaktywne nie zalozy konta polaczonego. */
+  aktywne: boolean
+}
+
+export async function tozsamoscStripe(): Promise<TozsamoscStripe | null> {
   const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
   if (!klucz) return null
   try {
@@ -238,9 +245,21 @@ export async function tozsamoscStripe(): Promise<{ konto: string; tryb: 'live' |
       headers: { Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64') },
     })
     if (!r.ok) return null
-    const d = await r.json() as { id?: string }
+    const d = await r.json() as {
+      id?: string
+      charges_enabled?: boolean
+      details_submitted?: boolean
+      requirements?: { disabled_reason?: string | null }
+    }
     if (!d.id) return null
-    return { konto: d.id, tryb: klucz.includes('_test_') ? 'test' : 'live' }
+    return {
+      konto: d.id,
+      tryb: klucz.includes('_test_') ? 'test' : 'live',
+      aktywne:
+        d.details_submitted === true &&
+        d.charges_enabled === true &&
+        !d.requirements?.disabled_reason,
+    }
   } catch {
     return null
   }
@@ -289,6 +308,24 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
 
     // Przy odczycie nie ma czego sprzatac; `id` zostaje puste i `finally` milczy.
     id = naZywo ? null : (dane.id ?? null)
+
+    // **Odczyt sam w sobie nie wystarczy.** `GET /v2/core/accounts` lapie
+    // odmowe dostepu do Accounts v2, ale przechodzi na koncie, ktore nie
+    // ukonczylo aktywacji — a takie przy zakladaniu konta polaczonego dostaje
+    // `account_create_activation_required`. 2026-10-04 raport ogolosil z tego
+    // powodu, ze Connect dziala, choc na produkcyjnym koncie nie dzialal.
+    // Falszywe "zdrowy" jest gorsze od braku sprawdzenia: licznik siedmiu
+    // czystych raportow ruszylby na nieprawdzie.
+    if (naZywo) {
+      const kto = await tozsamoscStripe()
+      if (kto && !kto.aktywne) {
+        return {
+          mozna: false,
+          powod: `konto ${kto.konto} nie ukonczylo aktywacji — ${await zaleglosciPlatformy(klucz) || 'brak szczegolow'}`.slice(0, 500),
+        }
+      }
+    }
+
     return { mozna: true }
 
   } catch (err) {

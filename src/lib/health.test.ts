@@ -323,8 +323,17 @@ describe('ocenStan - blokada Connect', () => {
 
 describe('opisSrodowiska i stopka raportu', () => {
   it('nazywa konto i tryb', () => {
-    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'live' })).toBe('Stripe: acct_123 (tryb live).')
-    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'test' })).toBe('Stripe: acct_123 (tryb testowy).')
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'live', aktywne: true }))
+      .toBe('Stripe: acct_123 (tryb live, aktywne).')
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'test', aktywne: true }))
+      .toBe('Stripe: acct_123 (tryb testowy, aktywne).')
+  })
+
+  // Konto nieaktywne nie zalozy konta polaczonego, choc odczyt przez nie
+  // przechodzi. Stopka ma to krzyczec, a nie szeptac.
+  it('krzyczy, gdy konto nie ukończyło aktywacji', () => {
+    expect(opisSrodowiska({ konto: 'acct_9', tryb: 'live', aktywne: false }))
+      .toBe('Stripe: acct_9 (tryb live, NIEAKTYWNE).')
   })
 
   it('nie udaje, że wie, gdy odczyt się nie powiódł', () => {
