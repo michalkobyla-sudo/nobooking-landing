@@ -451,7 +451,17 @@ Ruszamy, gdy wszystkie poniższe są prawdziwe:
       strona, dziewięć dat zablokowanych, dwa zamówienia. Uwaga przy sprawdzaniu:
       listowanie koszyka pokazuje `created_at` pliku `latest` na 2026-09-25,
       bo `upsert` nie zmienia daty utworzenia — świeżość czyta się z `updated_at`;
-- [ ] atrybucja wiąże zamówienie z kampanią (Etap 4a);
+- [x] atrybucja wiąże zamówienie z kampanią (Etap 4a) — sprawdzone na
+      produkcji 2026-10-04, cały łańcuch: wejście z `?utm_source=…` zapisuje
+      osiem pól w `localStorage`; **powtórne wejście z inną kampanią ich nie
+      nadpisuje** (pierwsze dotknięcie wygrywa, zgodnie z `ATRYBUCJA-NAZEWNICTWO.md`);
+      formularz zamówienia wysyła `zrodlo` z kampanią z **pierwszego** wejścia,
+      a `/api/orders` wstawia je przez `zBody` do kolumn `orders`. Sprawdzone bez
+      składania zamówienia — żądanie przechwycone w przeglądarce zamiast wysłane,
+      więc nie powstała ani sesja Stripe, ani wiersz w bazie (potwierdzone:
+      nadal dwa zamówienia, oba z maja). Niesprawdzone zostaje jedynie wpisanie
+      wartości do bazy przy prawdziwym zamówieniu — to zweryfikuje pierwszy
+      klient, a kolumny są na miejscu;
 - [ ] materiały i zgody Meta gotowe (Etap 0 i 4b).
 
 Siedem dni czystych raportów jest warunkiem celowo: awarie, które nas kosztowały
