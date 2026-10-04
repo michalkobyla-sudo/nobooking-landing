@@ -2,9 +2,18 @@ import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 import CheckinForm from '@/components/guest/CheckinForm'
+import type { Metadata } from 'next'
+import { metadanePortaluGoscia } from '@/lib/metadanePrywatne'
 
 interface Props {
   params: Promise<{ slug: string; bookingId: string }>
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+): Promise<Metadata> {
+  const { slug } = await params
+  return metadanePortaluGoscia(slug, 'Check-in online')
 }
 
 /**

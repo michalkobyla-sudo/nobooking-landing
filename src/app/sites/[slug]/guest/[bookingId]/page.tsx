@@ -1,5 +1,7 @@
 import { createServiceClient } from '@/lib/supabase'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
+import type { Metadata } from 'next'
+import { metadanePortaluGoscia } from '@/lib/metadanePrywatne'
 
 interface Props {
   params: Promise<{ slug: string; bookingId: string }>
@@ -8,6 +10,13 @@ interface Props {
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+): Promise<Metadata> {
+  const { slug } = await params
+  return metadanePortaluGoscia(slug, 'Twoja rezerwacja')
 }
 
 export default async function GuestPortalPage({ params, searchParams }: Props) {
