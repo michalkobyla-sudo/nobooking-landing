@@ -267,7 +267,14 @@ export async function tozsamoscStripe(): Promise<TozsamoscStripe | null> {
   }
 }
 
-export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
+/**
+ * Konto probne, ktorego nie udalo sie zamknac. Trasa raportu podaje je dalej,
+ * zeby nie trzeba bylo szukac po logach.
+ */
+let ostatnieKontoProbne: string | null = null
+export function kontoProbneDoSkasowania(): string | null { return ostatnieKontoProbne }
+
+export async function czyMoznaZakladacKonta(wymusZapis = false): Promise<StanConnect | null> {
   const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
   if (!klucz) return null
 
@@ -284,7 +291,12 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
   // Warunek na `sk_live_` wpuszczal ja w galaz zapisu — czyli dokladnie tam,
   // skad mial ja wyprowadzic. Nieznany format traktujemy jak zywy: odczyt
   // niczego nie zepsuje, zapis moze.
-  const naZywo = !klucz.includes('_test_')
+  // `wymusZapis` to jednorazowe sprawdzenie przed startem, uruchamiane recznie
+  // z sekretem crona (`/api/cron/health?zapis=1`). Zostawia konto, ktorego nie
+  // da sie zamknac — i to jest swiadomy koszt: inaczej jedynym sposobem, zeby
+  // dowiedziec sie, czy platforma zalozy konto klientowi, byloby sprzedanie
+  // pierwszemu klientowi i zobaczenie, co z tego wyjdzie.
+  const naZywo = !klucz.includes('_test_') && !wymusZapis
 
   let id: string | null = null
 
@@ -328,7 +340,7 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
       // Dlatego na zywo mowimy "nie wiem", a nie "dziala". Falszywe zdrowie
       // jest gorsze od jego braku: licznik siedmiu czystych raportow, od
       // ktorego zalezy start, ruszylby na nieprawdzie.
-      return { mozna: null, powod: 'odczyt przechodzi; zapisu nie sprawdzamy na żywo, żeby nie zostawiać kont-sierot w panelu Connect' }
+      return { mozna: null, powod: 'odczyt przechodzi; zapisu nie sprawdzamy na żywo, żeby nie zostawiać kont-sierot w panelu Connect (jednorazowo: /api/cron/health?zapis=1)' }
     }
 
     return { mozna: true }
@@ -346,10 +358,12 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
         })
         if (!z.ok) throw new Error(`HTTP ${z.status}`)
       } catch (err) {
+        // Na zywo to jest spodziewane: `/close` odmawia dla kont Standard.
         console.error(
-          `[connect-probe] nie udalo sie zamknac konta probnego ${id} — zamknij recznie:`,
+          `[connect-probe] konto probne ${id} zostaje — skasuj je recznie w panelu Connect:`,
           err instanceof Error ? err.message : String(err),
         )
+        ostatnieKontoProbne = id
       }
     }
   }

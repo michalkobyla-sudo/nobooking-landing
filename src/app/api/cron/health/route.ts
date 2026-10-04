@@ -5,7 +5,7 @@ import { odnotujPrzebieg, milczaceCrony } from '@/lib/cronHeartbeat'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, opisSrodowiska, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
-import { czyMoznaZakladacKonta, tozsamoscStripe } from '@/lib/stripe-connect'
+import { czyMoznaZakladacKonta, tozsamoscStripe, kontoProbneDoSkasowania } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
@@ -119,7 +119,10 @@ export async function GET(request: NextRequest) {
   let connectDziala: boolean | null = null
   let connectPowod = ''
   try {
-    const stan = await czyMoznaZakladacKonta()
+    // `?zapis=1` — jednorazowe sprawdzenie przed startem. Zaklada prawdziwe
+    // konto polaczone, zeby potwierdzic, ze platforma to potrafi. Codzienny
+    // przebieg tego nie robi, bo konta nie da sie pozniej zamknac.
+    const stan = await czyMoznaZakladacKonta(request.nextUrl.searchParams.get('zapis') === '1')
     if (stan) {
       connectDziala = stan.mozna
       if (!stan.mozna) connectPowod = stan.powod
@@ -397,5 +400,14 @@ export async function GET(request: NextRequest) {
 
   console.log(`[health] ${data}: znalezisk ${znaleziska.length}, mail wysłany: ${wyslano}`)
 
-  return NextResponse.json({ ok: true, data, wyslano, znaleziska, stan })
+  return NextResponse.json({
+    ok: true,
+    data,
+    wyslano,
+    znaleziska,
+    stan,
+    // Niepuste tylko po `?zapis=1` na żywo: konto próbne, którego Stripe nie
+    // pozwolił zamknąć. Do skasowania ręcznie w panelu Connect.
+    ...(kontoProbneDoSkasowania() ? { kontoProbneDoSkasowania: kontoProbneDoSkasowania() } : {}),
+  })
 }
