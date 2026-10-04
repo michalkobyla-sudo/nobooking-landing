@@ -444,7 +444,13 @@ Ruszamy, gdy wszystkie poniższe są prawdziwe:
 - [x] pełny przebieg od zamówienia do odnowienia przeszedł raz (Etap 2) — 2026-10-02, w trybie testowym;
 - [x] CI pilnuje testów i typów (Etap 3) — od 2026-10-01;
 - [ ] agent zdrowia raportuje czysto przez siedem dni z rzędu;
-- [ ] kopia zapasowa powstaje codziennie i ma niezerową treść;
+- [x] kopia zapasowa powstaje codziennie i ma niezerową treść — sprawdzone
+      2026-10-04: pięć kolejnych dziennych plików w koszyku `app-data`
+      (`backups/nobooking_backup_RRRR-MM-DD.json`, po 2347 B) plus `…_latest.json`
+      nadpisany tego samego dnia o 02:00. Treść niepusta i sensowna: jedna
+      strona, dziewięć dat zablokowanych, dwa zamówienia. Uwaga przy sprawdzaniu:
+      listowanie koszyka pokazuje `created_at` pliku `latest` na 2026-09-25,
+      bo `upsert` nie zmienia daty utworzenia — świeżość czyta się z `updated_at`;
 - [ ] atrybucja wiąże zamówienie z kampanią (Etap 4a);
 - [ ] materiały i zgody Meta gotowe (Etap 0 i 4b).
 

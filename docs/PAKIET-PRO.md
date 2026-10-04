@@ -87,7 +87,15 @@ Licznik użyć zwiększa funkcja bazodanowa `increment_discount_usage`, wywoływ
 z webhooka przy potwierdzeniu rezerwacji — atomowo, więc `max_uses` jest
 wykonalne.
 
-**Czego brakuje:** sposobu utworzenia kodu. Szczegóły w dokumencie weryfikacyjnym.
+**Tworzenie kodu działa** (sprawdzone 2026-10-04; do 2026-09-29 tego brakowało
+i dokument wymieniał to jako lukę). `GET/POST/PATCH /api/sites/[slug]/owner/discounts`,
+wszystkie trzy za bramką `site.plan !== 'pro' → 403`, obsługa w zakładce panelu.
+Nowy kod przechodzi przez `sprawdzNowyKod`, a zderzenie nazw zwraca 409
+(`kod_juz_istnieje`) zamiast błędu bazy.
+
+**Kodów nie da się skasować — celowo.** `bookings.discount_code` trzyma samą
+nazwę, więc usunięcie wiersza zostawiłoby rezerwacje z rabatem, którego nie da
+się już wytłumaczyć. Zamiast kasowania jest `PATCH` z `active: false`.
 
 **Struktura tabeli** `discount_codes`: `site_id`, `code` (wielkimi literami),
 `discount_pct`, `max_uses` (null = bez limitu), `uses_count`, `valid_until`,
@@ -102,8 +110,15 @@ miesiącu (z pominięciem anulowanych), przychód z rezerwacji `confirmed`
 i `completed`, średnią ocenę z opinii i obłożenie. Zakładka „Analityka"
 w panelu właściciela jest oznaczona jako Pro i ukryta dla planu Basic.
 
-**Zastrzeżenie:** bramka jest dziś wyłącznie w interfejsie — sam endpoint nie
-sprawdza planu. Opis w dokumencie weryfikacyjnym.
+**Bramka jest po obu stronach** (sprawdzone 2026-10-04; 2026-09-29 była tylko
+w interfejsie, więc właściciel Basic mógł odczytać dane Pro, wołając trasę
+wprost). `GET /api/sites/[slug]/owner/analytics` zwraca `403 pro_required`
+dla planu innego niż Pro.
+
+Rozdział tras jest zamierzony: `/owner/stats` to podsumowanie dla **każdego**
+planu — rezerwacje w tym miesiącu, przychód, średnia ocena, najbliższe przyjazdy
+— i dlatego nie ma bramki. Pełna analityka (`policzAnalitykę`, dwanaście
+miesięcy wstecz) siedzi w `/owner/analytics` i jest wyłącznie Pro.
 
 ---
 
