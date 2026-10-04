@@ -1,11 +1,65 @@
+import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase'
 import ApartmentPage from '@/components/apartment/ApartmentPage'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
+import { metadaneApartamentu, poprawnyJezyk } from '@/lib/metadataStrony'
 
 export const revalidate = 300 // ISR: odświeżaj co 5 minut
 
 interface Props {
   params: Promise<{ slug: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}
+
+/**
+ * Metadane strony apartamentu.
+ *
+ * Bez tego trasa dziedziczyła je z `layout.tsx`, czyli ze strony sprzedażowej
+ * Nobookinga: każda strona klienta nazywała się „Nobooking — własna strona
+ * rezerwacyjna bez prowizji", a link wklejony na Facebooku pokazywał gościowi
+ * reklamę nas zamiast zdjęcia apartamentu. Klient płaci za własną stronę,
+ * więc to jego nazwa ma być w zakładce i w zapowiedzi linku.
+ */
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const lang = poprawnyJezyk((await searchParams)?.lang)
+
+  const supabase = createServiceClient()
+  const { data: site } = await supabase
+    .from('sites')
+    .select('config')
+    .eq('slug', slug)
+    .eq('active', true)
+    .single()
+
+  const config = site?.config as ApartmentConfig | undefined
+  // Strona nieistniejąca albo jeszcze niewygenerowana: nie podszywamy się pod
+  // apartament, ale też nie zostawiamy tytułu strony sprzedażowej.
+  if (!config) return { title: 'Strona w przygotowaniu' }
+
+  const m = metadaneApartamentu(config, lang)
+  const adres = `https://nobooking.eu/sites/${slug}`
+
+  return {
+    title: m.title,
+    description: m.description,
+    alternates: { canonical: adres },
+    openGraph: {
+      title: m.title,
+      description: m.description,
+      url: adres,
+      siteName: m.title,
+      locale: m.locale,
+      type: 'website',
+      ...(m.obrazek ? { images: [{ url: m.obrazek }] } : {}),
+    },
+    twitter: {
+      card: m.obrazek ? 'summary_large_image' : 'summary',
+      title: m.title,
+      description: m.description,
+      ...(m.obrazek ? { images: [m.obrazek] } : {}),
+    },
+  }
 }
 
 export default async function SitePage({ params }: Props) {
