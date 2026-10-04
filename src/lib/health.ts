@@ -44,6 +44,8 @@ export interface StanSystemu {
   connectDziala: boolean | null
   /** Powód odmowy ze Stripe'a, gdy `connectDziala` jest `false`. */
   connectPowod: string
+  /** Konto Stripe, z którym rozmawia to środowisko, i tryb klucza. */
+  stripeKonto: { konto: string; tryb: 'live' | 'test' } | null
   /** Strony, które wciąż mają w galerii zdjęcia zastępcze z generatora. */
   stronyZeZdjeciamiZastepczymi: string[]
   /** Strony z datą wygaśnięcia w ciągu 60 dni. */
@@ -318,9 +320,23 @@ export function tematRaportu(znaleziska: Znalezisko[]): string {
   return `Nobooking: ${n} ${odmien(n, ['rzecz do sprawdzenia', 'rzeczy do sprawdzenia', 'rzeczy do sprawdzenia'])}`
 }
 
-export function raportHtml(znaleziska: Znalezisko[], data: string): string {
+/** Jednolinijkowy opis srodowiska do stopki raportu. */
+export function opisSrodowiska(stripeKonto: StanSystemu['stripeKonto']): string {
+  if (!stripeKonto) return 'Stripe: nie udało się odczytać konta.'
+  const tryb = stripeKonto.tryb === 'live' ? 'tryb live' : 'tryb testowy'
+  return `Stripe: ${stripeKonto.konto} (${tryb}).`
+}
+
+export function raportHtml(znaleziska: Znalezisko[], data: string, stopka = ''): string {
+  // Stopka mowi, ktore srodowisko sie odezwalo. Przy czystym raporcie to jedyna
+  // tresc poza "nic nie wymaga uwagi" — i jedyny sposob, zeby zauwazyc, ze
+  // przez tydzien chwalil sie zdrowiem nie ten Stripe, co trzeba.
+  const stopkaHtml = stopka
+    ? `<p style="margin:16px 0 0;color:#888;font-size:12px">${stopka}</p>`
+    : ''
+
   if (znaleziska.length === 0) {
-    return `<p>Raport z ${data}: nic nie wymaga uwagi.</p>`
+    return `<p>Raport z ${data}: nic nie wymaga uwagi.</p>${stopkaHtml}`
   }
   const kolor: Record<Waga, string> = {
     krytyczne: '#b3261e',
@@ -348,5 +364,6 @@ export function raportHtml(znaleziska: Znalezisko[], data: string): string {
       <h2 style="margin:0 0 4px">Stan systemu — ${data}</h2>
       <p style="margin:0 0 16px;color:#666">Znalezisk: ${znaleziska.length}</p>
       <table style="border-collapse:collapse;width:100%">${wiersze}</table>
+      ${stopkaHtml}
     </div>`
 }

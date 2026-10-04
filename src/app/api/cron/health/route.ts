@@ -3,9 +3,9 @@ import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg, milczaceCrony } from '@/lib/cronHeartbeat'
 import { sendHealthReport } from '@/lib/email'
-import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, type StanSystemu } from '@/lib/health'
+import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, opisSrodowiska, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
-import { czyMoznaZakladacKonta } from '@/lib/stripe-connect'
+import { czyMoznaZakladacKonta, tozsamoscStripe } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
@@ -361,6 +361,7 @@ export async function GET(request: NextRequest) {
     stronyBezStripe,
     connectDziala,
     connectPowod,
+    stripeKonto: await tozsamoscStripe(),
     stronyZeZdjeciamiZastepczymi,
     wygasajaceSubskrypcje,
     zdarzeniaStripe7dni: zdarzeniaStripe7dni ?? 0,
@@ -382,7 +383,7 @@ export async function GET(request: NextRequest) {
   let wyslano = false
   if (wymagaUwagi(znaleziska)) {
     try {
-      await sendHealthReport(tematRaportu(znaleziska), raportHtml(znaleziska, data))
+      await sendHealthReport(tematRaportu(znaleziska), raportHtml(znaleziska, data, opisSrodowiska(stan.stripeKonto)))
       wyslano = true
     } catch (err) {
       console.error('[health] nie udało się wysłać raportu:', err)

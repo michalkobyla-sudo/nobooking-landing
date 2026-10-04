@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, odmien, type StanSystemu } from './health'
+import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, odmien, opisSrodowiska, type StanSystemu } from './health'
 
 const zdrowy: StanSystemu = {
   ostatniaKopiaGodzinTemu: 5,
@@ -15,6 +15,7 @@ const zdrowy: StanSystemu = {
   stronyBezStripe: [],
   connectDziala: null,
   connectPowod: '',
+  stripeKonto: null,
   stronyZeZdjeciamiZastepczymi: [],
   wygasajaceSubskrypcje: [],
   zdarzeniaStripe7dni: 3,
@@ -317,5 +318,33 @@ describe('ocenStan - blokada Connect', () => {
 
   it('milczy, gdy proby nie wykonano', () => {
     expect(ocenStan({ ...zdrowy, connectDziala: null })).toEqual([])
+  })
+})
+
+describe('opisSrodowiska i stopka raportu', () => {
+  it('nazywa konto i tryb', () => {
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'live' })).toBe('Stripe: acct_123 (tryb live).')
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'test' })).toBe('Stripe: acct_123 (tryb testowy).')
+  })
+
+  it('nie udaje, że wie, gdy odczyt się nie powiódł', () => {
+    expect(opisSrodowiska(null)).toBe('Stripe: nie udało się odczytać konta.')
+  })
+
+  // Czysty raport to jedno zdanie — bez stopki nie dałoby się zauważyć,
+  // że przez tydzień chwalił się zdrowiem nie ten Stripe, co trzeba.
+  it('dokleja stopkę także do czystego raportu', () => {
+    const html = raportHtml([], '2026-10-04', 'Stripe: acct_123 (tryb live).')
+    expect(html).toContain('nic nie wymaga uwagi')
+    expect(html).toContain('acct_123')
+  })
+
+  it('dokleja stopkę do raportu ze znaleziskami', () => {
+    const html = raportHtml(ocenStan({ ...zdrowy, connectDziala: false }), '2026-10-04', 'Stripe: acct_9 (tryb live).')
+    expect(html).toContain('acct_9')
+  })
+
+  it('bez stopki raport wygląda jak dotąd', () => {
+    expect(raportHtml([], '2026-10-04')).toBe('<p>Raport z 2026-10-04: nic nie wymaga uwagi.</p>')
   })
 })

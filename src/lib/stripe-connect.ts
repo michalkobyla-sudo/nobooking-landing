@@ -221,6 +221,31 @@ export type StanConnect =
   | { mozna: true }
   | { mozna: false; powod: string }
 
+/**
+ * Z ktorym kontem Stripe rozmawia to srodowisko i w jakim trybie.
+ *
+ * Bez tego raport zdrowia mowil, ze "Stripe blokuje zakladanie kont", ale nie
+ * mowil **czyj** Stripe. 2026-10-04 ten sam kod odpowiadal inaczej lokalnie
+ * i na produkcji, i rozstrzygniecie wymagalo zgadywania. Dwie linijki w stanie
+ * systemu zamykaja to pytanie raz na zawsze — tym bardziej, ze pomylka
+ * srodowisk kosztowala juz dwie prawdziwe sesje platnosci na 1199 zl.
+ */
+export async function tozsamoscStripe(): Promise<{ konto: string; tryb: 'live' | 'test' } | null> {
+  const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
+  if (!klucz) return null
+  try {
+    const r = await fetch('https://api.stripe.com/v1/account', {
+      headers: { Authorization: 'Basic ' + Buffer.from(`${klucz}:`).toString('base64') },
+    })
+    if (!r.ok) return null
+    const d = await r.json() as { id?: string }
+    if (!d.id) return null
+    return { konto: d.id, tryb: klucz.includes('_test_') ? 'test' : 'live' }
+  } catch {
+    return null
+  }
+}
+
 export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
   const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
   if (!klucz) return null
@@ -232,7 +257,13 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
   }
 
   // Konta produkcyjnego nie da sie posprzatac po probie — patrz komentarz wyzej.
-  const naZywo = klucz.startsWith('sk_live_')
+  //
+  // Rozpoznajemy po `_test_`, nie po `sk_live_`: Stripe wydaje tez klucze
+  // ograniczone (`rk_live_`, `rk_test_`), a produkcja uzywa wlasnie takiego.
+  // Warunek na `sk_live_` wpuszczal ja w galaz zapisu — czyli dokladnie tam,
+  // skad mial ja wyprowadzic. Nieznany format traktujemy jak zywy: odczyt
+  // niczego nie zepsuje, zapis moze.
+  const naZywo = !klucz.includes('_test_')
 
   let id: string | null = null
 
