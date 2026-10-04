@@ -191,17 +191,31 @@ export async function createBookingCheckout(params: {
  *
  * **Probujemy Accounts v2**, nie v1. Sprawdzone 2026-10-01 w trybie testowym:
  * `POST /v1/accounts` jest odrzucane dla nowych integracji ("Stripe no longer
- * recommends Accounts v1"), a `POST /v2/core/accounts` przechodzi. Nasz
- * `createConnectAccount` nadal uzywa v1 i dlatego wymaga migracji — proba
- * sprawdza wiec te droge, ktora ma dzialac, a nie te, ktora mamy w kodzie.
+ * recommends Accounts v1"), a `POST /v2/core/accounts` przechodzi.
+ * `createConnectAccount` zostal na v2 przeniesiony — proba i kod produkcyjny
+ * ida wiec ta sama droga.
  *
  * Odczyt `GET /v1/account` tego nie rozstrzyga: blokada weryfikacji platformy
  * nie pokazuje sie w `requirements` wlasnego konta, wychodzi dopiero przy
  * probie zalozenia konta polaczonego.
  *
- * Konto probne zamykamy w `finally` (v2 nie ma kasowania, ma `/close`).
- * Gdyby zamkniecie nie przeszlo, id trafia do logu — lepszy slad w logu niz
- * sierota w panelu Connect, o ktorej nikt nie wie.
+ * **Na zywo tylko odczytujemy.** Proba przez zalozenie konta dziala w trybie
+ * testowym, ale na koncie produkcyjnym jest pulapka: `/close` odmawia dla
+ * kont ze `losses_collector: 'stripe'` i `dashboard: 'full'`, czyli dokladnie
+ * dla naszej konfiguracji — *"This method may not be used on livemode accounts
+ * [...] which includes Standard accounts"*. Konto probne zostawaloby wiec
+ * w panelu na stale, a cron zdrowia chodzi codziennie: po tygodniu siedem
+ * sierot, po roku trzysta. Sprawdzone 2026-10-04 — jedna taka sierota powstala
+ * i trzeba bylo skasowac ja recznie.
+ *
+ * Dlatego na zywo pytamy `GET /v2/core/accounts?limit=1`. Odmowa ma ten sam
+ * kod co przy zapisie (`non_connect_platform_accounts_v2_access_blocked`),
+ * wiec stan platformy rozpoznajemy tak samo, tyle ze bez skutkow ubocznych.
+ *
+ * Czego odczyt nie sprawdzi: czy nasze cialo zadania jest poprawne. To zostaje
+ * w trybie testowym, gdzie konto probne da sie zamknac — i tam nadal zakladamy
+ * je naprawde, bo proba z uproszczonym zadaniem potwierdzalaby, ze dziala cos
+ * innego niz to, co nas interesuje.
  */
 export type StanConnect =
   | { mozna: true }
@@ -217,17 +231,19 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
     'Stripe-Version': API_WERSJA,
   }
 
+  // Konta produkcyjnego nie da sie posprzatac po probie — patrz komentarz wyzej.
+  const naZywo = klucz.startsWith('sk_live_')
+
   let id: string | null = null
 
   try {
-    const odp = await fetch('https://api.stripe.com/v2/core/accounts', {
-      method: 'POST',
-      headers: naglowki,
-      // Dokladnie to cialo, ktore poleci przy zakladaniu konta klienta.
-      // Proba z uproszczonym zadaniem potwierdzalaby, ze dziala cos innego
-      // niz to, co nas interesuje.
-      body: JSON.stringify(cialoKontaV2('probe@nobooking.eu', 'Proba agenta zdrowia')),
-    })
+    const odp = naZywo
+      ? await fetch('https://api.stripe.com/v2/core/accounts?limit=1', { headers: naglowki })
+      : await fetch('https://api.stripe.com/v2/core/accounts', {
+          method: 'POST',
+          headers: naglowki,
+          body: JSON.stringify(cialoKontaV2('probe@nobooking.eu', 'Proba agenta zdrowia')),
+        })
     const dane = await odp.json() as { id?: string; error?: { code?: string; message?: string } }
 
     if (!odp.ok || dane.error) {
@@ -240,7 +256,8 @@ export async function czyMoznaZakladacKonta(): Promise<StanConnect | null> {
       return { mozna: false, powod: (powod + (braki ? ` | brakuje: ${braki}` : '')).slice(0, 500) }
     }
 
-    id = dane.id ?? null
+    // Przy odczycie nie ma czego sprzatac; `id` zostaje puste i `finally` milczy.
+    id = naZywo ? null : (dane.id ?? null)
     return { mozna: true }
 
   } catch (err) {
