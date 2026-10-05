@@ -41,6 +41,21 @@ Ważność liczy `sites.expires_at`, ustawiane na 2 lata przy provisioningu.
 Cron `renewal-reminders` przypomina D-90/30/14/7/1 i wyłącza stronę po 14 dniach
 karencji.
 
+**Cena odnowienia jest osobna od ceny zakupu** (`RENEWAL_PRICES` w `prices.ts`):
+299 zł / 99 € dla Basic, 449 zł / 149 € dla Pro. Kopiowana do
+`sites.renewal_price_*` w dniu zakupu, bo obiecujemy, że nie wzrośnie — zmiana
+cennika nie dosięga kogoś, kto już kupił. Do 2026-10-05 provisioning zapisywał
+tu pełną cenę zakupu, więc właściciel Basic miał odnowić za 799 zł przy ofercie
+mówiącej „od 299 zł"; pierwsze odnowienie wypada w maju 2028, więc nikogo to
+nie dotknęło.
+
+**Czego po wygaśnięciu NIE robimy: nie kasujemy danych.** Strona dostaje
+`active = false` i znika dla gości, ale rezerwacje, zdjęcia i opinie zostają
+w bazie bez ograniczenia czasu, więc odnowienie przywraca ją w całości. Mail
+D-14 i FAQ twierdziły do 2026-10-05, że dane znikają po 90 dniach — nie ma
+w kodzie niczego, co by je kasowało. Jeśli taka retencja ma istnieć, trzeba ją
+najpierw napisać, a dopiero potem obiecać.
+
 ## 2. Kalendarz i rezerwacje online
 
 - **Dostępność**: `GET /api/sites/[slug]/availability` zwraca zajęte dni —

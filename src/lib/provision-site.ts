@@ -6,7 +6,7 @@ import { hashPassword } from '@/lib/ownerAuth'
 import { toSlug } from '@/lib/generate-site'
 import { normalizujNumer } from '@/lib/sms'
 import { scalPoRegeneracji, parsujConfig } from '@/lib/configMerge'
-import { PRICES } from '@/lib/prices'
+import { PRICES, RENEWAL_PRICES } from '@/lib/prices'
 import type { Order } from '@/lib/types'
 
 const TEMP_PASSWORD_LENGTH = 12
@@ -209,8 +209,12 @@ export async function provisionSite(
   // Lock renewal price at current prices — client keeps this price forever
   const plan = order.plan as 'basic' | 'pro'
   const currency = (order.currency ?? 'pln') as 'pln' | 'eur'
-  const renewalPricePln = PRICES[plan].pln
-  const renewalPriceEur = PRICES[plan].eur
+  // Cena odnowienia, nie cena zakupu. Wcześniej stało tu `PRICES[plan]`, więc
+  // właściciel Basic miał odnowić za 799 zł, choć oferta obiecuje 299 zł.
+  // Kopiujemy ją do `sites`, bo obiecujemy, że nie wzrośnie — zmiana cennika
+  // nie może dosięgnąć kogoś, kto już kupił.
+  const renewalPricePln = RENEWAL_PRICES[plan].pln
+  const renewalPriceEur = RENEWAL_PRICES[plan].eur
   const expiresAt = new Date(Date.now() + 2 * 365.25 * 24 * 60 * 60 * 1000).toISOString()
 
   const baseSlug = toSlug(order.apartment_name)

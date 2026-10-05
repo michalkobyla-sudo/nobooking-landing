@@ -163,7 +163,7 @@ export const TR: Record<Lang, {
     pricingTitle: 'Wybierz plan',
     pricingPeriod: 'na 2 lata',
     pricingIncludes: 'W cenie:',
-    pricingRenewal: 'Po 2 latach — pakiet odnowieniowy od 299 zł',
+    pricingRenewal: 'Po 2 latach — odnowienie od 299 zł / 99 € za kolejne 2 lata',
     pricingRecommended: 'Polecany',
     pricingCtaBasic: 'Kup Basic',
     pricingCtaPro: 'Kup Pro',
@@ -205,7 +205,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'Co się dzieje po 2 latach?',
-        a: 'Wysyłamy Ci fakturę za pakiet odnowieniowy od 299 zł — pokrywa on kolejne 2 lata hostingu i domeny. Bez niego strona nie znika — po prostu czekamy na odnowienie.',
+        a: 'Na 90, 30, 14, 7 i 1 dzień przed końcem dostajesz maila z przypomnieniem i linkiem do płatności. Odnowienie kosztuje od 299 zł / 99 € i pokrywa kolejne 2 lata — tę cenę zapisujemy w dniu zakupu i nie wzrośnie. Po wygaśnięciu masz jeszcze 14 dni; jeśli w tym czasie nie odnowisz, strona przestaje być dostępna dla gości. Twoje dane — rezerwacje, zdjęcia, opinie — zostają, więc odnowienie przywraca stronę w tym stanie, w jakim była.',
       },
       {
         q: 'Czy strona działa na telefonie?',
@@ -300,7 +300,7 @@ export const TR: Record<Lang, {
     pricingTitle: 'Choose your plan',
     pricingPeriod: 'for 2 years',
     pricingIncludes: 'Included:',
-    pricingRenewal: 'After 2 years — renewal package from 299 PLN',
+    pricingRenewal: 'After 2 years — renewal from €99 / 299 PLN for another 2 years',
     pricingRecommended: 'Recommended',
     pricingCtaBasic: 'Buy Basic',
     pricingCtaPro: 'Buy Pro',
@@ -342,7 +342,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'What happens after 2 years?',
-        a: "We send you an invoice for the renewal package from 299 PLN — it covers another 2 years of hosting and domain. Without it, the site doesn't disappear — we simply wait for renewal.",
+        a: 'You get a reminder email with a payment link 90, 30, 14, 7 and 1 day before the end. Renewal starts at €99 / 299 PLN and covers another 2 years — we lock that price on the day you buy and it will not go up. After expiry you have 14 more days; if you do not renew by then, the site stops being available to guests. Your data — bookings, photos, reviews — stays, so renewing brings the site back exactly as it was.',
       },
       {
         q: 'Does the site work on mobile?',

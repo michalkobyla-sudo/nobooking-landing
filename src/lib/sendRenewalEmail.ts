@@ -247,7 +247,7 @@ export function zbudujMailOdnowienia(params: RenewalEmailParams): { subject: str
           </p>
           ${renderRenewButton(renewUrl, 'Przywróć stronę →')}
           <p style="font-size: 0.8rem; color: #9CA3AF; text-align: center; margin: 1rem 0 0;">
-            Jeśli nie planujesz odnowienia, dane zostaną usunięte po 90 dniach od wygaśnięcia.
+            Jeśli nie planujesz odnowienia, daj znać — inaczej Twoje dane zostają u nas i strona czeka na przywrócenie.
           </p>
         </div>
         ${renderFooter()}
