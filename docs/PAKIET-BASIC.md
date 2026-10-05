@@ -20,6 +20,21 @@ Własna domena klienta jest zbierana w onboardingu (`orders.ob_domain`) i podpin
 **ręcznie** w ustawieniach projektu Vercel. To usługa, nie automat — w kodzie nie
 ma nic, co tworzyłoby domenę samo.
 
+> **Domenę podpina się jako przekierowanie, nie jako kolejną domenę projektu.**
+> Sprawdzone 2026-10-04 w `src/proxy.ts`. Przepisywanie adresu działa wyłącznie
+> dla subdomen `nobooking.eu`: proxy liczy `subdomain = hostname.replace('.nobooking.eu','')`
+> i rusza dalej tylko wtedy, gdy ten `replace` coś zmienił. Dla obcej domeny
+> (`apartsunny.com`) nie zmienia nic, warunek nie przechodzi, przepisania nie ma
+> — i gość pod domeną klienta zobaczyłby **stronę sprzedażową Nobookinga**
+> zamiast apartamentu. Dlatego w Vercelu ustawia się **Redirect** na
+> `https://nobooking.eu/sites/<slug>`, a nie samo dodanie domeny do projektu.
+>
+> Subdomeny `slug.nobooking.eu` też dziś nie działają — brakuje wpisu DNS
+> z gwiazdką. `apart-sunny.nobooking.eu` nie rozwiązuje się (sprawdzone
+> 2026-10-04), więc kod przepisujący subdomeny jest na razie martwy.
+> Jedyny działający adres strony klienta to `nobooking.eu/sites/<slug>`
+> i to na niego wskazuje `canonical`.
+
 Poczta wychodzi przez Brevo z adresu `noreply@nobooking.eu` (`src/lib/email.ts`).
 
 Ważność liczy `sites.expires_at`, ustawiane na 2 lata przy provisioningu.
