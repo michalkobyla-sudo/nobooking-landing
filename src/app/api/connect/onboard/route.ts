@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createOnboardingLink } from '@/lib/stripe-connect'
+import { createOnboardingLink, createConnectAccount } from '@/lib/stripe-connect'
+import { createServiceClient } from '@/lib/supabase'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
 
 /**
@@ -36,12 +37,45 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(logowanie)
   }
 
-  if (!site.stripe_account_id) {
-    return NextResponse.json({ error: 'site_not_found_or_no_stripe_account' }, { status: 404 })
-  }
-
   try {
-    const url = await createOnboardingLink(site.stripe_account_id as string, slug)
+    let kontoId = site.stripe_account_id as string | null
+
+    // **Brak konta nie jest błędem — to sytuacja, do której ta trasa służy.**
+    //
+    // Provisioning zakłada konto połączone, ale porażka jest tam celowo
+    // nieśmiertelna: zamówienie ma się dokończyć nawet wtedy, gdy Stripe
+    // akurat nie odpowiada, a komentarz w `provision-site.ts` odsyła
+    // właściciela do panelu („owner can connect Stripe later via the admin
+    // panel"). Tyle że panel prowadził tutaj, a tu zwracaliśmy surowe
+    // `404 site_not_found_or_no_stripe_account` — czyli udokumentowana droga
+    // ratunkowa kończyła się komunikatem błędu w formacie JSON.
+    //
+    // Zakładamy więc konto teraz, dokładnie tak jak zrobiłby to provisioning.
+    if (!kontoId) {
+      const nazwa = ((site.config as Record<string, unknown> | null)?.name as string | undefined) ?? undefined
+      const email = (site.owner_email as string | null)?.trim()
+      if (!email) {
+        console.error(`[connect/onboard] strona ${slug} nie ma adresu wlasciciela`)
+        return NextResponse.json({ error: 'brak_adresu_wlasciciela' }, { status: 500 })
+      }
+
+      kontoId = await createConnectAccount(email, nazwa)
+
+      const { error } = await createServiceClient()
+        .from('sites')
+        .update({ stripe_account_id: kontoId })
+        .eq('id', site.id)
+
+      // Zapis się nie udał: konto w Stripe istnieje, ale my o nim nie wiemy.
+      // Przerywamy zamiast puszczać właściciela dalej — inaczej następne
+      // wejście założyłoby kolejne konto, i tak przy każdym kliknięciu.
+      if (error) {
+        console.error(`[connect/onboard] konto ${kontoId} zalozone, ale niezapisane dla ${slug}:`, error.message)
+        return NextResponse.json({ error: 'konto_zalozone_ale_niezapisane' }, { status: 500 })
+      }
+    }
+
+    const url = await createOnboardingLink(kontoId, slug)
     return NextResponse.redirect(url)
   } catch (err) {
     console.error('[connect/onboard] stripe error:', err)

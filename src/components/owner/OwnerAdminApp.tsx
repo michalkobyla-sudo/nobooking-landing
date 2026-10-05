@@ -826,7 +826,16 @@ function KodyRabatowe({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) {
 
   return (
     <Card style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{ filter: plan === 'pro' ? 'none' : 'blur(3px)', pointerEvents: plan === 'pro' ? 'auto' : 'none' }}>
+      {/* `inert` obok `pointerEvents`: samo wyłączenie myszy zostawia pola
+          w kolejności tabulacji, więc właściciel Basic docierał klawiszem Tab
+          do rozmytego formularza i mógł w nim pisać — a zapis i tak odbijał się
+          od bramki planu po stronie API. Czytnik ekranu czytał to jako zwykły,
+          dostępny formularz. `inert` wyjmuje całość z tabulacji i z drzewa
+          dostępności, czyli robi to, co blur tylko udaje. */}
+      <div
+        inert={plan === 'pro' ? undefined : true}
+        style={{ filter: plan === 'pro' ? 'none' : 'blur(3px)', pointerEvents: plan === 'pro' ? 'auto' : 'none' }}
+      >
         <SectionTitle>Kody rabatowe</SectionTitle>
         <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginTop: 0 }}>
           Rabat obejmuje całość razem ze sprzątaniem. Limit użyć i data ważności są opcjonalne.
@@ -1423,7 +1432,14 @@ function SubskrypcjaView({ slug }: { slug: string }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#059669', letterSpacing: '-0.03em' }}>{price}</p>
-            <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: '#9CA3AF' }}>zablokowana cena — nie wzrośnie</p>
+            {/* Obietnica tylko wtedy, gdy jest przy niej kwota. Przy stronach
+                sprzed wprowadzenia cen odnowienia `price` to „—", a „zablokowana
+                cena — nie wzrośnie" obok myślnika brzmi jak zapewnienie bez
+                pokrycia: właściciel czyta, że cena jest zagwarantowana, ale nie
+                widzi jaka. */}
+            <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: '#9CA3AF' }}>
+              {price === '—' ? 'cena odnowienia ustalana przy odnowieniu' : 'zablokowana cena — nie wzrośnie'}
+            </p>
           </div>
         </div>
       </div>
