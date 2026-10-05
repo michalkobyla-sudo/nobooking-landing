@@ -82,8 +82,8 @@ Required output structure — every field is mandatory:
     "currency": "EUR",
     "cleaningFee": 60,
     "tiers": {
-      "low":  { "pricePerNight": 80,  "minNights": 3, "label": { "pl": "Niski sezon",  "en": "Low season",  "es": "Temporada baja",  "de": "Nebensaison"    }, "months": "paź–kwi / Oct–Apr" },
-      "mid":  { "pricePerNight": 110, "minNights": 5, "label": { "pl": "Średni sezon", "en": "Mid season",  "es": "Temporada media", "de": "Zwischensaison" }, "months": "maj–cze / May–Jun" },
+      "low":  { "pricePerNight": 80,  "minNights": 3, "label": { "pl": "Niski sezon",  "en": "Low season",  "es": "Temporada baja",  "de": "Nebensaison"    }, "months": "lis–kwi / Nov–Apr" },
+      "mid":  { "pricePerNight": 110, "minNights": 5, "label": { "pl": "Średni sezon", "en": "Mid season",  "es": "Temporada media", "de": "Zwischensaison" }, "months": "maj–cze, paź / May–Jun, Oct" },
       "high": { "pricePerNight": 150, "minNights": 7, "label": { "pl": "Wysoki sezon", "en": "High season", "es": "Temporada alta",  "de": "Hochsaison"    }, "months": "lip–wrz / Jul–Sep" }
     }
   },

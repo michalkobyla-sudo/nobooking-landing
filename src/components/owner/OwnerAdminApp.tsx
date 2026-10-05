@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Booking, Review, BlockedDate } from '@/lib/types'
 import { KalendarzView } from './KalendarzView'
 import { GaleriaView } from './GaleriaView'
+import { opisMiesiecy } from '@/lib/bookingPricing'
 
 // ─── Design tokens ────────────────────────────────────────────────
 const PRIMARY = '#1A5276'
@@ -968,9 +969,9 @@ function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
   )
 
   const TIER_ROWS = [
-    { key: 'high', label: pricing?.tiers?.high?.label?.pl ?? 'Wysoki sezon', months: pricing?.tiers?.high?.months ?? '', state: high, set: setHigh },
-    { key: 'mid',  label: pricing?.tiers?.mid?.label?.pl  ?? 'Średni sezon', months: pricing?.tiers?.mid?.months  ?? '', state: mid,  set: setMid  },
-    { key: 'low',  label: pricing?.tiers?.low?.label?.pl  ?? 'Niski sezon',  months: pricing?.tiers?.low?.months  ?? '', state: low,  set: setLow  },
+    { key: 'high', label: pricing?.tiers?.high?.label?.pl ?? 'Wysoki sezon', months: opisMiesiecy('high'), state: high, set: setHigh },
+    { key: 'mid',  label: pricing?.tiers?.mid?.label?.pl  ?? 'Średni sezon', months: opisMiesiecy('mid'), state: mid,  set: setMid  },
+    { key: 'low',  label: pricing?.tiers?.low?.label?.pl  ?? 'Niski sezon',  months: opisMiesiecy('low'), state: low,  set: setLow  },
   ]
 
   return (

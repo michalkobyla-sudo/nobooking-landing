@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ApartmentConfig, Lang } from '@/lib/apartmentTypes'
+import { sezonDla, opisMiesiecy } from '@/lib/bookingPricing'
 
 // ─── UI translations ──────────────────────────────────────────────────────────
 
@@ -641,7 +642,10 @@ function CalendarPricer({ config, lang, ui, primary, isMobile, slug, stripeEnabl
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <input type="radio" name="season" value={s} checked={season === s} onChange={() => setSeason(s)} style={{ accentColor: primary }} />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t(tier2.label, lang)}</span>
-                        <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{tier2.months}</span>
+                        {/* Z reguły, nie z `tier2.months`: zapisany tekst kłamał
+                            na każdej wygenerowanej stronie (październik opisany
+                            jako niski sezon, liczony jako średni). */}
+                        <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{opisMiesiecy(s, lang)}</span>
                       </div>
                       <span style={{ fontWeight: 800, color: primary, fontSize: '0.9rem' }}>{tier2.pricePerNight} {curr}<span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#9CA3AF' }}>{ui.pricerPerNight}</span></span>
                     </label>
@@ -841,9 +845,10 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled,
     if (!form.arrival || !form.departure) return null
     const nights = Math.round((new Date(form.departure).getTime() - new Date(form.arrival).getTime()) / (1000 * 60 * 60 * 24))
     if (nights <= 0) return null
-    const month = new Date(form.arrival).getMonth() + 1
-    const tier = [7,8,9].includes(month) ? 'high' : [5,6,10].includes(month) ? 'mid' : 'low'
-    const pricePerNight = config.pricing.tiers[tier].pricePerNight
+    // Reguła sezonów ma jedno miejsce (`bookingPricing.ts`). Wcześniej stała
+    // tu jej kopia — ta sama co w API, ale osobna, więc rozjazd był kwestią
+    // czasu, a rozjazd między ceną pokazaną a policzoną jest nie do obronienia.
+    const pricePerNight = config.pricing.tiers[sezonDla(form.arrival)].pricePerNight
     const base = nights * pricePerNight + config.pricing.cleaningFee
     const discount = Math.round(base * discountPct / 100)
     return { nights, total: base - discount, currency: config.pricing.currency, discount }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sezonDla, liczNoce, rozwinZakres, sprawdzDaty, wycen, MAX_NOCY } from './bookingPricing'
+import { sezonDla, liczNoce, rozwinZakres, sprawdzDaty, wycen, MAX_NOCY, MIESIACE_SEZONU, opisMiesiecy } from './bookingPricing'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 
 const config = {
@@ -108,5 +108,50 @@ describe('wycen', () => {
   it('podaje minimalną liczbę nocy właściwą dla sezonu', () => {
     expect(wycen('2026-07-10', '2026-07-17', config).minNocy).toBe(7)
     expect(wycen('2026-01-10', '2026-01-13', config).minNocy).toBe(3)
+  })
+})
+
+describe('MIESIACE_SEZONU i opisMiesiecy', () => {
+  it('każdy miesiąc należy do dokładnie jednego sezonu', () => {
+    const wszystkie = [...MIESIACE_SEZONU.low, ...MIESIACE_SEZONU.mid, ...MIESIACE_SEZONU.high].sort((a, b) => a - b)
+    expect(wszystkie).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  })
+
+  // Reguła i etykieta muszą pochodzić z tego samego miejsca — rozjazd między
+  // nimi oznacza, że gość widzi inną cenę, niż zostanie policzona.
+  it('sezonDla zgadza się z tablicą miesięcy dla każdego miesiąca', () => {
+    for (let m = 1; m <= 12; m++) {
+      const data = `2026-${String(m).padStart(2, '0')}-15`
+      const sezon = sezonDla(data)
+      expect(MIESIACE_SEZONU[sezon]).toContain(m)
+    }
+  })
+
+  it('skleja miesiące idące po sobie w zakres', () => {
+    expect(opisMiesiecy('high')).toBe('lip–wrz')
+  })
+
+  // Średni sezon jest nieciągły (maj, czerwiec i październik), więc zakres
+  // sam w sobie by go nie opisał.
+  it('rozdziela grupy nieciągłe przecinkiem', () => {
+    expect(opisMiesiecy('mid')).toBe('maj–cze, paź')
+  })
+
+  // Niski sezon przechodzi przez przełom roku — bez zawinięcia wyszłoby
+  // „sty–kwi, lis–gru", co czyta się jak dwa różne okresy.
+  it('zawija niski sezon przez grudzień i styczeń', () => {
+    expect(opisMiesiecy('low')).toBe('lis–kwi')
+  })
+
+  it('tłumaczy skróty miesięcy', () => {
+    expect(opisMiesiecy('high', 'en')).toBe('Jul–Sep')
+    expect(opisMiesiecy('mid', 'de')).toBe('Mai–Jun, Okt')
+    expect(opisMiesiecy('low', 'es')).toBe('nov–abr')
+  })
+
+  // Październik był opisany jako niski sezon, a liczony jako średni.
+  it('październik to średni sezon, zgodnie z PAKIET-BASIC', () => {
+    expect(sezonDla('2026-10-26')).toBe('mid')
+    expect(opisMiesiecy('low')).not.toContain('paź')
   })
 })

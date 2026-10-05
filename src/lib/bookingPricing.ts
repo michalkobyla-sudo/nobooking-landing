@@ -19,8 +19,8 @@ export const MAX_NOCY = 365
  *  po stawce sezonu, w którym się zaczyna. */
 export function sezonDla(checkIn: string): Sezon {
   const miesiac = new Date(checkIn).getUTCMonth() + 1
-  if ([7, 8, 9].includes(miesiac)) return 'high'
-  if ([5, 6, 10].includes(miesiac)) return 'mid'
+  if (MIESIACE_SEZONU.high.includes(miesiac)) return 'high'
+  if (MIESIACE_SEZONU.mid.includes(miesiac)) return 'mid'
   return 'low'
 }
 
@@ -100,4 +100,74 @@ export function wycen(
     // Stripe przyjmuje kwoty w najmniejszej jednostce waluty.
     groszy: Math.round(doZaplaty * 100),
   }
+}
+
+/**
+ * Miesiące każdego sezonu — **jedyne źródło prawdy**.
+ *
+ * Do 2026-10-05 reguła sezonów żyła w trzech miejscach naraz: w `sezonDla`,
+ * w osobnej kopii w formularzu rezerwacji i w swobodnym tekście `months`
+ * wpisywanym do konfiguracji przez generator stron. Trzecia kopia była
+ * nieprawdziwa od początku:
+ *
+ * | sezon | etykieta generatora | co naprawdę liczył kod |
+ * |---|---|---|
+ * | niski  | „paź–kwi / Oct–Apr" | XI–IV (bez października) |
+ * | średni | „maj–cze / May–Jun" | V, VI **i X** |
+ * | wysoki | „lip–wrz / Jul–Sep" | VII–IX ✓ |
+ *
+ * Skutek dla gościa: strona pokazywała „Niski sezon paź–kwi, 80 €/noc,
+ * min. 3 noce", a rezerwacja na 10 października była liczona po stawce
+ * średniej i odbijała się komunikatem o minimum 5 nocy. Złapane 2026-10-05
+ * przy próbie złożenia rezerwacji na 26 października.
+ *
+ * Etykiety składa teraz `opisMiesiecy` z tej tablicy, więc nie da się ich
+ * rozjechać z regułą — także na stronach już wygenerowanych, bo zapisanego
+ * `months` nie czytamy.
+ */
+export const MIESIACE_SEZONU: Record<Sezon, number[]> = {
+  high: [7, 8, 9],
+  mid: [5, 6, 10],
+  low: [1, 2, 3, 4, 11, 12],
+}
+
+const SKROTY_MIESIECY: Record<'pl' | 'en' | 'es' | 'de', string[]> = {
+  pl: ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+}
+
+/**
+ * Opis miesięcy sezonu, np. „lis–kwi" albo „maj–cze, paź".
+ *
+ * Miesiące idące po sobie skleja w zakres, resztę wypisuje po przecinku.
+ * Niski sezon przechodzi przez grudzień i styczeń, więc zawijanie roku
+ * traktujemy jak ciągłość — inaczej wyszłoby „sty–kwi, lis–gru".
+ */
+export function opisMiesiecy(sezon: Sezon, lang: 'pl' | 'en' | 'es' | 'de' = 'pl'): string {
+  const nazwy = SKROTY_MIESIECY[lang] ?? SKROTY_MIESIECY.pl
+  const miesiace = [...MIESIACE_SEZONU[sezon]].sort((a, b) => a - b)
+  if (miesiace.length === 0) return ''
+
+  const grupy: number[][] = []
+  for (const m of miesiace) {
+    const ostatnia = grupy[grupy.length - 1]
+    if (ostatnia && m === ostatnia[ostatnia.length - 1] + 1) ostatnia.push(m)
+    else grupy.push([m])
+  }
+
+  // Grudzień i styczeń w osobnych grupach to ta sama zima — sklejamy.
+  if (grupy.length > 1) {
+    const pierwsza = grupy[0]
+    const ostatnia = grupy[grupy.length - 1]
+    if (pierwsza[0] === 1 && ostatnia[ostatnia.length - 1] === 12) {
+      grupy[grupy.length - 1] = [...ostatnia, ...pierwsza]
+      grupy.shift()
+    }
+  }
+
+  return grupy
+    .map(g => (g.length === 1 ? nazwy[g[0] - 1] : `${nazwy[g[0] - 1]}–${nazwy[g[g.length - 1] - 1]}`))
+    .join(', ')
 }
