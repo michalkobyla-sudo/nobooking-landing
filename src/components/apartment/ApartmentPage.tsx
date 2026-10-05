@@ -1084,7 +1084,7 @@ function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui:
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false, stripeEnabled = true, kodyRabatowe = false }: {
+export default function ApartmentPage({ config, siteId = '', slug = '', showDemoBanner = false, stripeEnabled = true, kodyRabatowe = false, jezykStartowy = 'pl' }: {
   config: ApartmentConfig
   siteId?: string
   slug?: string
@@ -1092,8 +1092,53 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
   stripeEnabled?: boolean
   /** Czy pokazywać pole kodu rabatowego. Kody są wyłącznie w pakiecie Pro. */
   kodyRabatowe?: boolean
+  /**
+   * Język z adresu (`?lang=`), ustalony po stronie serwera.
+   *
+   * Wcześniej strona zawsze zaczynała po polsku, bo `?lang=` czytały wyłącznie
+   * metadane. Link udostępniony jako `?lang=es` pokazywał więc hiszpańską
+   * zapowiedź, a otwierał polską stronę. Przekazanie języka z serwera usuwa
+   * też mignięcie polskiego przed przełączeniem — strona przychodzi już
+   * w docelowym języku.
+   */
+  jezykStartowy?: Lang
 }) {
-  const [lang, setLang] = useState<Lang>('pl')
+  const [lang, setLang] = useState<Lang>(jezykStartowy)
+
+  /**
+   * `<html lang>` musi iść za treścią strony.
+   *
+   * Korzeń aplikacji (`layout.tsx`) ustawia `lang="pl"` na sztywno, bo obsługuje
+   * też stronę sprzedażową. Na stronie apartamentu, która wyświetla się
+   * w czterech językach, zostawienie polskiego znaczy, że czytnik ekranu czyta
+   * hiszpański tekst polską wymową, a wyszukiwarka dostaje sprzeczny sygnał
+   * o języku strony.
+   */
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  /**
+   * Przełączenie języka zapisuje wybór w adresie.
+   *
+   * Bez tego gość, który przełączył na hiszpański i skopiował adres z paska,
+   * wysyłał znajomemu link otwierający się po polsku. `replaceState` zamiast
+   * nawigacji: zmiana języka nie ma wracać przyciskiem wstecz ani przeładowywać
+   * strony, na której gość właśnie wypełnia formularz.
+   */
+  const zmienJezyk = (l: Lang) => {
+    setLang(l)
+    if (typeof window === 'undefined') return
+    try {
+      const adres = new URL(window.location.href)
+      adres.searchParams.set('lang', l)
+      window.history.replaceState(null, '', adres.toString())
+      document.documentElement.lang = l
+    } catch {
+      // Adres nie do odczytania albo historia zablokowana — język i tak
+      // przełączony, a to jedyne, co jest tu istotne.
+    }
+  }
   const isMobile = useIsMobile()
   const ui = UI[lang]
   const primary = config.theme?.primary ?? '#1A5276'
@@ -1120,7 +1165,7 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
           <DemoBanner ui={ui} showDemo={showDemoBanner} isMobile={isMobile} />
         </div>
       )}
-      <ApartmentHeader config={config} lang={lang} setLang={setLang} ui={ui} primary={primary} isMobile={isMobile} demoBannerHeight={bannerHeight} />
+      <ApartmentHeader config={config} lang={lang} setLang={zmienJezyk} ui={ui} primary={primary} isMobile={isMobile} demoBannerHeight={bannerHeight} />
       <Hero config={config} lang={lang} ui={ui} primary={primary} onGallery={scrollToGallery} isMobile={isMobile} />
       <ApartmentInfo config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <Gallery config={config} ui={ui} primary={primary} isMobile={isMobile} />

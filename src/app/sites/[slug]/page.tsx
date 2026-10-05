@@ -62,8 +62,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 }
 
-export default async function SitePage({ params }: Props) {
+export default async function SitePage({ params, searchParams }: Props) {
   const { slug } = await params
+  const lang = poprawnyJezyk((await searchParams)?.lang)
   const supabase = createServiceClient()
 
   const { data: site } = await supabase
@@ -135,6 +136,7 @@ export default async function SitePage({ params }: Props) {
       showDemoBanner={false}
       stripeEnabled={site.stripe_onboarded === true}
       kodyRabatowe={site.plan === 'pro'}
+      jezykStartowy={lang}
     />
   )
 }
