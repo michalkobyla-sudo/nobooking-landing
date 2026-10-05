@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
+import { PRICES } from '@/lib/prices'
 
 /**
  * Kalkulator prowizji.
@@ -23,8 +24,9 @@ import { TR } from '@/lib/translations'
 const STRIPE_PROCENT = 1.5
 const STRIPE_STALA = { pl: 1, en: 0.25 }
 
-/** Cena pakietu Basic, zgodna z `calcRoiNote` i cennikiem. */
-const CENA_BASIC = { pl: 799, en: 199 }
+/** Cena pakietu Basic — z `prices.ts`, żeby kalkulator zwrotu liczył tę samą
+ *  kwotę, którą pobiera Stripe. Wcześniej stały tu dwie liczby wpisane ręcznie. */
+const CENA_BASIC = { pl: PRICES.basic.pln / 100, en: PRICES.basic.eur / 100 }
 
 /** Z translations: zakladamy srednio tyle nocy na rezerwacje. */
 const NOCY_NA_REZERWACJE = 7

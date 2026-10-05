@@ -2,6 +2,7 @@
 
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
+import { PRICE_LABELS } from '@/lib/prices'
 
 export default function DemoCTA() {
   const { lang } = useLang()
@@ -68,7 +69,7 @@ export default function DemoCTA() {
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)'; }}>
-            {lang === 'pl' ? 'Zamów — od 799 zł' : 'Order — from €199'}
+            {lang === 'pl' ? `Zamów — od ${PRICE_LABELS.basic.pln}` : `Order — from ${PRICE_LABELS.basic.eur}`}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6"/>
             </svg>

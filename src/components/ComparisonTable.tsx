@@ -2,6 +2,7 @@
 
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
+import { PRICE_LABELS } from '@/lib/prices'
 
 function CheckIcon() {
   return (
@@ -85,7 +86,7 @@ export default function ComparisonTable() {
       feature: t.compPrice,
       nb: (
         <span style={{ color: 'var(--color-accent)', fontWeight: 800, fontSize: '0.82rem', letterSpacing: '-0.02em' }}>
-          {lang === 'pl' ? '799 zł' : '€199'}
+          {lang === 'pl' ? PRICE_LABELS.basic.pln : PRICE_LABELS.basic.eur}
           <span style={{ fontWeight: 500, fontSize: '0.7rem', color: 'var(--color-accent)', opacity: 0.75, marginLeft: '0.25rem' }}>
             {lang === 'pl' ? '/ jednorazowo' : '/ one-time'}
           </span>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
+import { PRICE_LABELS } from '@/lib/prices'
 
 function CheckMark({ dark }: { dark?: boolean }) {
   return (
@@ -31,8 +32,11 @@ export default function PricingCards() {
   }
 
   const prices = {
-    basic: currency === 'eur' ? '199 €' : '799 zł',
-    pro: currency === 'eur' ? '299 €' : '1 199 zł',
+    // Z `prices.ts`, nie z literałów. Kwota pokazana i kwota pobrana przez
+    // Stripe muszą pochodzić z tego samego miejsca — rozjazd między nimi to
+    // ta sama klasa błędu co sezony i cena odnowienia.
+    basic: PRICE_LABELS.basic[currency],
+    pro: PRICE_LABELS.pro[currency],
   }
 
   return (
