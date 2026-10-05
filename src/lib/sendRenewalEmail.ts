@@ -88,9 +88,19 @@ export interface RenewalEmailParams {
   daysBefore: number  // 90, 30, 14, 7, 1, -14 (grace period end notification)
 }
 
-export async function sendRenewalEmail(params: RenewalEmailParams): Promise<void> {
+/**
+ * Składa temat i treść maila o odnowieniu. Czysta funkcja — bez wysyłki.
+ *
+ * Wydzielone z `sendRenewalEmail`, żeby treść dało się sprawdzić testem.
+ * Powód konkretny: przycisk w mailu D-14 miał etykietę zapisaną w apostrofach
+ * zamiast w odwrotnych ukośnikach, więc właściciel dostawał guzik z napisem
+ * „Odnów teraz — ${priceStr} →” — surowym wyrażeniem zamiast kwoty, w mailu
+ * o płatności. Dopóki treść powstawała w środku funkcji wysyłającej, nic nie
+ * mogło tego złapać poza przeczytaniem maila.
+ */
+export function zbudujMailOdnowienia(params: RenewalEmailParams): { subject: string; html: string } {
   const {
-    ownerEmail, apartmentName, slug, expiresAt,
+    apartmentName, slug, expiresAt,
     renewalPricePln, renewalPriceEur, renewalCurrency, daysBefore,
   } = params
 
@@ -166,7 +176,7 @@ export async function sendRenewalEmail(params: RenewalEmailParams): Promise<void
           <p style="font-size: 1rem; line-height: 1.7; margin: 0 0 1.5rem;">
             Cena odnowienia: <strong>${priceStr}</strong> na 2 lata.
           </p>
-          ${renderRenewButton(renewUrl, 'Odnów teraz — ${priceStr} →')}
+          ${renderRenewButton(renewUrl, `Odnów teraz — ${priceStr} →`)}
         </div>
         ${renderFooter()}
       </div>
@@ -245,5 +255,10 @@ export async function sendRenewalEmail(params: RenewalEmailParams): Promise<void
     `
   }
 
-  await sendEmail(ownerEmail, subject, html)
+  return { subject, html }
+}
+
+export async function sendRenewalEmail(params: RenewalEmailParams): Promise<void> {
+  const { subject, html } = zbudujMailOdnowienia(params)
+  await sendEmail(params.ownerEmail, subject, html)
 }
