@@ -87,7 +87,21 @@ zaufanie klienta, potem to, co kosztuje czas.
 
 ---
 
-## Etap 0 — Odblokowanie *(w toku, zależne od Michała)*
+## Etap 0 — Odblokowanie *(zamknięty w części Stripe, 2026-10-05)*
+
+> **Weryfikacja tożsamości przeszła, Connect działa.** Przyczyną nie był ani
+> dokument, ani zacięty stan po stronie Stripe. Konfiguracja Connect robiona
+> była przez pomyłkę na koncie **Casa Sol** (`acct_1TCfH5C4nRKn3H7A`), a produkcja
+> stoi na koncie **Nobooking** (`acct_1UKa8vBYbNUONJ2O`) — ustawienia Connect są
+> osobne dla każdego konta, więc praca na jednym nie zmieniała niczego na drugim.
+> Po powtórzeniu weryfikacji na właściwym koncie zakładanie kont połączonych
+> potwierdzone **zapisem**: `acct_1UMqpPPYR2QZczCN` założone na żywo 2026-10-05.
+>
+> Opis poniżej zostaje jako zapis tego, jak wyglądała ta pomyłka z wewnątrz:
+> panel mówił „Failed", API mówiło `pending`, `requirements` był pusty — i wszystko
+> troje było prawdą, tylko o dwóch różnych kontach.
+
+### Stan historyczny (przed 2026-10-05)
 
 Rzeczy, których nikt poza Tobą nie zrobi, a blokują resztę.
 
