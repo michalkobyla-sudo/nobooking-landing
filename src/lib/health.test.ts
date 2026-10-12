@@ -324,16 +324,16 @@ describe('ocenStan - blokada Connect', () => {
 
 describe('opisSrodowiska i stopka raportu', () => {
   it('nazywa konto i tryb', () => {
-    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'live', aktywne: true }))
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'live', aktywne: true, wyplaty: true, zaleglosci: [], poTerminie: [] }))
       .toBe('Stripe: acct_123 (tryb live, aktywne).')
-    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'test', aktywne: true }))
+    expect(opisSrodowiska({ konto: 'acct_123', tryb: 'test', aktywne: true, wyplaty: true, zaleglosci: [], poTerminie: [] }))
       .toBe('Stripe: acct_123 (tryb testowy, aktywne).')
   })
 
   // Konto nieaktywne nie zalozy konta polaczonego, choc odczyt przez nie
   // przechodzi. Stopka ma to krzyczec, a nie szeptac.
   it('krzyczy, gdy konto nie ukończyło aktywacji', () => {
-    expect(opisSrodowiska({ konto: 'acct_9', tryb: 'live', aktywne: false }))
+    expect(opisSrodowiska({ konto: 'acct_9', tryb: 'live', aktywne: false, wyplaty: true, zaleglosci: [], poTerminie: [] }))
       .toBe('Stripe: acct_9 (tryb live, NIEAKTYWNE).')
   })
 
@@ -385,5 +385,51 @@ describe('Connect niepotwierdzony na żywo', () => {
 
   it('brak dowodu blokuje czysty raport', () => {
     expect(wymagaUwagi(ocenStan({ ...zdrowy, ...nieWiadomo, stronyZeStripe: 0 }))).toBe(true)
+  })
+})
+
+describe('konto platformy Stripe', () => {
+  const konto = (nad: Partial<NonNullable<StanSystemu['stripeKonto']>>) => ({
+    ...zdrowy,
+    stripeKonto: { konto: 'acct_1', tryb: 'live' as const, aktywne: true, wyplaty: true, zaleglosci: [], poTerminie: [], ...nad },
+  })
+
+  /**
+   * 2026-10-12 Stripe wstrzymał wypłaty na koncie platformy, bo zadanie
+   * „Provide information about your website" przeterminowało się 8 października.
+   * Raport zdrowia tego nie widział — patrzył wyłącznie na to, czy da się
+   * zakładać konta połączone, a to działało. Zobaczyliśmy czerwony pasek
+   * przypadkiem, na zrzucie przysłanym w innej sprawie.
+   */
+  it('wymagania po terminie są krytyczne', () => {
+    const z = ocenStan(konto({ poTerminie: ['business_profile.url'], zaleglosci: ['business_profile.url'] }))
+      .find(x => x.tytul.includes('po terminie'))
+    expect(z?.waga).toBe('krytyczne')
+    expect(z?.szczegol).toContain('business_profile.url')
+  })
+
+  // Przed terminem to jeszcze nie pożar, ale termin minie.
+  it('zaległości przed terminem to ostrzeżenie', () => {
+    const z = ocenStan(konto({ zaleglosci: ['company.tax_id'] }))
+      .find(x => x.tytul.includes('zaległości'))
+    expect(z?.waga).toBe('ostrzezenie')
+  })
+
+  it('wstrzymane wypłaty bez zaległości też są zgłaszane', () => {
+    const z = ocenStan(konto({ wyplaty: false }))
+      .find(x => x.tytul.includes('wypłaty wstrzymane'))
+    expect(z?.waga).toBe('ostrzezenie')
+  })
+
+  it('zdrowe konto nie generuje żadnego z tych wpisów', () => {
+    const t = ocenStan(konto({})).map(x => x.tytul).join(' ')
+    expect(t).not.toContain('po terminie')
+    expect(t).not.toContain('zaległości')
+    expect(t).not.toContain('wypłaty wstrzymane')
+  })
+
+  it('stopka krzyczy o wstrzymanych wypłatach', () => {
+    expect(opisSrodowiska({ konto: 'acct_1', tryb: 'live', aktywne: true, wyplaty: false, zaleglosci: [], poTerminie: [] }))
+      .toContain('WYPŁATY WSTRZYMANE')
   })
 })

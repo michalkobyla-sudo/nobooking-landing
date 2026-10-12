@@ -46,8 +46,16 @@ export interface StanSystemu {
   connectDziala: boolean | null
   /** Powód odmowy ze Stripe'a, gdy `connectDziala` jest `false`. */
   connectPowod: string
-  /** Konto Stripe, z którym rozmawia to środowisko: identyfikator, tryb, aktywacja. */
-  stripeKonto: { konto: string; tryb: 'live' | 'test'; aktywne: boolean } | null
+  /** Konto Stripe, z którym rozmawia to środowisko: identyfikator, tryb, aktywacja,
+   *  wypłaty i zaległości wobec Stripe'a. */
+  stripeKonto: {
+    konto: string
+    tryb: 'live' | 'test'
+    aktywne: boolean
+    wyplaty: boolean
+    zaleglosci: string[]
+    poTerminie: string[]
+  } | null
   /** Strony, które wciąż mają w galerii zdjęcia zastępcze z generatora. */
   stronyZeZdjeciamiZastepczymi: string[]
   /** Strony z datą wygaśnięcia w ciągu 60 dni. */
@@ -254,6 +262,42 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
     })
   }
 
+  // ── Konto platformy ────────────────────────────────────────────────────────
+  //
+  // Dodane 2026-10-12, po tym jak czerwony pasek „Payouts paused — a required
+  // task is past due" zobaczony został przypadkiem, na zrzucie ekranu przysłanym
+  // w innej sprawie. Raport zdrowia go nie widział, bo patrzył wyłącznie na to,
+  // czy da się zakładać konta połączone — a to działało.
+  //
+  // Zaległości wobec Stripe'a eskalują po cichu: najpierw wstrzymane wypłaty,
+  // potem wyłączone płatności. Pierwszy stopień nie boli (na koncie platformy
+  // i tak nie ma sald przy opłatach bezpośrednich), drugi zatrzymuje sprzedaż.
+  // Dlatego `past_due` jest krytyczne, a nie ostrzegawcze.
+  const k = s.stripeKonto
+  if (k && k.poTerminie.length > 0) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: 'Stripe: wymagania konta platformy po terminie',
+      szczegol: `Konto ${k.konto}: ${k.poTerminie.join(', ')}. Po terminie Stripe najpierw wstrzymuje wypłaty, potem wyłącza płatności — a wtedy nikt niczego nie kupi. Uzupełnij w dashboard.stripe.com/account/onboarding.`,
+    })
+  } else if (k && k.zaleglosci.length > 0) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Stripe: konto platformy ma zaległości',
+      szczegol: `Konto ${k.konto}: ${k.zaleglosci.join(', ')}. Jeszcze przed terminem, ale termin minie.`,
+    })
+  }
+
+  // Wypłaty wstrzymane bez zaległości: powód jest inny niż brakujące dane
+  // i trzeba go odczytać z panelu.
+  if (k && k.tryb === 'live' && k.aktywne && !k.wyplaty && k.zaleglosci.length === 0) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Stripe: wypłaty wstrzymane',
+      szczegol: `Konto ${k.konto} przyjmuje płatności, ale Stripe ich nie wypłaca, a lista wymagań jest pusta. Powód widać wyłącznie w panelu.`,
+    })
+  }
+
   // `null` z niepustym powodem znaczy: odczyt przeszedl, ale zapisu na zywo
   // nie sprawdzamy (zostawialby konta-sieroty w panelu Connect). To nie jest
   // zdrowie — to brak wiedzy. Wage rozstrzyga rzeczywistosc: jesli ktorakolwiek
@@ -343,7 +387,8 @@ export function opisSrodowiska(stripeKonto: StanSystemu['stripeKonto']): string 
   if (!stripeKonto) return 'Stripe: nie udało się odczytać konta.'
   const tryb = stripeKonto.tryb === 'live' ? 'tryb live' : 'tryb testowy'
   const akt = stripeKonto.aktywne ? 'aktywne' : 'NIEAKTYWNE'
-  return `Stripe: ${stripeKonto.konto} (${tryb}, ${akt}).`
+  const wyp = stripeKonto.wyplaty ? '' : ', WYPŁATY WSTRZYMANE'
+  return `Stripe: ${stripeKonto.konto} (${tryb}, ${akt}${wyp}).`
 }
 
 export function raportHtml(znaleziska: Znalezisko[], data: string, stopka = ''): string {

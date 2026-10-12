@@ -237,6 +237,12 @@ export interface TozsamoscStripe {
   tryb: 'live' | 'test'
   /** Czy konto przeszlo aktywacje. Nieaktywne nie zalozy konta polaczonego. */
   aktywne: boolean
+  /** Czy Stripe wyplaca srodki z konta platformy. */
+  wyplaty: boolean
+  /** Czego Stripe zada od konta platformy — `currently_due` razem z `past_due`. */
+  zaleglosci: string[]
+  /** Pola po terminie. Te eskaluja: najpierw wstrzymane wyplaty, potem platnosci. */
+  poTerminie: string[]
 }
 
 export async function tozsamoscStripe(): Promise<TozsamoscStripe | null> {
@@ -250,17 +256,26 @@ export async function tozsamoscStripe(): Promise<TozsamoscStripe | null> {
     const d = await r.json() as {
       id?: string
       charges_enabled?: boolean
+      payouts_enabled?: boolean
       details_submitted?: boolean
-      requirements?: { disabled_reason?: string | null }
+      requirements?: {
+        disabled_reason?: string | null
+        currently_due?: string[]
+        past_due?: string[]
+      }
     }
     if (!d.id) return null
+    const req = d.requirements ?? {}
     return {
       konto: d.id,
       tryb: klucz.includes('_test_') ? 'test' : 'live',
       aktywne:
         d.details_submitted === true &&
         d.charges_enabled === true &&
-        !d.requirements?.disabled_reason,
+        !req.disabled_reason,
+      wyplaty: d.payouts_enabled === true,
+      zaleglosci: [...new Set([...(req.currently_due ?? []), ...(req.past_due ?? [])])],
+      poTerminie: req.past_due ?? [],
     }
   } catch {
     return null
