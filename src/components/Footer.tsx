@@ -21,9 +21,17 @@ export default function Footer() {
         { label: 'Demo', href: '/demo' },
       ]
 
-  const companyLinks = lang === 'pl'
-    ? ['O nas', 'Kontakt', 'Regulamin', 'Polityka prywatności']
-    : ['About', 'Contact', 'Terms', 'Privacy Policy']
+/**
+ * Adres kontaktowy — **widoczny na stronie, nie tylko w komunikatach błędu.**
+ *
+ * Do 2026-10-12 `kontakt@nobooking.eu` pojawiał się wyłącznie w treści błędów
+ * formularza („Spróbuj ponownie lub napisz na…"), czyli w praktyce nigdy.
+ * Stripe wstrzymał wtedy wypłaty, bo nie potrafił potwierdzić, że panujemy nad
+ * domeną: konto założone na Gmailu, a na stronie ani jednego adresu w domenie
+ * `nobooking.eu`. Odwiedzający miał ten sam problem — „Kontakt" w stopce był
+ * atrapą z `href="#"`.
+ */
+const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
 
   function scrollTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -73,15 +81,19 @@ export default function Footer() {
               <h4 style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B7280', marginBottom: '0.875rem' }}>
                 {lang === 'pl' ? 'Firma' : 'Company'}
               </h4>
-              {companyLinks.map(label => (
-                <div key={label} style={{ marginBottom: '0.5rem' }}>
-                  <a href="#" style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                    {label}
-                  </a>
-                </div>
-              ))}
+              {/* Były tu cztery etykiety z `href="#"` — „O nas", „Kontakt",
+                  „Regulamin", „Polityka prywatności" — prowadzące donikąd.
+                  Zostaje to, co istnieje naprawdę. Regulamin i polityka
+                  prywatności wrócą tu jako odnośniki w dniu, w którym powstaną
+                  te strony; martwy odnośnik nie zastępuje dokumentu, a wygląda,
+                  jakby zastępował. */}
+              <div style={{ marginBottom: '0.5rem' }}>
+                <a href={`mailto:${ADRES_KONTAKTOWY}`} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
+                  {ADRES_KONTAKTOWY}
+                </a>
+              </div>
             </div>
           </div>
         </div>
