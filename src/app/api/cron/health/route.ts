@@ -6,6 +6,7 @@ import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, opisSrodowiska, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import { czyMoznaZakladacKonta, tozsamoscStripe, kontoProbneDoSkasowania } from '@/lib/stripe-connect'
+import { wyslijSms } from '@/lib/smsSend'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
@@ -76,6 +77,27 @@ export async function GET(request: NextRequest) {
   if (unauthorized) return unauthorized
 
   const db = createServiceClient()
+
+  // `?sms=+48...` — jednorazowa wysylka testowa. Prawdziwy SMS wyzwala wylacznie
+  // webhook Stripe po oplaconej rezerwacji, wiec dopoki zadna strona testowa nie
+  // ma podpietego Connect, kanalu nie da sie sprawdzic inaczej niz sprzedajac
+  // cos naprawde. Raport potrafi powiedziec, ze poswiadczenia Twilio sa wazne
+  // i nadawca poprawny — ale nie, czy wiadomosc dociera i czy kraj odbiorcy
+  // jest dozwolony w Geo Permissions.
+  //
+  // Chronione sekretem crona, wiec uruchamia sie recznie i swiadomie.
+  const numerTestowy = request.nextUrl.searchParams.get('sms')
+  if (numerTestowy) {
+    const { data: strona } = await db.from('sites').select('id').limit(1).single()
+    const wynik = await wyslijSms(db, {
+      siteId: (strona?.id as string) ?? '00000000-0000-0000-0000-000000000000',
+      numerSurowy: numerTestowy,
+      tresc: 'Nobooking: testowa wiadomosc z raportu zdrowia. Nic nie trzeba robic.',
+      rodzaj: 'test',
+      wlaczone: true,
+    })
+    return NextResponse.json({ ok: true, probaSms: { numer: numerTestowy, wynik } })
+  }
 
   // Slad po uruchomieniu: alarm o cichym zatrzymaniu crona opiera sie
   // na tym wpisie, bo brak uruchomienia nie zostawia zadnego innego sladu.
