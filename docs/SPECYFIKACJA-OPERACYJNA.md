@@ -175,6 +175,24 @@ kiedyś naruszone — data w nawiasie to moment, w którym to wyszło.
     panelu, w którym ustawia się konto bankowe do wypłat. Trasa istniała jako
     zapasowy odnośnik w mailu powitalnym. Teraz wymaga sesji właściciela,
     a bez niej odsyła na logowanie, żeby odnośnik z maila dalej działał.
+25. **Konta próbnego Connect nie kasujemy, dopóki nie ma prawdziwego klienta.**
+    Codzienna próba na żywo tylko odczytuje listę kont połączonych — zakładanie
+    zostawiałoby sieroty, bo `/close` odmawia dla kont Standard. Dowód, że
+    platforma umie zakładać konta, bierze się stąd, że **jakiekolwiek** konto
+    połączone istnieje. Dziś jest nim wyłącznie konto próbne
+    `acct_1UMqpPPYR2QZczCN` (Nobooking, 2026-10-05). Skasowanie go opróżni
+    listę, próba wróci do odpowiedzi „nie wiem", a raport zdrowia zacznie
+    ostrzegać — i licznik siedmiu czystych raportów ruszy od zera. Po
+    podłączeniu pierwszego klienta jego konto przejmuje rolę dowodu i próbne
+    można skasować. Drugie konto próbne, `acct_1UMnavFu8N006T9R`, leży na
+    koncie Casa Sol i niczego nie podpiera — tam to tylko bałagan.
+26. **Każde środowisko mówi, z kim rozmawia.** Stan systemu podaje konto Stripe
+    (identyfikator, tryb, aktywacja, wypłaty, zaległości) i konto Twilio
+    (SID, nazwa, typ). Zasada powstała 2026-10-04 i 2026-10-12, po dwóch
+    pomyłkach tej samej klasy: Connect konfigurowany był przez pół dnia na
+    koncie Casa Sol, podczas gdy produkcja stała na koncie Nobooking, a przy
+    Twilio o mało nie powtórzyliśmy tego z subkontem. Odpowiedź „działa" jest
+    bezwartościowa, dopóki nie wiadomo, **czyje** to działa.
 
 ---
 
