@@ -29,6 +29,27 @@ odbywa się zmianą wartości w bazie.
   działa bez rejestracji, bez dodatkowej opłaty i **bez kupowania numeru**.
   Jest jednokierunkowy (odbiorca nie odpowie), co tu niczego nie psuje: te
   SMS-y idą do właściciela, nie do gościa.
+
+  > **Działa dla numerów polskich. Dla hiszpańskich nie — i to nie kwestia
+  > uprawnień geograficznych.** Sprawdzone wysyłką 2026-10-12 na `+34…`:
+  > błąd **21612**, nie 21408. Hiszpania wymaga **wcześniejszej rejestracji**
+  > nadawcy alfanumerycznego (wytyczne Twilio dla ES: *Pre-registration —
+  > Required*, czas prowizjonowania **do 4 tygodni**, dynamiczny sender ID
+  > niewspierany). Włączenie Hiszpanii w Geo Permissions było potrzebne, ale
+  > samo nie wystarcza.
+  >
+  > **Kogo to dotyczy:** właścicieli z hiszpańskim numerem telefonu — przy
+  > apartamentach w Torrevieja to nie jest przypadek brzegowy. Gości nie
+  > dotyczy wcale, bo do nich SMS-y nie idą.
+  >
+  > **Awaria nie jest cicha:** nieudana wysyłka ląduje w `sms_log` z powodem,
+  > a raport zdrowia zgłasza ją w `smsNieudane`.
+  >
+  > Rejestracja nadawcy dla Hiszpanii w toku (decyzja 2026-10-12). Gdyby
+  > któryś z pierwszych klientów miał hiszpański numer wcześniej, obejściem
+  > jest kupienie numeru telefonu jako nadawcy — numery nie wymagają
+  > rejestracji, kosztują około 1 €/mies. i wymagają wyboru nadawcy zależnie
+  > od kraju odbiorcy.
 - Numer odbiorcy siedzi w `sites.sms_phone`, nie w configu — config bywa
   nadpisywany przy regeneracji strony. Właściciel zmienia go w panelu razem
   z wyłącznikiem (`owner/settings`, bramka planu po stronie serwera).
