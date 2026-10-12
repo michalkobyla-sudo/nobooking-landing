@@ -24,8 +24,11 @@ export const runtime = 'nodejs'
  * ani tabel SMS-ów. Wszystkie trzy trzeba było znaleźć ręcznie, porównując kod
  * z bazą.
  *
- * Tabele bota celowo pominięte: nie istnieją i mają nie istnieć do etapu 4,
- * a alarm powtarzany codziennie przestaje być czytany.
+ * Tabele bota doszły 2026-10-12 razem z migracją `2026-10-12-bot-tabele.sql`.
+ * Do tego dnia były celowo pominięte, bo nie istniały — i właśnie dlatego nikt
+ * nie zauważył, że bot nigdy się nie uruchomił: `isBotEnabled()` trafiał na brak
+ * tabeli, zawodził na zamknięto i webhook milczał. Teraz, gdy tabele są, ich
+ * zniknięcie ma być widoczne tego samego dnia.
  */
 const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
   // Strony i odnowienia
@@ -51,6 +54,13 @@ const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
   ['checkin_forms', 'guests_data'],
   ['guest_notifications', 'rodzaj'],
   ['reviews', 'published'],
+
+  // Bot Messengera. `enabled` jest tu nieprzypadkowo: to wyłącznik czytany przy
+  // każdej wiadomości, a jego brak oznacza bota milczącego bez śladu w logu.
+  ['bot_settings', 'enabled'],
+  ['bot_knowledge', 'content'],
+  ['bot_conversations', 'messages'],
+  ['bot_leads', 'phone'],
 
   // Pozostałe
   ['bot_processed_messages', 'mid'],
