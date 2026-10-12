@@ -9,6 +9,7 @@ const zdrowy: StanSystemu = {
   smsNieudane: [],
   smsDziala: null,
   smsNadawcaOk: null,
+  smsKonto: null,
   checkinyPoRetencji: 0,
   przypomnieniaZalegle: 0,
   rezerwacjePendingStare: 0,

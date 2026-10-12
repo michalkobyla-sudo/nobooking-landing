@@ -68,6 +68,9 @@ export interface StanSystemu {
   brakiSchematu: string[]
   /** Crony, które milczą dłużej, niż pozwala ich harmonogram. */
   cronyMilczace: Array<{ nazwa: string; godzinTemu: number | null }>
+  /** Konto Twilio, z którym rozmawia to środowisko. Uprawnienia geograficzne
+   *  ustawia się osobno dla każdego subkonta, więc identyfikator ma znaczenie. */
+  smsKonto: { sid: string; nazwa: string; typ: string } | null
   /** Czy klucz API poczty jest ważny. null = nie udało się sprawdzić. */
   mailDziala: boolean | null
   /** Czy klucz Anthropic jest ważny — bez niego provisioning nie wygeneruje strony. */

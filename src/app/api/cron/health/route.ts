@@ -175,6 +175,10 @@ export async function GET(request: NextRequest) {
   // SMS-y są funkcją pakietu Pro i dopóki nikt go nie ma, są zbędne.
   let smsDziala: boolean | null = null
   let smsNadawcaOk: boolean | null = null
+  // Które konto Twilio — ta sama lekcja co przy Stripe. Geo Permissions
+  // i Alphanumeric Sender ID ustawia się osobno na każdym subkoncie, więc
+  // „włączyłem Hiszpanię" nic nie znaczy, dopóki nie wiadomo gdzie.
+  let smsKonto: { sid: string; nazwa: string; typ: string } | null = null
   try {
     const sid = (process.env.TWILIO_ACCOUNT_SID ?? '').trim()
     const token = (process.env.TWILIO_AUTH_TOKEN ?? '').trim()
@@ -187,6 +191,16 @@ export async function GET(request: NextRequest) {
         headers: { Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64') },
       })
       smsDziala = r.ok
+      if (r.ok) {
+        const d = await r.json() as { sid?: string; friendly_name?: string; type?: string }
+        smsKonto = {
+          sid: d.sid ?? sid,
+          nazwa: d.friendly_name ?? '(bez nazwy)',
+          // `Full` to konto główne, `Trial` — próbne. Subkonto ma własny SID
+          // i własne uprawnienia geograficzne.
+          typ: d.type ?? '(nieznany)',
+        }
+      }
     } else if (sid || token || from) {
       // Częściowa konfiguracja jest gorsza od żadnej: wygląda na włączoną,
       // a moduł i tak nie wyśle nic.
@@ -372,6 +386,7 @@ export async function GET(request: NextRequest) {
     smsNieudane,
     smsDziala,
     smsNadawcaOk,
+    smsKonto,
     checkinyPoRetencji,
     przypomnieniaZalegle,
     rezerwacjePendingStare: rezerwacjePendingStare ?? 0,
