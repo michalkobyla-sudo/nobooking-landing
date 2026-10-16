@@ -20,5 +20,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    // Dokumenty prawne — niska waga, ale mają być indeksowalne: Stripe i inni
+    // weryfikujący szukają ich wprost, a klient powinien móc je znaleźć,
+    // zanim zapłaci.
+    {
+      url: 'https://nobooking.eu/regulamin',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: 'https://nobooking.eu/polityka-prywatnosci',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
   ]
 }

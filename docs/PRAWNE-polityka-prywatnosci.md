@@ -1,15 +1,9 @@
-# Polityka prywatności — SZKIC
-
-> **Stan: szkic do uzupełnienia i przeglądu.** Treść odzwierciedla to, co system
-> faktycznie robi — inwentarz powstał 2026-10-12 z kodu i schematu bazy, nie
-> z szablonu. Brakuje trzech danych identyfikujących administratora (zaznaczone
-> `⟪…⟫`) oraz przeglądu przez kogoś, kto zna prawo. Nie publikować przed jednym
-> i drugim.
+# Polityka prywatności
 
 ## 1. Kto przetwarza Twoje dane
 
-Administratorem danych jest ⟪PEŁNA NAZWA FIRMY⟫ z siedzibą w ⟪ADRES⟫,
-NIP ⟪NIP⟫, prowadzący serwis **nobooking.eu**.
+Administratorem danych jest KobylinskiStudio.pl Michał Kobyliński z siedzibą w ul. Łagowska 4/1U, 01-464 Warszawa,
+NIP 5342334497, prowadzący serwis **nobooking.eu**.
 
 Kontakt we wszystkich sprawach dotyczących danych: **kontakt@nobooking.eu**.
 
@@ -118,11 +112,6 @@ ostatniej zmiany widnieje na dole strony.
 
 ---
 
-## Do uzupełnienia przed publikacją
-
-1. ⟪PEŁNA NAZWA FIRMY⟫ — jak w CEIDG albo KRS
-2. ⟪ADRES⟫ — siedziba
-3. ⟪NIP⟫
 
 ## Do rozstrzygnięcia z kimś, kto zna prawo
 

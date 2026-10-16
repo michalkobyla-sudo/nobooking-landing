@@ -84,16 +84,21 @@ const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
               {/* Były tu cztery etykiety z `href="#"` — „O nas", „Kontakt",
                   „Regulamin", „Polityka prywatności" — prowadzące donikąd.
                   Zostaje to, co istnieje naprawdę. Regulamin i polityka
-                  prywatności wrócą tu jako odnośniki w dniu, w którym powstaną
-                  te strony; martwy odnośnik nie zastępuje dokumentu, a wygląda,
-                  jakby zastępował. */}
-              <div style={{ marginBottom: '0.5rem' }}>
-                <a href={`mailto:${ADRES_KONTAKTOWY}`} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                  onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                  {ADRES_KONTAKTOWY}
-                </a>
-              </div>
+                  prywatności wróciły tu 2026-10-16, gdy powstały te strony —
+                  i prowadzą do dokumentów, a nie do `#`. */}
+              {[
+                { label: ADRES_KONTAKTOWY, href: `mailto:${ADRES_KONTAKTOWY}` },
+                { label: lang === 'pl' ? 'Regulamin' : 'Terms', href: '/regulamin' },
+                { label: lang === 'pl' ? 'Polityka prywatności' : 'Privacy Policy', href: '/polityka-prywatnosci' },
+              ].map(poz => (
+                <div key={poz.href} style={{ marginBottom: '0.5rem' }}>
+                  <a href={poz.href} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
+                    {poz.label}
+                  </a>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -1,14 +1,8 @@
-# Regulamin — SZKIC
-
-> **Stan: szkic do uzupełnienia i przeglądu.** Warunki odzwierciedlają to, co
-> system faktycznie robi i co obiecują `PAKIET-BASIC.md` i `PAKIET-PRO.md` —
-> sprawdzone 2026-10-12. Brakuje trzech danych identyfikujących sprzedawcę
-> (`⟪…⟫`) oraz przeglądu przez kogoś, kto zna prawo. Nie publikować przed
-> jednym i drugim.
+# Regulamin
 
 ## 1. Kto sprzedaje
 
-Usługę świadczy ⟪PEŁNA NAZWA FIRMY⟫ z siedzibą w ⟪ADRES⟫, NIP ⟪NIP⟫.
+Usługę świadczy KobylinskiStudio.pl Michał Kobyliński z siedzibą w ul. Łagowska 4/1U, 01-464 Warszawa, NIP 5342334497.
 Kontakt: **kontakt@nobooking.eu**.
 
 ## 2. Co kupujesz
@@ -113,11 +107,6 @@ zawartych stosuje się regulamin z dnia zakupu.
 
 ---
 
-## Do uzupełnienia przed publikacją
-
-1. ⟪PEŁNA NAZWA FIRMY⟫
-2. ⟪ADRES⟫
-3. ⟪NIP⟫
 
 ## Do rozstrzygnięcia z kimś, kto zna prawo
 
