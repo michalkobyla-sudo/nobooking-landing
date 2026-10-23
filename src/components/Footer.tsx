@@ -106,7 +106,14 @@ const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
         {/* Bottom bar */}
         <div style={{ borderTop: '1px solid #1F2937', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <p style={{ fontSize: '0.78rem', color: '#4B5563' }}>{t.footerCopyright}. Wszelkie prawa zastrzeżone.</p>
-          <p style={{ fontSize: '0.78rem', color: '#4B5563' }}>Made with ♥ in Poland</p>
+          <p style={{ fontSize: '0.78rem', color: '#4B5563' }}>
+            {lang === 'pl' ? 'Stworzył: ' : 'Created by '}
+            <a href="https://michalkobylinski.pl" style={{ color: '#6B7280', textDecoration: 'underline' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
+              Michał Kobyliński
+            </a>
+          </p>
         </div>
       </div>
     </footer>
