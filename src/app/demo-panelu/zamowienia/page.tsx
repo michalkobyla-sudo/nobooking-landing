@@ -898,7 +898,7 @@ export default function AdminDemoPage() {
       {/* Demo banner — NOT sticky, just sits at top and scrolls away */}
       <div style={{ background: '#7C3AED', color: 'white', padding: '0.55rem 1rem', fontSize: '0.78rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <span>{isMobile ? '👁 Demo panelu — dane przykładowe' : '👁 Demo panelu właściciela — dane przykładowe, przyciski nie wykonują akcji'}</span>
-        <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ color: 'white', fontWeight: 800, textDecoration: 'underline', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
+        <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ color: 'white', fontWeight: 800, textDecoration: 'underline', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
           Zamów własny →
         </a>
       </div>
