@@ -155,6 +155,24 @@ export interface BlockedDate {
   reason: string | null
 }
 
+// ─── KALENDARZE Z PORTALI (iCal) ──────────────────────────────────────────────
+
+export type ZrodloKalendarza = 'booking' | 'airbnb' | 'inne'
+
+export interface CalendarFeed {
+  id: string
+  source: ZrodloKalendarza
+  url: string
+  last_synced_at: string | null
+  last_error: string | null
+  last_days_count: number | null
+}
+
+export interface DzienZajetyNaPortalu {
+  date: string    // YYYY-MM-DD
+  source: ZrodloKalendarza
+}
+
 // ─── REVIEW ───────────────────────────────────────────────────────────────────
 
 export interface Review {

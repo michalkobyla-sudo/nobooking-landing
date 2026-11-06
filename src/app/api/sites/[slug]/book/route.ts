@@ -85,6 +85,18 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'dates_unavailable' }, { status: 409 })
   }
 
+  // Termin sprzedany na Booking.com lub Airbnb (cron sync-calendars).
+  const { data: externalConflicts } = await supabase
+    .from('external_blocked_dates')
+    .select('date')
+    .eq('site_id', site.id)
+    .in('date', Array.from(requestedDates))
+    .limit(1)
+
+  if (externalConflicts && externalConflicts.length > 0) {
+    return NextResponse.json({ error: 'dates_unavailable' }, { status: 409 })
+  }
+
   // ── Calculate price ───────────────────────────────────────────────────────────
   const wstepna = wycen(check_in, check_out, config)
   if (wstepna.noce < wstepna.minNocy) {

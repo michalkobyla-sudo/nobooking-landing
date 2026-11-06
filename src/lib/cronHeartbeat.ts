@@ -33,6 +33,7 @@ export const MAKS_PRZERWA_H: Record<string, number> = {
   'renewal-reminders': 36,         // codziennie 09:00
   'health': 36,                    // codziennie 06:00
   'guest-reminders': 36,           // codziennie 08:00
+  'sync-calendars': 2,             // co 15 minut
 }
 
 /** Nazwa crona z adresu żądania: `/api/cron/health` → `health`. */

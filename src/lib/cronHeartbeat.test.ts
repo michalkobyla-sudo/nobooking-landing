@@ -71,10 +71,11 @@ describe('progi zgodne z vercel.json', () => {
   it('ma wpis dla kazdego crona i zapas wzgledem harmonogramu', () => {
     expect(Object.keys(MAKS_PRZERWA_H).sort()).toEqual([
       'backup-bookings', 'cleanup-pending-bookings', 'guest-reminders', 'health',
-      'provision-sites', 'renewal-reminders', 'review-requests',
+      'provision-sites', 'renewal-reminders', 'review-requests', 'sync-calendars',
     ])
     // Cron dobowy ma prog ponad doby, minutowy wyraznie wiecej niz minute.
     expect(MAKS_PRZERWA_H['provision-sites']).toBeGreaterThan(1)
+    expect(MAKS_PRZERWA_H['sync-calendars']).toBeGreaterThan(0.25)
     for (const dobowy of ['backup-bookings', 'health', 'guest-reminders', 'renewal-reminders', 'review-requests']) {
       expect(MAKS_PRZERWA_H[dobowy]).toBeGreaterThan(24)
     }

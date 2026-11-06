@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import type { Booking, BlockedDate } from '@/lib/types'
+import { useState, useCallback, useEffect } from 'react'
+import type { Booking, BlockedDate, CalendarFeed, DzienZajetyNaPortalu, ZrodloKalendarza } from '@/lib/types'
 
-type DayState = 'available' | 'blocked' | 'booked_confirmed' | 'booked_pending' | 'booked_other' | 'past'
+type DayState = 'available' | 'blocked' | 'external' | 'booked_confirmed' | 'booked_pending' | 'booked_other' | 'past'
 
 interface DayInfo {
   state: DayState
@@ -15,9 +15,16 @@ function isoDate(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
+const NAZWA_ZRODLA: Record<ZrodloKalendarza, string> = {
+  booking: 'Booking.com',
+  airbnb:  'Airbnb',
+  inne:    'inny portal',
+}
+
 function buildDayMap(
   bookings: Booking[],
   blocked: BlockedDate[],
+  external: DzienZajetyNaPortalu[],
   year: number,
   month: number,
 ): Map<string, DayInfo> {
@@ -32,6 +39,12 @@ function buildDayMap(
 
   for (const b of blocked) {
     if (map.has(b.date)) map.set(b.date, { state: 'blocked', blockedId: b.id })
+  }
+
+  // Zajęte na portalu — nie do odblokowania tutaj, zwalnia się na portalu.
+  for (const e of external) {
+    const cur = map.get(e.date)
+    if (cur && cur.state !== 'past') map.set(e.date, { state: 'external', bookingName: `Zajęte na ${NAZWA_ZRODLA[e.source]}` })
   }
 
   for (const b of bookings) {
@@ -83,6 +96,7 @@ function MonthCalendar({ year, month, dayMap, onToggle, loadingDates }: {
       case 'past':             return { ...base, color: '#D1D5DB', cursor: 'default' }
       case 'available':        return { ...base, color: '#374151', background: '#F3F4F6', border: '1px solid #E5E7EB', cursor: 'pointer' }
       case 'blocked':          return { ...base, color: '#fff',    background: '#6B7280', cursor: 'pointer' }
+      case 'external':         return { ...base, color: '#fff',    background: '#2563EB', cursor: 'default' }
       case 'booked_confirmed': return { ...base, color: '#fff',    background: '#059669', cursor: 'default' }
       case 'booked_pending':   return { ...base, color: '#92400E', background: '#FEF3C7', cursor: 'default' }
       case 'booked_other':     return { ...base, color: '#374151', background: '#E5E7EB', cursor: 'default' }
@@ -139,6 +153,18 @@ export function KalendarzView({ slug, bookings, blocked, setBlocked }: Props) {
   const [viewYear,     setViewYear]     = useState(now.getFullYear())
   const [viewMonth,    setViewMonth]    = useState(now.getMonth())
   const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set())
+  const [feeds,        setFeeds]        = useState<CalendarFeed[]>([])
+  const [external,     setExternal]     = useState<DzienZajetyNaPortalu[]>([])
+
+  const wczytajPortale = useCallback(async () => {
+    const res = await fetch(`/api/sites/${slug}/owner/calendars`)
+    if (!res.ok) return
+    const dane = await res.json() as { feeds: CalendarFeed[]; zajete: DzienZajetyNaPortalu[] }
+    setFeeds(dane.feeds)
+    setExternal(dane.zajete)
+  }, [slug])
+
+  useEffect(() => { wczytajPortale() }, [wczytajPortale])
 
   const handleToggle = useCallback(async (date: string, info: DayInfo) => {
     setLoadingDates(prev => new Set(prev).add(date))
@@ -196,6 +222,7 @@ export function KalendarzView({ slug, bookings, blocked, setBlocked }: Props) {
           { bg: '#059669', label: 'Potwierdzona' },
           { bg: '#FEF3C7', label: 'Oczekuje',    border: '1px solid #FDE68A' },
           { bg: '#6B7280', label: 'Zablokowane' },
+          { bg: '#2563EB', label: 'Booking / Airbnb' },
           { bg: '#F3F4F6', label: 'Dostępne',    border: '1px solid #E5E7EB' },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -213,11 +240,147 @@ export function KalendarzView({ slug, bookings, blocked, setBlocked }: Props) {
             key={`${year}-${month}`}
             year={year}
             month={month}
-            dayMap={buildDayMap(bookings, blocked, year, month)}
+            dayMap={buildDayMap(bookings, blocked, external, year, month)}
             onToggle={handleToggle}
             loadingDates={loadingDates}
           />
         ))}
+      </div>
+
+      <SynchronizacjaPortali slug={slug} feeds={feeds} odswiez={wczytajPortale} />
+    </div>
+  )
+}
+
+const KOMUNIKAT_BLEDU: Record<string, string> = {
+  invalid_url:    'To nie wygląda na link. Skopiuj cały adres z panelu portalu.',
+  not_https:      'Link musi zaczynać się od https://',
+  private_host:   'Ten adres nie jest linkiem z portalu.',
+  invalid_source: 'Wybierz portal.',
+  already_added:  'Ten kalendarz jest już podpięty.',
+  too_many_feeds: 'Można podpiąć najwyżej 5 kalendarzy.',
+  not_ical:       'Pod linkiem nie ma kalendarza. Sprawdź, czy to link eksportu iCal.',
+  network:        'Portal nie odpowiedział. Spróbujemy ponownie za 15 minut.',
+  too_large:      'Plik pod linkiem jest za duży jak na kalendarz.',
+}
+
+function opisBledu(kod: string): string {
+  if (KOMUNIKAT_BLEDU[kod]) return KOMUNIKAT_BLEDU[kod]
+  if (kod.startsWith('http_')) return `Portal zwrócił błąd ${kod.slice(5)}. Sprawdź, czy link jest aktualny.`
+  return 'Nie udało się pobrać kalendarza.'
+}
+
+function kiedy(iso: string): string {
+  return new Date(iso).toLocaleString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+function SynchronizacjaPortali({ slug, feeds, odswiez }: {
+  slug: string
+  feeds: CalendarFeed[]
+  odswiez: () => Promise<void>
+}) {
+  const [zrodlo,     setZrodlo]     = useState<ZrodloKalendarza>('booking')
+  const [adres,      setAdres]      = useState('')
+  const [blad,       setBlad]       = useState<string | null>(null)
+  const [zapisuje,   setZapisuje]   = useState(false)
+  const [skopiowany, setSkopiowany] = useState(false)
+  const [linkEksportu, setLinkEksportu] = useState(`/api/sites/${slug}/calendar.ics`)
+
+  // Pełny adres dopiero w przeglądarce: strona działa i na subdomenie,
+  // i na własnej domenie właściciela.
+  useEffect(() => { setLinkEksportu(`${window.location.origin}/api/sites/${slug}/calendar.ics`) }, [slug])
+
+  async function kopiuj() {
+    try {
+      await navigator.clipboard.writeText(linkEksportu)
+      setSkopiowany(true)
+      setTimeout(() => setSkopiowany(false), 2000)
+    } catch { /* przeglądarka bez dostępu do schowka — link i tak jest widoczny */ }
+  }
+
+  async function dodaj(e: React.FormEvent) {
+    e.preventDefault()
+    setBlad(null)
+    setZapisuje(true)
+    const res = await fetch(`/api/sites/${slug}/owner/calendars`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: zrodlo, url: adres.trim() }),
+    })
+    setZapisuje(false)
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: '' })) as { error: string }
+      setBlad(opisBledu(error))
+      return
+    }
+    setAdres('')
+    await odswiez()
+  }
+
+  async function usun(id: string) {
+    if (!confirm('Odpiąć ten kalendarz? Dni zajęte na tym portalu przestaną być blokowane na Twojej stronie.')) return
+    const res = await fetch(`/api/sites/${slug}/owner/calendars/${id}`, { method: 'DELETE' })
+    if (res.ok) await odswiez()
+  }
+
+  const karta: React.CSSProperties = { background: 'white', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1.25rem' }
+  const pole: React.CSSProperties = { padding: '0.55rem 0.75rem', border: '1.5px solid #E5E7EB', borderRadius: '8px', fontFamily: 'inherit', fontSize: '0.875rem', minWidth: 0 }
+  const przycisk: React.CSSProperties = { padding: '0.55rem 1rem', border: 'none', borderRadius: '8px', background: '#111827', color: 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.875rem' }
+
+  return (
+    <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', margin: 0 }}>Synchronizacja z Booking.com i Airbnb</h2>
+
+      <div style={karta}>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.35rem' }}>1. Twój kalendarz dla portali</div>
+        <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0 0 0.75rem' }}>
+          Wklej ten link w Booking.com (Ceny i dostępność → Synchronizacja kalendarzy → Importuj kalendarz)
+          i w Airbnb (Kalendarz → Dostępność → Połącz kalendarze → Importuj kalendarz).
+          Portale zablokują u siebie terminy zarezerwowane na Twojej stronie.
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input readOnly value={linkEksportu} onFocus={e => e.target.select()} style={{ ...pole, flex: '1 1 260px', color: '#374151', background: '#F9FAFB' }} />
+          <button type="button" onClick={kopiuj} style={przycisk}>{skopiowany ? 'Skopiowano' : 'Kopiuj link'}</button>
+        </div>
+      </div>
+
+      <div style={karta}>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.35rem' }}>2. Kalendarze z portali</div>
+        <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0 0 0.75rem' }}>
+          Skopiuj z portalu link „eksportuj kalendarz” (w Booking.com: Synchronizacja kalendarzy → Eksportuj;
+          w Airbnb: Połącz kalendarze → Eksportuj) i wklej go tutaj. Sprawdzamy go co 15 minut.
+        </p>
+
+        {feeds.length > 0 && (
+          <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
+            {feeds.map(f => (
+              <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #F3F4F6', borderRadius: '10px', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0, flex: '1 1 220px' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{NAZWA_ZRODLA[f.source]}</div>
+                  <div style={{ fontSize: '0.75rem', color: f.last_error ? '#B91C1C' : '#6B7280' }}>
+                    {f.last_error
+                      ? opisBledu(f.last_error)
+                      : f.last_synced_at
+                        ? `Sprawdzony ${kiedy(f.last_synced_at)} · zajętych dni: ${f.last_days_count ?? 0}`
+                        : 'Czeka na pierwsze pobranie (do 15 minut)'}
+                  </div>
+                </div>
+                <button type="button" onClick={() => usun(f.id)} style={{ ...przycisk, background: 'white', color: '#B91C1C', border: '1.5px solid #FECACA' }}>Odepnij</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={dodaj} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <select value={zrodlo} onChange={e => setZrodlo(e.target.value as ZrodloKalendarza)} style={pole}>
+            <option value="booking">Booking.com</option>
+            <option value="airbnb">Airbnb</option>
+            <option value="inne">Inny portal</option>
+          </select>
+          <input type="url" required placeholder="https://..." value={adres} onChange={e => setAdres(e.target.value)} style={{ ...pole, flex: '1 1 260px' }} />
+          <button type="submit" disabled={zapisuje} style={{ ...przycisk, opacity: zapisuje ? 0.6 : 1 }}>{zapisuje ? 'Zapisuję…' : 'Podepnij'}</button>
+        </form>
+        {blad && <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#B91C1C' }}>{blad}</div>}
       </div>
     </div>
   )

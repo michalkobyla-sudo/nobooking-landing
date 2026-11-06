@@ -38,6 +38,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .select('date')
     .eq('site_id', site.id)
 
+  // Dni zajęte na Booking.com i Airbnb (cron sync-calendars)
+  const { data: external } = await supabase
+    .from('external_blocked_dates')
+    .select('date')
+    .eq('site_id', site.id)
+
   const bookedDates = new Set<string>()
 
   for (const b of bookings ?? []) {
@@ -46,7 +52,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }
   }
 
-  for (const b of blocked ?? []) {
+  for (const b of [...(blocked ?? []), ...(external ?? [])]) {
     bookedDates.add(b.date as string)
   }
 
