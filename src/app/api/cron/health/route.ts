@@ -10,67 +10,13 @@ import { wyslijSms } from '@/lib/smsSend'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
+import { WYMAGANE } from '@/lib/schematWymagany'
 
 export const runtime = 'nodejs'
 
 /** Kolumny i tabele, bez których części systemu przestają działać.
  *  Sprawdzane wprost, bo nieuruchomiona migracja objawia się dopiero
  *  wtedy, gdy ktoś zapłaci i nie dostanie strony. */
-/**
- * Kolumny i tabele, bez których jakaś funkcja przestaje działać — po cichu.
- *
- * Lista musi rosnąć razem z funkcjami. Do 2026-10-01 kończyła się na wpisach
- * z 25 września, więc agent zdrowia nie wyłapał ani brakujących kolumn poprawek
- * (cztery rundy reklamowane klientowi w mailu), ani znacznika prośby o opinię,
- * ani tabel SMS-ów. Wszystkie trzy trzeba było znaleźć ręcznie, porównując kod
- * z bazą.
- *
- * Tabele bota doszły 2026-10-12 razem z migracją `2026-10-12-bot-tabele.sql`.
- * Do tego dnia były celowo pominięte, bo nie istniały — i właśnie dlatego nikt
- * nie zauważył, że bot nigdy się nie uruchomił: `isBotEnabled()` trafiał na brak
- * tabeli, zawodził na zamknięto i webhook milczał. Teraz, gdy tabele są, ich
- * zniknięcie ma być widoczne tego samego dnia.
- */
-const WYMAGANE: Array<[tabela: string, kolumna: string]> = [
-  // Strony i odnowienia
-  ['sites', 'expires_at'],
-  ['sites', 'renewal_price_pln'],
-  ['sites', 'sms_phone'],
-  ['sites', 'sms_enabled'],
-
-  // Zamówienia, provisioning i poprawki
-  ['orders', 'provisioning_started_at'],
-  ['orders', 'revision_token'],
-  ['orders', 'revision_count'],
-  ['orders', 'review_request_sent_at'],
-  ['orders', 'utm_source'],
-  ['orders', 'click_id'],
-
-  // Płatności
-  ['stripe_webhook_events', 'event_id'],
-  ['discount_codes', 'uses_count'],
-
-  // Funkcje pakietu Pro i obieg gościa
-  ['sms_log', 'udane'],
-  ['checkin_forms', 'guests_data'],
-  ['guest_notifications', 'rodzaj'],
-  ['reviews', 'published'],
-
-  // Bot Messengera. `enabled` jest tu nieprzypadkowo: to wyłącznik czytany przy
-  // każdej wiadomości, a jego brak oznacza bota milczącego bez śladu w logu.
-  ['bot_settings', 'enabled'],
-  ['bot_knowledge', 'content'],
-  ['bot_conversations', 'messages'],
-  ['bot_leads', 'phone'],
-
-  // Pozostałe
-  ['bot_processed_messages', 'mid'],
-  ['renewal_reminders', 'id'],
-  // Bez tej tabeli limit żądań cicho przestaje być wspólny: proxy zawodzi
-  // na otwarto i zostaje tylko licznik w pamięci instancji.
-  ['rate_limits', 'koniec'],
-  ['cron_runs', 'ostatni_przebieg'],
-]
 
 export async function GET(request: NextRequest) {
   const unauthorized = requireCron(request)
