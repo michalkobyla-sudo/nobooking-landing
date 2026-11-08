@@ -50,7 +50,7 @@ async function synchronizuj(
   feed: { id: string; site_id: string; url: string },
   dzis: string,
   doDnia: string,
-): Promise<{ id: string; dni?: number; blad?: string }> {
+): Promise<{ id: string; dni?: number; blad?: string; pominiete?: number }> {
   const wynik = await pobierzKalendarz(feed.url)
 
   if (!wynik.ok) {
@@ -89,12 +89,20 @@ async function synchronizuj(
     if (bladKasowania) return zapiszBlad(supabase, feed.id, 'db_delete')
   }
 
+  // Pominięte wpisy zapisujemy jako błąd, choć pobranie się udało. Nie jest
+  // to nadużycie kolumny: pominięty wpis to termin sprzedany w portalu i wolny
+  // u nas, więc właściciel musi to zobaczyć w panelu, a raport zdrowia — zgłosić.
+  // Daty i licznik aktualizujemy normalnie, bo ta część weszła poprawnie.
   await supabase
     .from('calendar_feeds')
-    .update({ last_synced_at: new Date().toISOString(), last_error: null, last_days_count: nowe.size })
+    .update({
+      last_synced_at: new Date().toISOString(),
+      last_error: wynik.pominiete > 0 ? `pominieto_${wynik.pominiete}` : null,
+      last_days_count: nowe.size,
+    })
     .eq('id', feed.id)
 
-  return { id: feed.id, dni: nowe.size }
+  return { id: feed.id, dni: nowe.size, ...(wynik.pominiete > 0 ? { pominiete: wynik.pominiete } : {}) }
 }
 
 async function zapiszBlad(supabase: ReturnType<typeof createServiceClient>, id: string, blad: string) {

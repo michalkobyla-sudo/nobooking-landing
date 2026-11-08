@@ -262,11 +262,17 @@ const KOMUNIKAT_BLEDU: Record<string, string> = {
   not_ical:       'Pod linkiem nie ma kalendarza. Sprawdź, czy to link eksportu iCal.',
   network:        'Portal nie odpowiedział. Spróbujemy ponownie za 15 minut.',
   too_large:      'Plik pod linkiem jest za duży jak na kalendarz.',
+  parse_failed:   'Kalendarz pobiera się, ale nie udało się odczytać z niego rezerwacji. Sprawdź terminy w portalu ręcznie — zgłosiliśmy to już sobie.',
 }
 
 function opisBledu(kod: string): string {
   if (KOMUNIKAT_BLEDU[kod]) return KOMUNIKAT_BLEDU[kod]
   if (kod.startsWith('http_')) return `Portal zwrócił błąd ${kod.slice(5)}. Sprawdź, czy link jest aktualny.`
+  // Pobranie się udało, ale części pliku nie zrozumieliśmy. Reszta terminów
+  // weszła poprawnie — dlatego mówimy wprost, czego sprawdzić ręcznie.
+  if (kod.startsWith('pominieto_')) {
+    return `Z kalendarza nie udało się odczytać ${kod.slice(10)} wpisów. Pozostałe terminy są zablokowane — te sprawdź w portalu ręcznie.`
+  }
   return 'Nie udało się pobrać kalendarza.'
 }
 

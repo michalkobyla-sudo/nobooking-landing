@@ -346,6 +346,39 @@ export async function GET(request: NextRequest) {
     })
     .sort((a, b) => a.dni - b.dni)
 
+  // ── Kanały kalendarzy ──────────────────────────────────────────────────────
+  // Dopóki nie mamy konta gospodarza w żadnym portalu, parsera nie da się
+  // sprawdzić na prawdziwym pliku. Raport jest wtedy jedynym miejscem, gdzie
+  // awaria kanału ma szansę się odezwać — wcześniej trafiała tylko do logu.
+  const { data: kanaly } = await db
+    .from('calendar_feeds')
+    .select('site_id, source, last_error, last_synced_at')
+    .not('last_error', 'is', null)
+
+  const kalendarzeZBledem: StanSystemu['kalendarzeZBledem'] = []
+  if ((kanaly ?? []).length > 0) {
+    // Slug osobnym zapytaniem, nie przez zagnieżdżenie PostgREST: nazwa
+    // strony jest w raporcie jedyną informacją, po której wiadomo, do kogo
+    // zadzwonić, a zagnieżdżenie milczy, gdy zabraknie klucza obcego.
+    const { data: strony } = await db
+      .from('sites')
+      .select('id, slug')
+      .in('id', [...new Set((kanaly ?? []).map(k => String(k.site_id)))])
+    const slugi = new Map((strony ?? []).map(s => [String(s.id), String(s.slug)]))
+
+    for (const k of kanaly ?? []) {
+      const zsynchronizowany = k.last_synced_at ? Date.parse(String(k.last_synced_at)) : NaN
+      kalendarzeZBledem.push({
+        slug: slugi.get(String(k.site_id)) ?? String(k.site_id),
+        zrodlo: String(k.source ?? 'inne'),
+        blad: String(k.last_error),
+        godzinBezSynchronizacji: Number.isNaN(zsynchronizowany)
+          ? null
+          : (teraz - zsynchronizowany) / 3_600_000,
+      })
+    }
+  }
+
   const stan: StanSystemu = {
     ostatniaKopiaGodzinTemu,
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
@@ -373,6 +406,7 @@ export async function GET(request: NextRequest) {
     modelDziala,
     botWlaczony,
     botToken,
+    kalendarzeZBledem,
   }
 
   const znaleziska = ocenStan(stan)

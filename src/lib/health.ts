@@ -79,7 +79,19 @@ export interface StanSystemu {
   botWlaczony: boolean
   /** Czy token strony Facebooka jest ważny. null = nie sprawdzono. */
   botToken: boolean | null
+  /** Kanały iCal, na których ostatnia próba pobrania się nie udała.
+   *  `godzinBezSynchronizacji` = null, gdy kanał nie zsynchronizował się nigdy. */
+  kalendarzeZBledem: Array<{
+    slug: string
+    zrodlo: string
+    blad: string
+    godzinBezSynchronizacji: number | null
+  }>
 }
+
+/** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
+ *  awarią portalu. Cron chodzi co 15 minut, więc to dwanaście prób pod rząd. */
+const PROG_KALENDARZA_GODZIN = 3
 
 /** Po tylu godzinach bez kopii uznajemy backup za niedziałający.
  *  Cron chodzi raz na dobę, więc 36 h to jedno pominięte uruchomienie. */
@@ -117,6 +129,34 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Generowanie stron nie działa',
       szczegol: 'Klucz ANTHROPIC_API_KEY jest odrzucany. Zamówienia po onboardingu nie dostaną strony.',
+    })
+  }
+
+  // Synchronizacja z portalami jest jedyną funkcją, której nie da się
+  // sprawdzić bez konta gospodarza w Booking.com czy Airbnb. Dopóki tego
+  // konta nie mamy, raport jest jedynym miejscem, w którym awaria kanału
+  // ma szansę się odezwać — wcześniej trafiała wyłącznie do logu Vercela.
+  for (const k of s.kalendarzeZBledem) {
+    // Nieodczytany plik i pominięte wpisy nie naprawią się same, więc nie
+    // podlegają progowi czasu. Zerwana sieć zwykle naprawia się sama.
+    const trwale = k.blad === 'parse_failed' || k.blad.startsWith('pominieto_')
+    const dlugo = k.godzinBezSynchronizacji === null || k.godzinBezSynchronizacji > PROG_KALENDARZA_GODZIN
+    if (!trwale && !dlugo) continue
+
+    const pominieto = k.blad.startsWith('pominieto_') ? k.blad.slice('pominieto_'.length) : null
+    const przyczyna =
+      k.blad === 'parse_failed'
+        ? 'Plik z portalu pobiera się, ale nie udało się z niego odczytać ani jednej rezerwacji — najpewniej portal zmienił format pliku.'
+        : pominieto
+          ? `Z pliku portalu nie udało się odczytać ${pominieto} wpisów; reszta weszła poprawnie.`
+          : k.godzinBezSynchronizacji === null
+            ? `Ten kanał nie zsynchronizował się ani razu (błąd: ${k.blad}).`
+            : `Od ${Math.round(k.godzinBezSynchronizacji)} h żadna próba pobrania się nie udała (błąd: ${k.blad}).`
+
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: `Kalendarz ${k.zrodlo} nie synchronizuje się (${k.slug})`,
+      szczegol: `${przyczyna} Terminy sprzedane w portalu mogą być u nas wolne, czyli grozi to podwójną rezerwacją.`,
     })
   }
 

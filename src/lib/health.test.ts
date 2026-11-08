@@ -28,6 +28,7 @@ const zdrowy: StanSystemu = {
   modelDziala: true,
   botWlaczony: false,
   botToken: null,
+  kalendarzeZBledem: [],
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -432,5 +433,51 @@ describe('konto platformy Stripe', () => {
   it('stopka krzyczy o wstrzymanych wypłatach', () => {
     expect(opisSrodowiska({ konto: 'acct_1', tryb: 'live', aktywne: true, wyplaty: false, zaleglosci: [], poTerminie: [] }))
       .toContain('WYPŁATY WSTRZYMANE')
+  })
+})
+
+/**
+ * Kanały iCal to jedyna funkcja, której działania nie da się sprawdzić bez
+ * konta gospodarza w portalu. Skoro nie umiemy przetestować parsera na
+ * prawdziwym pliku, to przynajmniej pierwsza nieudana próba musi być głośna:
+ * dotąd błąd kanału trafiał wyłącznie do logu Vercela, czyli nigdzie.
+ */
+describe('kanały kalendarzy', () => {
+  const kanal = (nad: Partial<StanSystemu['kalendarzeZBledem'][number]> = {}) => ({
+    slug: 'villa-mar', zrodlo: 'booking', blad: 'network', godzinBezSynchronizacji: 0.2, ...nad,
+  })
+
+  // Portal bywa chwilowo niedostępny, a cron próbuje co kwadrans. Alarm przy
+  // każdym mignięciu sieci nauczyłby nas ignorować raport.
+  it('chwilowa awaria portalu nie jest znaleziskiem', () => {
+    expect(tytuly({ kalendarzeZBledem: [kanal()] })).toEqual([])
+  })
+
+  it('kilka godzin bez udanego pobrania już jest', () => {
+    expect(tytuly({ kalendarzeZBledem: [kanal({ godzinBezSynchronizacji: 9 })] }))
+      .toContain('Kalendarz booking nie synchronizuje się (villa-mar)')
+  })
+
+  it('kanał, który nigdy się nie zsynchronizował, jest znaleziskiem od razu', () => {
+    expect(tytuly({ kalendarzeZBledem: [kanal({ godzinBezSynchronizacji: null })] })).toHaveLength(1)
+  })
+
+  // Nieodczytany plik nie naprawi się sam, więc nie podlega progowi czasu.
+  it('niezrozumiany format alarmuje natychmiast', () => {
+    const z = ocenStan({ ...zdrowy, kalendarzeZBledem: [kanal({ blad: 'parse_failed' })] })
+    expect(z).toHaveLength(1)
+    expect(z[0].szczegol).toMatch(/format/)
+  })
+
+  it('pominięte wpisy alarmują natychmiast i podają liczbę', () => {
+    const z = ocenStan({ ...zdrowy, kalendarzeZBledem: [kanal({ blad: 'pominieto_3' })] })
+    expect(z).toHaveLength(1)
+    expect(z[0].szczegol).toContain('3')
+  })
+
+  // Właściciel ma wiedzieć, czym to grozi, a nie że „kanał ma last_error".
+  it('opisuje skutek, nie kod błędu', () => {
+    const z = ocenStan({ ...zdrowy, kalendarzeZBledem: [kanal({ godzinBezSynchronizacji: 9 })] })
+    expect(z[0].szczegol).toMatch(/podwójn|sprzedan/i)
   })
 })

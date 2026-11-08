@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseIcal, dniZajete, zakresyZDni, zbudujIcal, sprawdzAdresKalendarza, pobierzKalendarz, MAKS_ROZMIAR_ICAL } from './ical'
+import { parseIcal, parseIcalZeStatystyka, dniZajete, zakresyZDni, zbudujIcal, sprawdzAdresKalendarza, pobierzKalendarz, MAKS_ROZMIAR_ICAL } from './ical'
 
 // Skrócony eksport z Booking.com — tak wyglądają ich pliki: CRLF, daty
 // całodniowe, SUMMARY bez danych gościa.
@@ -154,7 +154,7 @@ describe('pobierzKalendarz', () => {
 
   it('zwraca zdarzenia z poprawnego pliku', async () => {
     const wynik = await pobierzKalendarz('https://admin.booking.com/ical?t=1', async () => odp(200, BOOKING))
-    expect(wynik).toEqual({ ok: true, zdarzenia: parseIcal(BOOKING) })
+    expect(wynik).toEqual({ ok: true, zdarzenia: parseIcal(BOOKING), pominiete: 0 })
   })
 
   // Portal w awarii odsyła stronę HTML. Gdybyśmy uznali ją za pusty
@@ -166,7 +166,7 @@ describe('pobierzKalendarz', () => {
 
   it('pusty kalendarz jest poprawny — portal nie ma rezerwacji', async () => {
     const wynik = await pobierzKalendarz('https://admin.booking.com/ical', async () => odp(200, 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n'))
-    expect(wynik).toEqual({ ok: true, zdarzenia: [] })
+    expect(wynik).toEqual({ ok: true, zdarzenia: [], pominiete: 0 })
   })
 
   it('błąd HTTP zwraca kod', async () => {
@@ -203,5 +203,90 @@ describe('pobierzKalendarz', () => {
   it('wyjątek sieci zamienia na błąd', async () => {
     const wynik = await pobierzKalendarz('https://admin.booking.com/ical', async () => { throw new Error('ETIMEDOUT') })
     expect(wynik).toEqual({ ok: false, blad: 'network' })
+  })
+})
+
+/**
+ * Plik, którego nie umiemy sparsować, nie może wyglądać jak kalendarz pusty.
+ *
+ * To najgroźniejszy scenariusz całej synchronizacji i jedyny, którego nie da
+ * się sprawdzić na żywo bez konta gospodarza w portalu. Jeśli Booking.com
+ * zmieni kształt pliku albo poda go w dialekcie, którego parser nie rozumie,
+ * dostaniemy zero zdarzeń — a cron zinterpretuje to jako „portal zwolnił
+ * wszystkie terminy" i odblokuje daty, które są sprzedane. Właściciel dowie
+ * się o tym od drugiego gościa stojącego pod tymi samymi drzwiami.
+ *
+ * Rozróżnienie jest proste i nie wymaga znajomości dialektu: pusty kalendarz
+ * nie ma bloków VEVENT, a niezrozumiany plik ma ich wiele i żadnego czytelnego.
+ */
+describe('niezrozumiany plik vs kalendarz pusty', () => {
+  const odp = (body: string) => new Response(body, { status: 200 })
+
+  // Dialekt, którego parser nie zna: daty w polu, którego nie czytamy.
+  const OBCY_DIALEKT = [
+    'BEGIN:VCALENDAR',
+    'BEGIN:VEVENT',
+    'UID:1@portal',
+    'X-CHECKIN-DATE:20261110',
+    'X-CHECKOUT-DATE:20261113',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:2@portal',
+    'X-CHECKIN-DATE:20261201',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+
+  it('bloki VEVENT bez ani jednej czytelnej daty to błąd', async () => {
+    const wynik = await pobierzKalendarz('https://admin.booking.com/ical', async () => odp(OBCY_DIALEKT))
+    expect(wynik).toEqual({ ok: false, blad: 'parse_failed' })
+  })
+
+  it('brak bloków VEVENT to nadal poprawny pusty kalendarz', async () => {
+    const wynik = await pobierzKalendarz('https://admin.booking.com/ical',
+      async () => odp('BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n'))
+    expect(wynik).toEqual({ ok: true, zdarzenia: [], pominiete: 0 })
+  })
+
+  // Anulowana rezerwacja jest pomijana celowo — nie wolno jej liczyć jako
+  // wpisu, którego nie zrozumieliśmy.
+  it('kalendarz z samymi anulowanymi jest pusty, nie zepsuty', async () => {
+    const tylkoAnulowane = [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT', 'UID:1@a', 'DTSTART;VALUE=DATE:20261110', 'STATUS:CANCELLED', 'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n')
+    const wynik = await pobierzKalendarz('https://admin.booking.com/ical', async () => odp(tylkoAnulowane))
+    expect(wynik).toEqual({ ok: true, zdarzenia: [], pominiete: 0 })
+  })
+
+  // Jeden zepsuty wpis nie zatrzymuje reszty — ale zostaje policzony, bo
+  // pominięty wpis to termin sprzedany w portalu i wolny u nas.
+  it('częściowo czytelny plik przechodzi i liczy pominięte wpisy', async () => {
+    const polowa = [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT', 'UID:1@a', 'DTSTART;VALUE=DATE:20261110', 'DTEND;VALUE=DATE:20261113', 'END:VEVENT',
+      'BEGIN:VEVENT', 'UID:2@a', 'X-CHECKIN-DATE:20261201', 'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n')
+    const wynik = await pobierzKalendarz('https://admin.booking.com/ical', async () => odp(polowa))
+    expect(wynik.ok).toBe(true)
+    if (!wynik.ok) return
+    expect(wynik.zdarzenia).toHaveLength(1)
+    expect(wynik.pominiete).toBe(1)
+  })
+})
+
+describe('parseIcalZeStatystyka', () => {
+  it('liczy bloki, zdarzenia i pominięte', () => {
+    expect(parseIcalZeStatystyka(BOOKING)).toEqual({
+      zdarzenia: parseIcal(BOOKING),
+      blokow: 1,
+      pominiete: 0,
+    })
+  })
+
+  it('na śmieciach nie znajduje żadnego bloku', () => {
+    expect(parseIcalZeStatystyka('<html>Not found</html>')).toEqual({ zdarzenia: [], blokow: 0, pominiete: 0 })
   })
 })

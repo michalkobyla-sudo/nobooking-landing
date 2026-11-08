@@ -44,25 +44,47 @@ function dzienPo(data: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Zdarzenia z pliku iCal. Nieczytelne fragmenty pomija zamiast rzucać —
- *  jeden zepsuty wpis z portalu nie może zatrzymać synchronizacji reszty. */
-export function parseIcal(tekst: string): ZdarzenieIcal[] {
-  const wynik: ZdarzenieIcal[] = []
+export interface WynikParsowania {
+  zdarzenia: ZdarzenieIcal[]
+  /** Ile bloków VEVENT było w pliku. */
+  blokow: number
+  /** Bloki pominięte bez wyjaśnienia — ani zdarzenie, ani STATUS:CANCELLED. */
+  pominiete: number
+}
+
+/**
+ * Zdarzenia z pliku iCal razem z tym, czego nie udało się przeczytać.
+ *
+ * Nieczytelne fragmenty pomija zamiast rzucać — jeden zepsuty wpis z portalu
+ * nie może zatrzymać synchronizacji reszty. Ale je **liczy**, i to jest tu
+ * najważniejsze: pominięty wpis znaczy termin sprzedany w portalu i wolny
+ * u nas. Cisza w tym miejscu kończy się dwoma gośćmi pod jednymi drzwiami,
+ * więc liczba pominięć musi wyjść na zewnątrz zamiast zostać w parserze.
+ */
+export function parseIcalZeStatystyka(tekst: string): WynikParsowania {
+  const zdarzenia: ZdarzenieIcal[] = []
+  let blokow = 0
+  let pominiete = 0
   let biezace: Record<string, string> | null = null
 
   for (const linia of rozwinLinie(tekst)) {
-    if (linia === 'BEGIN:VEVENT') { biezace = {}; continue }
+    if (linia === 'BEGIN:VEVENT') { biezace = {}; blokow++; continue }
     if (linia === 'END:VEVENT') {
       if (biezace) {
         const start = dataZIcal(biezace.DTSTART ?? '')
         const koniec = dataZIcal(biezace.DTEND ?? '')
-        if (start && biezace.STATUS !== 'CANCELLED') {
-          wynik.push({
+        // Anulowana rezerwacja jest pomijana celowo — nie wolno jej liczyć
+        // jako wpisu, którego nie zrozumieliśmy.
+        const anulowane = biezace.STATUS === 'CANCELLED'
+        if (start && !anulowane) {
+          zdarzenia.push({
             uid: biezace.UID ?? '',
             start,
             end: koniec && koniec > start ? koniec : dzienPo(start),
             opis: biezace.SUMMARY ?? '',
           })
+        } else if (!anulowane) {
+          pominiete++
         }
       }
       biezace = null
@@ -76,7 +98,12 @@ export function parseIcal(tekst: string): ZdarzenieIcal[] {
     biezace[nazwa] = linia.slice(dwukropek + 1).trim()
   }
 
-  return wynik
+  return { zdarzenia, blokow, pominiete }
+}
+
+/** Same zdarzenia — gdy statystyka pominięć nie jest potrzebna. */
+export function parseIcal(tekst: string): ZdarzenieIcal[] {
+  return parseIcalZeStatystyka(tekst).zdarzenia
 }
 
 /** Zajęte dni w oknie [od, do), posortowane, bez powtórzeń. */
@@ -171,7 +198,7 @@ const MAKS_PRZEKIEROWAN = 3
 const LIMIT_CZASU_MS = 10_000
 
 export type WynikPobrania =
-  | { ok: true; zdarzenia: ZdarzenieIcal[] }
+  | { ok: true; zdarzenia: ZdarzenieIcal[]; pominiete: number }
   | { ok: false; blad: string }
 
 type Pobieracz = (url: string, init: RequestInit) => Promise<Response>
@@ -219,7 +246,19 @@ export async function pobierzKalendarz(adres: string, pobierz: Pobieracz = fetch
     if (tekst.length > MAKS_ROZMIAR_ICAL) return { ok: false, blad: 'too_large' }
 
     if (!/^﻿?\s*BEGIN:VCALENDAR/i.test(tekst)) return { ok: false, blad: 'not_ical' }
-    return { ok: true, zdarzenia: parseIcal(tekst) }
+
+    // Plik, którego nie umiemy sparsować, nie może wyglądać jak kalendarz
+    // pusty. Bez tego rozróżnienia zmiana dialektu po stronie portalu
+    // zostałaby odczytana jako „zwolniono wszystkie terminy".
+    //
+    // Sygnałem jest pominięcie **niewyjaśnione**, a nie samo zero zdarzeń:
+    // kalendarz złożony z anulowanych rezerwacji jest pusty w pełni legalnie
+    // i nie wolno go uznać za zepsuty.
+    const wynik = parseIcalZeStatystyka(tekst)
+    if (wynik.zdarzenia.length === 0 && wynik.pominiete > 0) {
+      return { ok: false, blad: 'parse_failed' }
+    }
+    return { ok: true, zdarzenia: wynik.zdarzenia, pominiete: wynik.pominiete }
   }
   return { ok: false, blad: 'too_many_redirects' }
 }
