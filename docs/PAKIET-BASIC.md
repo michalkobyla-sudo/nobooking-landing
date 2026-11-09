@@ -42,7 +42,7 @@ Cron `renewal-reminders` przypomina D-90/30/14/7/1 i wyłącza stronę po 14 dni
 karencji.
 
 **Cena odnowienia jest osobna od ceny zakupu** (`RENEWAL_PRICES` w `prices.ts`):
-299 zł / 99 € dla Basic, 449 zł / 149 € dla Pro. Kopiowana do
+299 zł / 99 € dla Basic, 499 zł / 119 € dla Pro. Kopiowana do
 `sites.renewal_price_*` w dniu zakupu, bo obiecujemy, że nie wzrośnie — zmiana
 cennika nie dosięga kogoś, kto już kupił. Do 2026-10-05 provisioning zapisywał
 tu pełną cenę zakupu, więc właściciel Basic miał odnowić za 799 zł przy ofercie

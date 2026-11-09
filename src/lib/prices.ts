@@ -30,10 +30,10 @@ export const PLAN_NAMES = {
  */
 export const RENEWAL_PRICES = {
   basic: { pln: 29900, eur: 9900 },
-  pro:   { pln: 44900, eur: 14900 },
+  pro:   { pln: 49900, eur: 11900 },
 } as const
 
 export const RENEWAL_LABELS = {
   basic: { pln: '299 zł', eur: '99 €' },
-  pro:   { pln: '449 zł', eur: '149 €' },
+  pro:   { pln: '499 zł', eur: '119 €' },
 } as const
