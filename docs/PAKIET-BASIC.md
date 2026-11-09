@@ -29,11 +29,19 @@ ma nic, co tworzyłoby domenę samo.
 > zamiast apartamentu. Dlatego w Vercelu ustawia się **Redirect** na
 > `https://nobooking.eu/sites/<slug>`, a nie samo dodanie domeny do projektu.
 >
-> Subdomeny `slug.nobooking.eu` też dziś nie działają — brakuje wpisu DNS
-> z gwiazdką. `apart-sunny.nobooking.eu` nie rozwiązuje się (sprawdzone
-> 2026-10-04), więc kod przepisujący subdomeny jest na razie martwy.
-> Jedyny działający adres strony klienta to `nobooking.eu/sites/<slug>`
-> i to na niego wskazuje `canonical`.
+> Subdomeny `slug.nobooking.eu` nadal nie działają, ale z innego powodu niż
+> 2026-10-04. Wpis DNS z gwiazdką już jest (`*.nobooking.eu` → Vercel), domena
+> `*.nobooking.eu` jest podpięta do projektu — **brakuje certyfikatu**. Vercel
+> wystawia certyfikat na wszystkie subdomeny tylko przy własnych serwerach
+> nazw, a DNS obsługuje Porkbun. Efekt (sprawdzone 2026-11-09): połączenie
+> zrywa się na TLS, zanim żądanie dotrze do aplikacji.
+>
+> Naprawa wymaga decyzji: przeniesienie serwerów nazw na Vercel (trzeba
+> wcześniej odtworzyć tam wszystkie rekordy, w tym pocztę — przekierowanie
+> `kontakt@nobooking.eu` stoi na Porkbun) albo rezygnacja z subdomen.
+> Do tego czasu jedyny działający adres strony klienta to
+> `nobooking.eu/sites/<slug>` i to na niego wskazują maile oraz `canonical`.
+> Kod przepisujący subdomeny jest gotowy (`lib/subdomena.ts`, z testami).
 
 Poczta wychodzi przez Brevo z adresu `noreply@nobooking.eu` (`src/lib/email.ts`).
 
