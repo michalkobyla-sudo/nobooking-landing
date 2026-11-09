@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ApartmentConfig, Lang } from '@/lib/apartmentTypes'
 import { sezonDla, opisMiesiecy } from '@/lib/bookingPricing'
 import { adresOdtwarzacza } from '@/lib/galeria'
+import { ETYKIETY } from '@/lib/informacjeDlaGosci'
 
 // ─── UI translations ──────────────────────────────────────────────────────────
 
@@ -34,7 +35,8 @@ const UI = {
     bookSubmit: 'Wyślij zapytanie',
     bookSuccess: '✅ Dziękujemy! Odpiszemy w ciągu 24 godzin.',
     bookSuccessNote: 'Email z potwierdzeniem zostanie wysłany automatycznie.',
-    footerPowered: 'Strona stworzona przez',
+    footerPowered: 'Strona stworzona przez', footerTagline: 'Własna strona rezerwacji bez prowizji',
+    bookRedirecting: 'Przekierowanie do płatności...', noStripeTitle: 'Rezerwacje przez kontakt bezpośredni', noStripeText: 'Płatności online są tymczasowo niedostępne. Skontaktuj się bezpośrednio z właścicielem.',
     demoBanner: '👁 To jest demo strony stworzonej przez Nobooking',
     demoOrder: 'Zamów własną →',
     months: ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'],
@@ -68,7 +70,8 @@ const UI = {
     bookSubmit: 'Send inquiry',
     bookSuccess: '✅ Thank you! We\'ll reply within 24 hours.',
     bookSuccessNote: 'A confirmation email will be sent automatically.',
-    footerPowered: 'Website created by',
+    footerPowered: 'Website created by', footerTagline: 'Your own booking website, no commission',
+    bookRedirecting: 'Redirecting to payment...', noStripeTitle: 'Book directly with the owner', noStripeText: 'Online payments are temporarily unavailable. Please contact the owner directly.',
     demoBanner: '👁 This is a demo site created by Nobooking',
     demoOrder: 'Order yours →',
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
@@ -102,7 +105,8 @@ const UI = {
     bookSubmit: 'Enviar consulta',
     bookSuccess: '✅ ¡Gracias! Responderemos en 24 horas.',
     bookSuccessNote: 'Se enviará un email de confirmación automáticamente.',
-    footerPowered: 'Sitio creado por',
+    footerPowered: 'Sitio creado por', footerTagline: 'Web de reservas propia, sin comisiones',
+    bookRedirecting: 'Redirigiendo al pago...', noStripeTitle: 'Reserva directamente con el propietario', noStripeText: 'Los pagos online no están disponibles temporalmente. Contacta directamente con el propietario.',
     demoBanner: '👁 Este es un sitio demo creado por Nobooking',
     demoOrder: 'Pide el tuyo →',
     months: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
@@ -136,7 +140,8 @@ const UI = {
     bookSubmit: 'Anfrage senden',
     bookSuccess: '✅ Danke! Wir melden uns innerhalb von 24 Stunden.',
     bookSuccessNote: 'Eine Bestätigungs-E-Mail wird automatisch versendet.',
-    footerPowered: 'Website erstellt von',
+    footerPowered: 'Website erstellt von', footerTagline: 'Eigene Buchungswebsite ohne Provision',
+    bookRedirecting: 'Weiterleitung zur Zahlung...', noStripeTitle: 'Direkt beim Eigentümer buchen', noStripeText: 'Online-Zahlungen sind vorübergehend nicht verfügbar. Bitte wenden Sie sich direkt an den Eigentümer.',
     demoBanner: '👁 Dies ist eine Demo-Website von Nobooking',
     demoOrder: 'Bestellen Sie Ihre →',
     months: ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
@@ -697,8 +702,10 @@ function CalendarPricer({ config, lang, ui, primary, isMobile, slug, stripeEnabl
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 
-function Reviews({ config, lang, ui, primary, isMobile }: {
-  config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
+function Reviews({ config, lang, ui, primary, isMobile, informacje, demo }: {
+  config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean; informacje: string
+  /** Opinie w demo są przykładowe — zdanie o ich pochodzeniu byłoby tam nieprawdą. */
+  demo: boolean
 }) {
   const items = config.reviews.items
   if (items.length === 0) return null
@@ -710,6 +717,14 @@ function Reviews({ config, lang, ui, primary, isMobile }: {
           <div>
             <Overline color={primary}>{ui.reviewsOverline}</Overline>
             <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.1 }}>{ui.reviewsTitle}</h2>
+            {/* Przepisy Omnibus: przy opiniach informacja, czy i jak sprawdzamy,
+                że pochodzą od gości. Nasz mechanizm na to zasługuje — opinię
+                wystawia tylko gość po wyjeździe, raz na rezerwację, a publikuje
+                właściciel — więc mówimy to wprost, łącznie z moderacją. */}
+            {!demo && <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0.6rem 0 0', maxWidth: 460, lineHeight: 1.5 }}>
+              {ETYKIETY[lang].opinie}
+              {informacje && <> <a href={informacje} style={{ color: primary }}>{ETYKIETY[lang].jakToDziala}</a></>}
+            </p>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '0.875rem 1.25rem' }}>
             <span style={{ fontSize: '2rem', fontWeight: 900, color: primary, letterSpacing: '-0.03em' }}>{config.reviews.score}</span>
@@ -889,9 +904,9 @@ function MapSection({ config, lang, ui, primary, isMobile }: {
 
 // ─── Booking form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled, kodyRabatowe }: {
+function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled, kodyRabatowe, informacje }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
-  siteId: string; slug: string; stripeEnabled: boolean; kodyRabatowe: boolean
+  siteId: string; slug: string; stripeEnabled: boolean; kodyRabatowe: boolean; informacje: string
 }) {
   void lang
   const [form, setForm] = useState({ arrival: '', departure: '', guests: '2', name: '', email: '', phone: '', message: '', discount: '' })
@@ -1099,14 +1114,20 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled,
             {stripeEnabled ? (
               <>
                 <button type="submit" disabled={sending} style={{ background: primary, color: 'white', border: 'none', borderRadius: 12, padding: '0.95rem', fontSize: '1rem', fontWeight: 800, cursor: sending ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.75 : 1, marginTop: '0.25rem' }}>
-                  {sending ? '⏳ Przekierowanie do płatności...' : `💳 ${ui.bookSubmit}`}
+                  {sending ? `⏳ ${ui.bookRedirecting}` : `💳 ${ui.bookSubmit}`}
                 </button>
                 <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#9CA3AF' }}>🔒 {ui.stripeNote}</div>
+                {/* Art. 13 RODO: informacja w chwili zbierania danych. */}
+                {informacje && (
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#6B7280' }}>
+                    {ETYKIETY[lang].przedRezerwacja} <a href={informacje} target="_blank" rel="noopener" style={{ color: primary }}>{ETYKIETY[lang].link}</a>
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 12, padding: '1rem 1.25rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#374151', marginBottom: '0.4rem' }}>📞 Rezerwacje przez kontakt bezpośredni</div>
-                <div style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '0.75rem' }}>Płatności online są tymczasowo niedostępne. Skontaktuj się bezpośrednio z właścicielem.</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#374151', marginBottom: '0.4rem' }}>📞 {ui.noStripeTitle}</div>
+                <div style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '0.75rem' }}>{ui.noStripeText}</div>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   {config.contact.email && (
                     <a href={`mailto:${config.contact.email}`} style={{ display: 'inline-block', background: primary, color: 'white', borderRadius: 9, padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none' }}>
@@ -1130,7 +1151,7 @@ function BookingForm({ config, lang, ui, primary, isMobile, slug, stripeEnabled,
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
-function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui: typeof UI.pl; primary: string }) {
+function ApartmentFooter({ config, ui, primary, informacje, lang }: { config: ApartmentConfig; ui: typeof UI.pl; primary: string; informacje: string; lang: Lang }) {
   return (
     <footer style={{ background: '#111827', color: 'rgba(255,255,255,0.65)', padding: '3rem 1.5rem', textAlign: 'center' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -1143,13 +1164,18 @@ function ApartmentFooter({ config, ui, primary }: { config: ApartmentConfig; ui:
         {config.contact.instagram && (
           <p style={{ marginBottom: '1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)' }}>@{config.contact.instagram}</p>
         )}
+        {informacje && (
+          <p style={{ margin: '0.9rem 0 1.25rem', fontSize: '0.82rem' }}>
+            <a href={informacje} style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'underline', textUnderlineOffset: 3 }}>{ETYKIETY[lang].link}</a>
+          </p>
+        )}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
           <span>{ui.footerPowered}</span>
           <a href="https://nobooking.eu" style={{ color: 'white', fontWeight: 700, textDecoration: 'none' }}>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>No</span>booking
           </a>
           <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Własna strona rezerwacji bez prowizji</span>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>{ui.footerTagline}</span>
         </div>
       </div>
     </footer>
@@ -1178,6 +1204,10 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
   jezykStartowy?: Lang
 }) {
   const [lang, setLang] = useState<Lang>(jezykStartowy)
+  // Informacja dla gości: `/sites/[slug]/informacje`, a w demo `/demo/informacje`.
+  // Ścieżki z prefiksem działają też na subdomenach — patrz `sciezkaDlaSubdomeny`.
+  const baza = slug ? `/sites/${slug}` : showDemoBanner ? '/demo' : ''
+  const informacje = baza ? `${baza}/informacje${lang === 'pl' ? '' : `?lang=${lang}`}` : ''
 
   /**
    * `<html lang>` musi iść za treścią strony.
@@ -1245,11 +1275,11 @@ export default function ApartmentPage({ config, siteId = '', slug = '', showDemo
       <Gallery config={config} ui={ui} primary={primary} isMobile={isMobile} />
       <VideoSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <CalendarPricer config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} />
-      <Reviews config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
+      <Reviews config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} informacje={informacje} demo={showDemoBanner} />
       <GuestPortal config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
       <MapSection config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} />
-      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} kodyRabatowe={kodyRabatowe} />
-      <ApartmentFooter config={config} ui={ui} primary={primary} />
+      <BookingForm config={config} lang={lang} ui={ui} primary={primary} isMobile={isMobile} siteId={siteId} slug={slug} stripeEnabled={stripeEnabled} kodyRabatowe={kodyRabatowe} informacje={informacje} />
+      <ApartmentFooter config={config} ui={ui} primary={primary} informacje={informacje} lang={lang} />
     </div>
   )
 }

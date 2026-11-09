@@ -156,6 +156,11 @@ ją razem z umową o stronę.
 
 **Strony.** Ty jesteś administratorem danych gości, my — podmiotem przetwarzającym.
 
+**Informacja dla gości.** Na Twojej stronie publikujemy informację dla gości o przetwarzaniu ich
+danych, warunkach rezerwacji i sposobie zbierania opinii. Jako administratora wskazujemy w niej
+Ciebie — nazwę firmy albo imię i nazwisko z zamówienia — oraz adres e-mail i telefon podane na
+stronie. Tego wymaga art. 13 RODO; jeśli dane mają być inne, napisz do nas.
+
 **Przedmiot i czas.** Przetwarzamy dane gości Twojego apartamentu przez czas trwania umowy o stronę
 i do czasu ich usunięcia zgodnie z tym punktem.
 

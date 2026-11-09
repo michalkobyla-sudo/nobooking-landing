@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sciezkaDlaSubdomeny } from '@/lib/subdomena'
 import { createServerClient } from '@supabase/ssr'
 import { czyPrzekroczono, type Wpis } from '@/lib/rateLimit'
 import { czyPrzekroczonoWBazie } from '@/lib/rateLimitDb'
@@ -147,15 +148,10 @@ export async function proxy(request: NextRequest) {
     // pod /sites/casa-sol/api/sites/casa-sol/book. Taka trasa nie istnieje,
     // więc formularz rezerwacji i kalendarz dostępności na subdomenach
     // odpowiadały 404. Slug jest już w ścieżce, więc prefiks jest zbędny.
-    if (subdomain && subdomain !== hostname && !pathname.startsWith('/api/')) {
+    const docelowa = subdomain && subdomain !== hostname ? sciezkaDlaSubdomeny(subdomain, pathname) : null
+    if (docelowa) {
       const url = request.nextUrl.clone()
-
-      if (subdomain === 'demo') {
-        url.pathname = `/demo${pathname === '/' ? '' : pathname}`
-      } else {
-        url.pathname = `/sites/${subdomain}${pathname === '/' ? '' : pathname}`
-      }
-
+      url.pathname = docelowa
       return NextResponse.rewrite(url)
     }
   }
