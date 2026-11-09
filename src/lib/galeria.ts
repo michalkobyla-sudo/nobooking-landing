@@ -168,3 +168,23 @@ export function naOsadzenie(adres: string): string {
 
   return ''
 }
+
+/**
+ * Adres odtwarzacza na stronie apartamentu — zawsze w trybie
+ * `youtube-nocookie.com`, z autoodtwarzaniem, bo ramka powstaje dopiero po
+ * kliknięciu gościa w kafel filmu.
+ *
+ * Dlaczego tryb prywatny i dlaczego dopiero po kliknięciu: art. 399 Prawa
+ * komunikacji elektronicznej wymaga zgody na zapis w urządzeniu odwiedzającego,
+ * chyba że zapis jest niezbędny do usługi, której ten wyraźnie zażądał.
+ * Kliknięcie w film jest takim żądaniem; zwykłe wejście na stronę — nie.
+ *
+ * Konwersja przy wyświetlaniu, nie przy zapisie: strony zapisane wcześniej
+ * mają w bazie `youtube.com/embed`. Nieznane źródło daje pusty adres — do
+ * ramki trafia wyłącznie YouTube.
+ */
+export function adresOdtwarzacza(adres: string): string {
+  const osadzenie = naOsadzenie(adres)
+  const id = osadzenie.match(/\/embed\/([\w-]+)$/)?.[1]
+  return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : ''
+}

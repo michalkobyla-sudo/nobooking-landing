@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ApartmentConfig, Lang } from '@/lib/apartmentTypes'
 import { sezonDla, opisMiesiecy } from '@/lib/bookingPricing'
+import { adresOdtwarzacza } from '@/lib/galeria'
 
 // ─── UI translations ──────────────────────────────────────────────────────────
 
@@ -20,6 +21,7 @@ const UI = {
     pricerPerNight: '/ noc', pricerMin: 'Min. nocy:', pricerTotal: 'Łącznie:', pricerCleaning: 'Sprzątanie:', pricerBook: 'Zarezerwuj →',
     reviewsOverline: 'Opinie', reviewsTitle: 'Opinie gości', reviewsOf: 'opinii',
     mapOverline: 'Lokalizacja', mapTitle: 'Lokalizacja i okolica',
+    mapShow: 'Pokaż mapę', mapOpen: 'Otwórz w Mapach Google', mapNote: 'Mapa ładuje się z serwerów Google, które mogą zapisać pliki cookie.',
     portalOverline: 'Panel gościa', portalTitle: 'Twoja rezerwacja — zawsze pod ręką',
     portalDesc: 'Wejdź do panelu gościa, aby sprawdzić szczegóły pobytu, wypełnić check-in i znaleźć kontakt do właściciela.',
     portalBtn: 'Zaloguj się →',
@@ -53,6 +55,7 @@ const UI = {
     pricerPerNight: '/ night', pricerMin: 'Min. nights:', pricerTotal: 'Total:', pricerCleaning: 'Cleaning:', pricerBook: 'Book online →',
     reviewsOverline: 'Reviews', reviewsTitle: 'Guest reviews', reviewsOf: 'reviews',
     mapOverline: 'Location', mapTitle: 'Location & surroundings',
+    mapShow: 'Show map', mapOpen: 'Open in Google Maps', mapNote: 'The map loads from Google servers, which may set cookies.',
     portalOverline: 'Guest portal', portalTitle: 'Your booking — always at hand',
     portalDesc: 'Open the guest portal to check your stay details, complete check-in and find the host contact.',
     portalBtn: 'Log in →',
@@ -86,6 +89,7 @@ const UI = {
     pricerPerNight: '/ noche', pricerMin: 'Mín. noches:', pricerTotal: 'Total:', pricerCleaning: 'Limpieza:', pricerBook: 'Reservar online →',
     reviewsOverline: 'Opiniones', reviewsTitle: 'Opiniones de huéspedes', reviewsOf: 'opiniones',
     mapOverline: 'Ubicación', mapTitle: 'Ubicación y alrededores',
+    mapShow: 'Mostrar mapa', mapOpen: 'Abrir en Google Maps', mapNote: 'El mapa se carga desde los servidores de Google, que pueden guardar cookies.',
     portalOverline: 'Portal huésped', portalTitle: 'Tu reserva — siempre disponible',
     portalDesc: 'Accede al portal del huésped para consultar los detalles de tu estancia, completar el check-in y contactar al propietario.',
     portalBtn: 'Acceder →',
@@ -119,6 +123,7 @@ const UI = {
     pricerPerNight: '/ Nacht', pricerMin: 'Min. Nächte:', pricerTotal: 'Gesamt:', pricerCleaning: 'Endreinigung:', pricerBook: 'Online buchen →',
     reviewsOverline: 'Bewertungen', reviewsTitle: 'Gästebewertungen', reviewsOf: 'Bewertungen',
     mapOverline: 'Lage', mapTitle: 'Lage & Umgebung',
+    mapShow: 'Karte anzeigen', mapOpen: 'In Google Maps öffnen', mapNote: 'Die Karte wird von Google-Servern geladen, die Cookies setzen können.',
     portalOverline: 'Gästeportal', portalTitle: 'Ihre Buchung — immer griffbereit',
     portalDesc: 'Öffnen Sie das Gästeportal, um Ihre Aufenthaltsdetails zu prüfen, den Check-in auszufüllen und den Gastgeber zu kontaktieren.',
     portalBtn: 'Einloggen →',
@@ -531,12 +536,12 @@ function VideoSection({ config, lang, ui, primary, isMobile }: {
         </div>
       </div>
 
-      {/* Modal */}
-      {activeVideo && (
+      {/* Modal — tylko dla adresów, które umiemy bezpiecznie osadzić */}
+      {activeVideo && adresOdtwarzacza(activeVideo) && (
         <div onClick={() => setActiveVideo(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <button onClick={() => setActiveVideo(null)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', fontSize: '1.5rem', zIndex: 10 }}>×</button>
           <iframe
-            src={`${activeVideo}?autoplay=1`}
+            src={adresOdtwarzacza(activeVideo)}
             onClick={(e) => e.stopPropagation()}
             allow="autoplay; fullscreen"
             allowFullScreen
@@ -789,6 +794,72 @@ function CheckInBanner({ ui, primary, isMobile }: { ui: typeof UI.pl; primary: s
 
 // ─── Map section ─────────────────────────────────────────────────────────────
 
+/**
+ * Mapa Google dopiero po kliknięciu.
+ *
+ * Osadzona mapa ładuje się z serwerów Google, które dostają wtedy adres IP
+ * odwiedzającego i mogą zapisać ciasteczka. Art. 399 Prawa komunikacji
+ * elektronicznej wymaga na to zgody, chyba że zapis jest niezbędny do usługi,
+ * której odwiedzający wyraźnie zażądał — a kliknięcie „Pokaż mapę” jest
+ * właśnie takim żądaniem. Do 2026-11-09 mapa ładowała się sama, gdy tylko gość
+ * przewinął stronę w jej pobliże.
+ *
+ * Wybór nie jest zapamiętywany: zapamiętanie wymagałoby kolejnego zapisu
+ * w przeglądarce. Link „Otwórz w Mapach Google” działa bez osadzania.
+ */
+function MapaNaZadanie({ embedUrl, adres, ui, primary, wysokosc }: {
+  embedUrl: string; adres: string; ui: typeof UI.pl; primary: string; wysokosc: number
+}) {
+  const [pokaz, setPokaz] = useState(false)
+  const ramka: React.CSSProperties = { borderRadius: 16, overflow: 'hidden', border: '1px solid #E5E7EB', height: wysokosc }
+
+  if (pokaz) {
+    return (
+      <div style={ramka}>
+        <iframe src={embedUrl} title={ui.mapTitle} width="100%" height={wysokosc} style={{ border: 'none', display: 'block' }} allowFullScreen referrerPolicy="no-referrer-when-downgrade" />
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      ...ramka,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.9rem',
+      padding: '1.5rem', textAlign: 'center',
+      // Delikatna siatka zamiast zrzutu mapy — zrzut też trzeba by pobrać od Google.
+      backgroundColor: '#EFEBE3',
+      backgroundImage: 'linear-gradient(#E4DED3 1px, transparent 1px), linear-gradient(90deg, #E4DED3 1px, transparent 1px)',
+      backgroundSize: '32px 32px',
+    }}>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+        <circle cx="12" cy="9.5" r="2.5" />
+      </svg>
+      {adres && <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1F2937', margin: 0, maxWidth: 360 }}>{adres}</p>}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
+        <button
+          type="button"
+          onClick={() => setPokaz(true)}
+          style={{ padding: '0.6rem 1.1rem', border: 'none', borderRadius: 10, background: primary, color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+        >
+          {ui.mapShow}
+        </button>
+        {adres && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adres)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '0.6rem 1.1rem', borderRadius: 10, border: '1px solid #D6CFC2', background: 'rgba(255,255,255,0.7)', color: '#1F2937', fontWeight: 600, fontSize: '0.85rem', textDecoration: 'none' }}
+          >
+            {ui.mapOpen}
+          </a>
+        )}
+      </div>
+      <p style={{ fontSize: '0.72rem', color: '#6B7280', margin: 0, maxWidth: 320, lineHeight: 1.5 }}>{ui.mapNote}</p>
+    </div>
+  )
+}
+
 function MapSection({ config, lang, ui, primary, isMobile }: {
   config: ApartmentConfig; lang: Lang; ui: typeof UI.pl; primary: string; isMobile: boolean
 }) {
@@ -798,9 +869,7 @@ function MapSection({ config, lang, ui, primary, isMobile }: {
         <Overline color={primary}>{ui.mapOverline}</Overline>
         <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: isMobile ? '1.5rem' : '2.5rem', lineHeight: 1.1 }}>{ui.mapTitle}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: isMobile ? '1rem' : '2rem', alignItems: 'start' }}>
-          <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E5E7EB' }}>
-            <iframe src={config.map.embedUrl} width="100%" height={isMobile ? '240' : '400'} style={{ border: 'none', display: 'block' }} loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" />
-          </div>
+          <MapaNaZadanie embedUrl={config.map.embedUrl} adres={config.address} ui={ui} primary={primary} wysokosc={isMobile ? 240 : 400} />
           <div>
             <p style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '1rem' }}>📍 {config.address}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

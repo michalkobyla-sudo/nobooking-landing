@@ -106,9 +106,11 @@ Zapisujemy w przeglądarce dwie rzeczy:
   jeśli je złożysz. Nie trafiają do nas wcześniej. Możesz je usunąć, czyszcząc dane strony
   w przeglądarce.
 
-**Strony apartamentów** zbudowane w Nobooking mogą zawierać mapę Google i filmy z YouTube. Ładują się
-one razem ze stroną, a Google może przy tym zapisać w przeglądarce własne ciasteczka i otrzymać
-adres IP odwiedzającego — zgodnie z polityką prywatności Google.
+**Strony apartamentów** zbudowane w Nobooking mogą zawierać mapę Google i filmy z YouTube. **Ładują
+się dopiero wtedy, gdy klikniesz „Pokaż mapę” albo film** — wcześniej Google nie otrzymuje od strony
+żadnych danych. Po kliknięciu Google otrzymuje adres IP odwiedzającego i może zapisać w przeglądarce
+własne ciasteczka, zgodnie ze swoją polityką prywatności. Filmy odtwarzamy w trybie rozszerzonej
+prywatności YouTube.
 
 ## 9. Jak długo trzymamy dane
 

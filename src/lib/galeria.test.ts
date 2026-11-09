@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  sprawdzGalerie, sprawdzWideo, naOsadzenie,
+  sprawdzGalerie, sprawdzWideo, naOsadzenie, adresOdtwarzacza,
   MAX_ZDJEC, MIN_ZDJEC, MAX_WIDEO, MAX_DL_OPISU, MAX_DL_TYTULU,
 } from './galeria'
 
@@ -188,5 +188,41 @@ describe('naOsadzenie', () => {
     for (const a of ['', 'https://vimeo.com/123', 'dQw4w9WgXcQ', 'https://www.youtube.com/watch?v=', 'https://example.com/youtube.com/watch?v=abc123']) {
       expect(naOsadzenie(a)).toBe('')
     }
+  })
+})
+
+/**
+ * Odtwarzacz na stronie apartamentu. Zawsze `youtube-nocookie.com` — tryb,
+ * w którym YouTube nie zapisuje ciasteczek przed odtworzeniem — i zawsze
+ * dopiero po kliknięciu gościa (Prawo komunikacji elektronicznej, art. 399).
+ *
+ * Konwersja przy wyświetlaniu, nie przy zapisie: strony zapisane wcześniej
+ * mają w bazie `youtube.com/embed`, a konfiguracja demo też.
+ */
+describe('adresOdtwarzacza', () => {
+  it('każdy zapis YouTube → nocookie z autoodtwarzaniem', () => {
+    for (const a of [
+      'https://www.youtube.com/embed/QvWMDFqnGrY',
+      'https://youtube.com/embed/QvWMDFqnGrY',
+      'https://www.youtube.com/watch?v=QvWMDFqnGrY',
+      'https://youtu.be/QvWMDFqnGrY',
+      'https://www.youtube-nocookie.com/embed/QvWMDFqnGrY',
+    ]) {
+      expect(adresOdtwarzacza(a)).toBe('https://www.youtube-nocookie.com/embed/QvWMDFqnGrY?autoplay=1')
+    }
+  })
+
+  // Doklejanie `?autoplay=1` na ślepo do adresu z parametrami dawało
+  // `…?si=x?autoplay=1` — film się nie ładował.
+  it('parametry z oryginału nie psują adresu', () => {
+    expect(adresOdtwarzacza('https://www.youtube.com/embed/QvWMDFqnGrY?si=abc'))
+      .toBe('https://www.youtube-nocookie.com/embed/QvWMDFqnGrY?autoplay=1')
+  })
+
+  // Nieznane źródło nie trafia do ramki — lepiej nic nie pokazać niż osadzić
+  // cokolwiek, co ktoś wpisał do konfiguracji.
+  it('nie-YouTube daje pusty adres', () => {
+    expect(adresOdtwarzacza('https://evil.example/embed/x')).toBe('')
+    expect(adresOdtwarzacza('')).toBe('')
   })
 })
