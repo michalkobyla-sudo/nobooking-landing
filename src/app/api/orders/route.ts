@@ -4,6 +4,7 @@ import { sendNewOrderNotification } from '@/lib/email'
 import { zBody, opisZrodla } from '@/lib/attribution'
 import type { Order } from '@/lib/types'
 import { utworzSesjeZamowienia } from '@/lib/checkoutZamowienia'
+import { WERSJA_REGULAMINU } from '@/lib/dokumentyPrawne'
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
     apartment_location?: string
     notes?: string
     zrodlo?: unknown
+    akceptacja_regulaminu?: unknown
   }
 
   // Validate required fields
@@ -36,6 +38,12 @@ export async function POST(request: NextRequest) {
     if (!body[field]?.toString().trim()) {
       return NextResponse.json({ error: `missing_${field}` }, { status: 400 })
     }
+  }
+
+  // Ściśle `true`: formularz wysyła wartość pola wyboru, a „cokolwiek
+  // niepustego” przepuściłoby np. ręcznie spreparowane `"false"`.
+  if (body.akceptacja_regulaminu !== true) {
+    return NextResponse.json({ error: 'missing_terms_acceptance' }, { status: 400 })
   }
 
   if (!['basic', 'pro'].includes(body.plan!)) {
@@ -93,6 +101,7 @@ export async function POST(request: NextRequest) {
     plan: order.plan as 'basic' | 'pro',
     currency: order.currency as 'pln' | 'eur',
     orderId: order.id as string,
+    wersjaRegulaminu: WERSJA_REGULAMINU,
     adresPowrotu: request.nextUrl.origin,
   })
 

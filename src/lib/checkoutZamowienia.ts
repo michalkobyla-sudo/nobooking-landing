@@ -20,7 +20,7 @@ const StripeLib = _require('stripe') as any
  * tę samą maszynę, na której kod i tak działał. Pierwsze uruchomienie poza
  * produkcją trafiło na to od razu.
  *
- * Teraz obie trasy wołają tę funkcję bezpośrednio. Nie ma żądania po sieci,
+ * Teraz `/api/orders` woła tę funkcję bezpośrednio. Nie ma żądania po sieci,
  * więc **nie da się zlecić operacji finansowej innemu środowisku** — ani
  * z localhosta, ani z preview, ani z CI.
  */
@@ -28,7 +28,11 @@ const StripeLib = _require('stripe') as any
 export interface DaneSesji {
   plan: 'basic' | 'pro'
   currency: 'pln' | 'eur'
-  orderId?: string
+  /** Wymagane: płatność bez zamówienia w bazie nie ma do czego przypiąć
+   *  onboardingu. Do 2026-11-09 istniała trasa, która na to pozwalała. */
+  orderId: string
+  /** Data wersji regulaminu zaakceptowanej w formularzu — `WERSJA_REGULAMINU`. */
+  wersjaRegulaminu: string
   /** Adres, na który Stripe odeśle gościa. Bierzemy go z **bieżącego żądania**,
    *  nie z konfiguracji — adres zwrotny ma prowadzić tam, skąd przyszedł klient. */
   adresPowrotu: string
@@ -75,7 +79,9 @@ export async function utworzSesjeZamowienia(dane: DaneSesji): Promise<WynikSesji
       cancel_url: `${adres}/#cennik`,
       // Metody płatności dobiera Stripe wg konta i kraju gościa. Sztywna lista
       // wywracała odnowienia po zmianie konta platformy (p24 nie istniał na nowym).
-      metadata: { plan, currency, ...(orderId ? { order_id: orderId } : {}) },
+      // `regulamin` to jedyny trwały ślad tego, którą wersję zaakceptował
+      // klient — regulamin stosuje się w brzmieniu z dnia zakupu.
+      metadata: { plan, currency, order_id: orderId, regulamin: dane.wersjaRegulaminu },
     })
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

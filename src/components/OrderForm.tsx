@@ -58,6 +58,9 @@ export default function OrderForm({ plan, currency }: Props) {
   const [form, setForm] = useState<FormData>(INITIAL)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Akceptacja regulaminu. Osobny stan, nie pole `form`: nie jest daną
+  // zamówienia, tylko warunkiem jego złożenia.
+  const [akceptacja, setAkceptacja] = useState(false)
 
   const planLabel = plan === 'pro' ? 'Pro' : 'Basic'
   const priceLabel = PRICE_LABELS[plan][currency]
@@ -90,6 +93,11 @@ export default function OrderForm({ plan, currency }: Props) {
       }
     }
 
+    if (!akceptacja) {
+      setError('Zaakceptuj regulamin, żeby przejść do płatności.')
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/orders', {
@@ -107,6 +115,7 @@ export default function OrderForm({ plan, currency }: Props) {
           apartment_name: form.apartment_name.trim(),
           apartment_location: form.apartment_location.trim(),
           notes: form.notes.trim() || null,
+          akceptacja_regulaminu: akceptacja,
           // Źródło zapisane przy pierwszej wizycie (`ZapiszZrodlo`). Odczyt
           // w try/catch, bo tryb prywatny rzuca — brak atrybucji nie może
           // zablokować zamówienia.
@@ -211,6 +220,27 @@ export default function OrderForm({ plan, currency }: Props) {
           <Field label="Notatki / dodatkowe informacje">
             <textarea style={textareaStyle} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Cokolwiek chcesz nam powiedzieć..." />
           </Field>
+
+          {/* Regulamin. Bez tej akceptacji regulamin nie wiąże klienta, a brak
+              informacji o prawie odstąpienia wydłuża termin z 14 dni do roku
+              (art. 29 ustawy o prawach konsumenta). Linki otwierają się
+              w nowej karcie, żeby nie zgubić wypełnionego formularza. */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.875rem', lineHeight: 1.5, color: '#374151', marginBottom: '1.5rem' }}>
+            <input
+              type="checkbox"
+              checked={akceptacja}
+              onChange={e => setAkceptacja(e.target.checked)}
+              required
+              style={{ width: '18px', height: '18px', marginTop: '0.1rem', flexShrink: 0, accentColor: 'var(--color-accent)', cursor: 'pointer' }}
+            />
+            <span>
+              Akceptuję{' '}
+              <a href="/regulamin" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>regulamin</a>
+              {' '}i potwierdzam zapoznanie się z{' '}
+              <a href="/polityka-prywatnosci" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>polityką prywatności</a>.
+              {' '}Jako konsument masz 14 dni na odstąpienie od umowy.
+            </span>
+          </label>
 
           {/* Error */}
           {error && (

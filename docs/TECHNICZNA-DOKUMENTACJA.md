@@ -555,7 +555,7 @@ dokumencie: `SPECYFIKACJA-OPERACYJNA.md`.
 
 ```
 /zamow  →  POST /api/orders           zapis w `orders` (razem ze źródłem), e-mail do Michała
-        →  POST /api/stripe/checkout  sesja płatności (konto platformy)
+        →  (sesję płatności tworzy /api/orders przez lib/checkoutZamowienia — osobna trasa usunięta 2026-11-09)
         →  webhook checkout.session.completed
               stripe_paid = true, status = onboarding_sent
               e-mail z linkiem onboardingowym (token w `orders.onboarding_token`)
