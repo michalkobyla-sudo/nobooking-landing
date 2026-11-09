@@ -19,6 +19,32 @@ export interface ZdarzenieIcal {
   /** Dzień wyjazdu — wolny, jak w `rozwinZakres`. */
   end: string
   opis: string
+  /** Reguła powtarzania, jeśli wpis ją ma i rozumiemy ją w całości. */
+  powtarzanie?: Powtarzanie
+}
+
+/**
+ * Podzbiór RRULE (RFC 5545 §3.3.10), który rozwijamy sami.
+ *
+ * Portale tego nie używają — rezerwacja się nie powtarza. Ale źródło „inne"
+ * to zwykle prywatny kalendarz właściciela, a tam „nie wynajmuję
+ * w weekendy" jest jednym wpisem z regułą. Kalendarz Google zapisuje go jako
+ * `FREQ=WEEKLY;BYDAY=SA,SU`, Apple święta jako `FREQ=YEARLY;COUNT=6`.
+ *
+ * Wszystko poza tym podzbiorem (BYMONTH, BYSETPOS, „ostatnia niedziela"…)
+ * zostaje niezrozumiane **jawnie**: blokujemy pierwsze wystąpienie i liczymy
+ * wpis jako nieodczytany, żeby panel kazał właścicielowi sprawdzić resztę.
+ */
+export interface Powtarzanie {
+  freq: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+  interval: number
+  count?: number
+  /** Ostatni dzień, w którym wolno zacząć wystąpienie — włącznie. */
+  until?: string
+  /** Tylko WEEKLY: dni tygodnia, 0 = poniedziałek … 6 = niedziela. */
+  dniTygodnia?: number[]
+  /** EXDATE — wystąpienia wyłączone. Nadal zużywają COUNT, jak w RFC. */
+  wyjatki?: string[]
 }
 
 export interface Zakres {
@@ -44,11 +70,58 @@ function dzienPo(data: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+const DNI_TYGODNIA = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+const ZNANE_CZESCI_REGULY = new Set(['FREQ', 'INTERVAL', 'COUNT', 'UNTIL', 'BYDAY', 'WKST'])
+
+/** RRULE → `Powtarzanie`, albo null, gdy nie rozumiemy jej w całości.
+ *  Lepiej przyznać się do niezrozumienia niż rozwinąć regułę po swojemu. */
+function czytajRegule(rrule: string): Powtarzanie | null {
+  const czesci = new Map<string, string>()
+  for (const fragment of rrule.split(';')) {
+    const [k, v] = fragment.split('=')
+    if (!k || v === undefined) return null
+    czesci.set(k.trim().toUpperCase(), v.trim().toUpperCase())
+  }
+  for (const k of czesci.keys()) if (!ZNANE_CZESCI_REGULY.has(k)) return null
+
+  const freq = czesci.get('FREQ')
+  if (freq !== 'DAILY' && freq !== 'WEEKLY' && freq !== 'MONTHLY' && freq !== 'YEARLY') return null
+
+  const interval = czesci.has('INTERVAL') ? Number(czesci.get('INTERVAL')) : 1
+  if (!Number.isInteger(interval) || interval < 1) return null
+
+  const wynik: Powtarzanie = { freq, interval }
+
+  if (czesci.has('COUNT')) {
+    const count = Number(czesci.get('COUNT'))
+    if (!Number.isInteger(count) || count < 1) return null
+    wynik.count = count
+  }
+  if (czesci.has('UNTIL')) {
+    const until = dataZIcal(czesci.get('UNTIL')!)
+    if (!until) return null
+    wynik.until = until
+  }
+  // Początek tygodnia zmienia wynik tylko przy INTERVAL > 1 z BYDAY; liczymy
+  // od poniedziałku, więc inny początek to reguła, której nie odtworzymy.
+  if (czesci.has('WKST') && czesci.get('WKST') !== 'MO') return null
+
+  if (czesci.has('BYDAY')) {
+    if (freq !== 'WEEKLY') return null
+    // `2TU` czy `-1SU` (n-ty dzień tygodnia) nie trafi w listę — i dobrze.
+    const dni = czesci.get('BYDAY')!.split(',').map(d => DNI_TYGODNIA.indexOf(d))
+    if (dni.length === 0 || dni.some(d => d < 0)) return null
+    wynik.dniTygodnia = [...new Set(dni)].sort((a, b) => a - b)
+  }
+  return wynik
+}
+
 export interface WynikParsowania {
   zdarzenia: ZdarzenieIcal[]
   /** Ile bloków VEVENT było w pliku. */
   blokow: number
-  /** Bloki pominięte bez wyjaśnienia — ani zdarzenie, ani STATUS:CANCELLED. */
+  /** Bloki nieodczytane w całości: bez czytelnej daty albo z regułą
+   *  powtarzania, której nie umiemy rozwinąć. Anulowane się nie liczą. */
   pominiete: number
 }
 
@@ -77,12 +150,28 @@ export function parseIcalZeStatystyka(tekst: string): WynikParsowania {
         // jako wpisu, którego nie zrozumieliśmy.
         const anulowane = biezace.STATUS === 'CANCELLED'
         if (start && !anulowane) {
-          zdarzenia.push({
+          const zdarzenie: ZdarzenieIcal = {
             uid: biezace.UID ?? '',
             start,
             end: koniec && koniec > start ? koniec : dzienPo(start),
             opis: biezace.SUMMARY ?? '',
-          })
+          }
+          // Wpis powtarzalny, którego reguły nie rozumiemy, zostaje
+          // pojedynczym wystąpieniem — to jedno na pewno jest prawdziwe —
+          // ale liczy się jako nieodczytany, bo reszty dat nie znamy.
+          let niepelny = biezace.RDATE !== undefined
+          if (biezace.RRULE !== undefined) {
+            const regula = czytajRegule(biezace.RRULE)
+            if (regula) {
+              const wyjatki = (biezace.EXDATE ?? '').split(',').map(dataZIcal).filter((d): d is string => !!d)
+              if (wyjatki.length) regula.wyjatki = wyjatki
+              zdarzenie.powtarzanie = regula
+            } else {
+              niepelny = true
+            }
+          }
+          if (niepelny) pominiete++
+          zdarzenia.push(zdarzenie)
         } else if (!anulowane) {
           pominiete++
         }
@@ -95,7 +184,9 @@ export function parseIcalZeStatystyka(tekst: string): WynikParsowania {
     if (dwukropek < 0) continue
     // `DTSTART;VALUE=DATE` → `DTSTART`: parametry nie są nam potrzebne.
     const nazwa = linia.slice(0, dwukropek).split(';')[0].toUpperCase()
-    biezace[nazwa] = linia.slice(dwukropek + 1).trim()
+    const wartosc = linia.slice(dwukropek + 1).trim()
+    // EXDATE może wystąpić wiele razy — każdy wiersz dokłada wyjątki.
+    biezace[nazwa] = nazwa === 'EXDATE' && biezace.EXDATE ? `${biezace.EXDATE},${wartosc}` : wartosc
   }
 
   return { zdarzenia, blokow, pominiete }
@@ -109,15 +200,99 @@ export function parseIcal(tekst: string): ZdarzenieIcal[] {
 /** Zajęte dni w oknie [od, do), posortowane, bez powtórzeń. */
 export function dniZajete(zdarzenia: ZdarzenieIcal[], od: string, do_: string): string[] {
   const dni = new Set<string>()
-  for (const z of zdarzenia) {
+  const dodaj = (s: string, e: string) => {
     // Przycięcie przed rozwinięciem — zdarzenie „do 2099 roku” nie może
     // zbudować dziesiątek tysięcy wpisów.
-    const start = z.start > od ? z.start : od
-    const koniec = z.end < do_ ? z.end : do_
-    if (start >= koniec) continue
+    const start = s > od ? s : od
+    const koniec = e < do_ ? e : do_
+    if (start >= koniec) return
     for (const d of rozwinZakres(start, koniec)) dni.add(d)
   }
+  for (const z of zdarzenia) {
+    if (!z.powtarzanie) { dodaj(z.start, z.end); continue }
+    const dlugosc = roznicaDni(z.start, z.end)
+    for (const s of wystapienia(z.start, dlugosc, z.powtarzanie, od, do_)) {
+      dodaj(s, przesun(s, dlugosc))
+    }
+  }
   return [...dni].sort()
+}
+
+const DZIEN_MS = 86_400_000
+const naDate = (d: string) => new Date(`${d}T00:00:00Z`)
+const zDaty = (d: Date) => d.toISOString().slice(0, 10)
+const roznicaDni = (a: string, b: string) => Math.round((naDate(b).getTime() - naDate(a).getTime()) / DZIEN_MS)
+const przesun = (d: string, dni: number) => zDaty(new Date(naDate(d).getTime() + dni * DZIEN_MS))
+
+/** Dzień miesiąca albo null, gdy go nie ma — 31 kwietnia, 29 lutego 2027. */
+function dataJesliIstnieje(rok: number, miesiac0: number, dzien: number): string | null {
+  const d = new Date(Date.UTC(rok, miesiac0, dzien))
+  return d.getUTCMonth() === ((miesiac0 % 12) + 12) % 12 && d.getUTCDate() === dzien ? zDaty(d) : null
+}
+
+/** Bezpiecznik: tyle okresów reguły przechodzimy najwyżej. Reguła, która go
+ *  wyczerpie, jest absurdalna (DTSTART w roku 1, INTERVAL=1000). */
+const MAKS_OKRESOW = 50_000
+
+/**
+ * Początki kolejnych wystąpień w porządku chronologicznym, tylko te, które
+ * mogą zachodzić na okno [od, do_).
+ *
+ * COUNT liczy od pierwszego wystąpienia, także sprzed okna — dlatego dla
+ * reguł dziennych i tygodniowych przeskakujemy do okna arytmetycznie, ale
+ * z dokładnym licznikiem, zamiast przechodzić dzień po dniu od 1970 roku.
+ */
+function* wystapienia(start: string, dlugosc: number, r: Powtarzanie, od: string, do_: string): Generator<string> {
+  const wyjatki = new Set(r.wyjatki ?? [])
+  // Wystąpienie zaczęte przed `prog` kończy się przed oknem.
+  const prog = przesun(od, -Math.max(dlugosc, 1))
+
+  // Okres: dzień, tydzień, miesiąc albo rok — razy INTERVAL. Każdy okres
+  // daje uporządkowaną listę kandydatów.
+  let kandydaci: (okres: number) => string[]
+  let poczatekOkresu: (okres: number) => string
+  let pierwszyOkres = 0
+  let liczbaPrzed = 0
+
+  if (r.freq === 'DAILY') {
+    const krok = r.interval
+    kandydaci = o => [przesun(start, o * krok)]
+    poczatekOkresu = o => przesun(start, o * krok)
+    pierwszyOkres = Math.max(0, Math.floor(roznicaDni(start, prog) / krok) - 1)
+    liczbaPrzed = pierwszyOkres
+  } else if (r.freq === 'WEEKLY') {
+    const dniTyg = r.dniTygodnia ?? [(naDate(start).getUTCDay() + 6) % 7]
+    const poniedzialek = przesun(start, -((naDate(start).getUTCDay() + 6) % 7))
+    const krok = 7 * r.interval
+    kandydaci = o => dniTyg.map(d => przesun(poniedzialek, o * krok + d)).filter(d => d >= start)
+    poczatekOkresu = o => przesun(poniedzialek, o * krok)
+    pierwszyOkres = Math.max(0, Math.floor(roznicaDni(poniedzialek, prog) / krok) - 1)
+    // Pierwszy tydzień bywa niepełny (dni sprzed DTSTART nie istnieją),
+    // każdy następny ma komplet.
+    liczbaPrzed = pierwszyOkres === 0 ? 0 : kandydaci(0).length + (pierwszyOkres - 1) * dniTyg.length
+  } else {
+    const d = naDate(start)
+    const rok = d.getUTCFullYear(), mies = d.getUTCMonth(), dzien = d.getUTCDate()
+    const miesiecy = r.freq === 'MONTHLY' ? r.interval : 12 * r.interval
+    kandydaci = o => {
+      const data = dataJesliIstnieje(rok, mies + o * miesiecy, dzien)
+      return data ? [data] : []
+    }
+    poczatekOkresu = o => zDaty(new Date(Date.UTC(rok, mies + o * miesiecy, 1)))
+  }
+
+  let numer = liczbaPrzed
+  for (let o = pierwszyOkres; o < pierwszyOkres + MAKS_OKRESOW; o++) {
+    if (poczatekOkresu(o) >= do_) return
+    for (const s of kandydaci(o)) {
+      if (r.count !== undefined && numer >= r.count) return
+      if (r.until !== undefined && s > r.until) return
+      if (s >= do_) return
+      numer++
+      if (s < prog || wyjatki.has(s)) continue
+      yield s
+    }
+  }
 }
 
 /** Kolejne zajęte dni → pobyty. Koniec to dzień po ostatniej nocy. */
@@ -133,6 +308,35 @@ export function zakresyZDni(dni: string[]): Zakres[] {
 }
 
 const bezMyslnikow = (d: string) => d.replace(/-/g, '')
+
+/** Bajty znaku w UTF-8 — bez alokacji, bo liczymy znak po znaku. */
+function bajtyUtf8(znak: string): number {
+  const k = znak.codePointAt(0)!
+  return k < 0x80 ? 1 : k < 0x800 ? 2 : k < 0x10000 ? 3 : 4
+}
+
+/**
+ * RFC 5545 §3.1: wiersz dłuższy niż 75 bajtów zawijamy, a kontynuacja
+ * zaczyna się spacją (która też się liczy). Liczymy bajty, nie znaki, i nie
+ * tniemy znaku wielobajtowego — „ż" przecięte w pół to krzaczki w portalu.
+ */
+function zawin(linia: string): string {
+  const wynik: string[] = []
+  let biezacy = ''
+  let bajty = 0
+  for (const znak of linia) {
+    const b = bajtyUtf8(znak)
+    if (bajty + b > 75) {
+      wynik.push(biezacy)
+      biezacy = ' '
+      bajty = 1
+    }
+    biezacy += znak
+    bajty += b
+  }
+  wynik.push(biezacy)
+  return wynik.join('\r\n')
+}
 
 /**
  * Plik iCal do pobrania przez Booking i Airbnb.
@@ -164,7 +368,7 @@ export function zbudujIcal(opcje: { nazwa: string; zakresy: Zakres[]; domena: st
     )
   }
   linie.push('END:VCALENDAR')
-  return linie.join('\r\n') + '\r\n'
+  return linie.map(zawin).join('\r\n') + '\r\n'
 }
 
 export type BladAdresu = 'invalid_url' | 'not_https' | 'private_host'

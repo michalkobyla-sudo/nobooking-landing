@@ -290,3 +290,157 @@ describe('parseIcalZeStatystyka', () => {
     expect(parseIcalZeStatystyka('<html>Not found</html>')).toEqual({ zdarzenia: [], blokow: 0, pominiete: 0 })
   })
 })
+
+/**
+ * Wydarzenia powtarzalne (RRULE).
+ *
+ * Portale ich nie używają — rezerwacja się nie powtarza. Ale źródło „inne"
+ * w panelu jest właśnie na prywatny kalendarz właściciela, a tam „nie
+ * wynajmuję w weekendy" to jedno wydarzenie z regułą, nie sto wydarzeń.
+ *
+ * Wykryte na prawdziwym pliku Apple (święta PL, 2026-11-09): „Nowy Rok"
+ * zapisany raz, z datą 2024-01-01 i `FREQ=YEARLY;COUNT=6`. Parser brał tylko
+ * pierwszą datę, przeszłą — i 1 stycznia 2027 nie był zablokowany. Licznik
+ * pominięć tego nie łapał, bo wpis „odczytywał się poprawnie".
+ */
+describe('wydarzenia powtarzalne', () => {
+  const plik = (...wpisy: string[][]) => [
+    'BEGIN:VCALENDAR',
+    ...wpisy.flatMap(w => ['BEGIN:VEVENT', 'UID:x@test', ...w, 'END:VEVENT']),
+    'END:VCALENDAR',
+  ].join('\r\n')
+  const dni = (tekst: string, od: string, do_: string) => dniZajete(parseIcal(tekst), od, do_)
+
+  it('co roku z limitem — przypadek z pliku Apple', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20240101', 'DTEND;VALUE=DATE:20240102', 'RRULE:FREQ=YEARLY;COUNT=6'])
+    expect(dni(t, '2026-12-01', '2027-01-07')).toEqual(['2027-01-01'])
+  })
+
+  it('COUNT kończy powtarzanie', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20240101', 'RRULE:FREQ=YEARLY;COUNT=2'])
+    expect(dni(t, '2026-12-01', '2027-01-07')).toEqual([])
+  })
+
+  it('UNTIL jest włącznie', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261201', 'RRULE:FREQ=DAILY;UNTIL=20261203'])
+    expect(dni(t, '2026-11-01', '2027-01-01')).toEqual(['2026-12-01', '2026-12-02', '2026-12-03'])
+  })
+
+  it('UNTIL jako data z godziną', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261201', 'RRULE:FREQ=DAILY;UNTIL=20261202T225959Z'])
+    expect(dni(t, '2026-11-01', '2027-01-01')).toEqual(['2026-12-01', '2026-12-02'])
+  })
+
+  // Tak Kalendarz Google zapisuje „co tydzień w: sob, nie".
+  it('co tydzień w wybrane dni', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261205', 'DTEND;VALUE=DATE:20261206', 'RRULE:FREQ=WEEKLY;BYDAY=SA,SU'])
+    expect(dni(t, '2026-12-01', '2026-12-15')).toEqual(['2026-12-05', '2026-12-06', '2026-12-12', '2026-12-13'])
+  })
+
+  it('co drugi tydzień', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261207', 'RRULE:FREQ=WEEKLY;INTERVAL=2'])
+    expect(dni(t, '2026-12-01', '2027-01-01')).toEqual(['2026-12-07', '2026-12-21'])
+  })
+
+  // Wystąpienia sprzed DTSTART nie istnieją, nawet jeśli wypadają w tym samym tygodniu.
+  it('BYDAY nie cofa się przed początek', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261209', 'RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=3'])
+    expect(dni(t, '2026-12-01', '2027-01-01')).toEqual(['2026-12-09', '2026-12-14', '2026-12-16'])
+  })
+
+  it('pobyt kilkudniowy zachowuje długość w każdym powtórzeniu', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261204', 'DTEND;VALUE=DATE:20261206', 'RRULE:FREQ=WEEKLY;COUNT=2'])
+    expect(dni(t, '2026-12-01', '2027-01-01')).toEqual(['2026-12-04', '2026-12-05', '2026-12-11', '2026-12-12'])
+  })
+
+  // RFC 5545: 31. dzień w miesiącu, który go nie ma, po prostu nie występuje.
+  it('co miesiąc 31. pomija krótsze miesiące', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20270131', 'RRULE:FREQ=MONTHLY;COUNT=4'])
+    expect(dni(t, '2027-01-01', '2028-01-01')).toEqual(['2027-01-31', '2027-03-31', '2027-05-31', '2027-07-31'])
+  })
+
+  it('29 lutego tylko w latach przestępnych', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20240229', 'RRULE:FREQ=YEARLY'])
+    expect(dni(t, '2025-01-01', '2029-01-01')).toEqual(['2028-02-29'])
+  })
+
+  it('EXDATE wyłącza wystąpienia — w jednym wierszu i w kilku', () => {
+    const t = plik([
+      'DTSTART;VALUE=DATE:20261201', 'RRULE:FREQ=DAILY;COUNT=5',
+      'EXDATE;VALUE=DATE:20261202,20261203', 'EXDATE;VALUE=DATE:20261205',
+    ])
+    expect(dni(t, '2026-11-01', '2027-01-01')).toEqual(['2026-12-01', '2026-12-04'])
+  })
+
+  // Reguła bez końca, zaczęta dawno temu — nie może kręcić pętli przez
+  // dziesiątki lat, żeby dojść do okna synchronizacji.
+  it('codzienna reguła od 1970 roku bez końca daje tylko okno', () => {
+    const t = plik(['DTSTART;VALUE=DATE:19700101', 'RRULE:FREQ=DAILY'])
+    const wynik = dni(t, '2026-12-01', '2026-12-04')
+    expect(wynik).toEqual(['2026-12-01', '2026-12-02', '2026-12-03'])
+  })
+
+  it('COUNT liczy się od początku, także gdy okno zaczyna się później', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261201', 'RRULE:FREQ=DAILY;COUNT=10'])
+    expect(dni(t, '2026-12-08', '2027-01-01')).toEqual(['2026-12-08', '2026-12-09', '2026-12-10'])
+  })
+
+  // Reguła, której nie rozumiemy w całości: pierwsze wystąpienie blokujemy,
+  // bo na pewno jest prawdziwe, a wpis liczymy jako nieodczytany — panel
+  // powie właścicielowi, że resztę ma sprawdzić ręcznie.
+  it('nieobsługiwana reguła: pierwsze wystąpienie zostaje, wpis jest policzony', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20270328', 'RRULE:FREQ=YEARLY;COUNT=6;BYDAY=-1SU;BYMONTH=3'])
+    const st = parseIcalZeStatystyka(t)
+    expect(st.pominiete).toBe(1)
+    expect(dniZajete(st.zdarzenia, '2027-01-01', '2029-01-01')).toEqual(['2027-03-28'])
+  })
+
+  it('RDATE też jest liczone jako nieodczytane', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261201', 'RDATE;VALUE=DATE:20261215'])
+    expect(parseIcalZeStatystyka(t).pominiete).toBe(1)
+  })
+
+  it('obsługiwana reguła nie jest liczona jako pominięta', () => {
+    const t = plik(['DTSTART;VALUE=DATE:20261205', 'RRULE:FREQ=WEEKLY;BYDAY=SA,SU'])
+    expect(parseIcalZeStatystyka(t).pominiete).toBe(0)
+  })
+})
+
+/**
+ * RFC 5545 §3.1: wiersz nie powinien przekraczać 75 bajtów, dłuższy zawija
+ * się, a kontynuacja zaczyna spacją. Wykryte parserem Mozilli (ical.js) na
+ * naszym eksporcie: nazwa apartamentu dała wiersz 115-bajtowy. Mozilla i Google
+ * to tolerują; nie wiemy, czy toleruje parser Bookingu — a eksport czyta
+ * właśnie Booking.
+ */
+describe('zawijanie długich wierszy w eksporcie', () => {
+  const NAZWA = 'Apartament Słoneczna Żółta Łódź — widok na morze Costa del Sol Málaga ul. Świętokrzyska'
+  const plik = zbudujIcal({
+    nazwa: NAZWA,
+    zakresy: [{ start: '2026-12-12', end: '2026-12-15' }],
+    domena: 'nobooking.eu',
+    teraz: new Date('2026-11-09T10:00:00Z'),
+  })
+  const wiersze = plik.split('\r\n').filter(Boolean)
+
+  it('żaden wiersz nie przekracza 75 bajtów', () => {
+    for (const w of wiersze) expect(new TextEncoder().encode(w).length).toBeLessThanOrEqual(75)
+  })
+
+  // Cięcie w środku „ż" dałoby w portalu krzaczki zamiast nazwy.
+  it('nie tnie znaków wielobajtowych', () => {
+    for (const w of wiersze) {
+      const bajty = new TextEncoder().encode(w)
+      expect(new TextDecoder('utf-8', { fatal: true }).decode(bajty)).toBe(w)
+    }
+  })
+
+  it('po rozwinięciu nazwa jest nietknięta', () => {
+    const rozwiniete = plik.replace(/\r\n[ \t]/g, '')
+    expect(rozwiniete).toContain(`X-WR-CALNAME:${NAZWA}`)
+  })
+
+  it('zdarzenia nadal czytają się w obie strony', () => {
+    expect(parseIcal(plik)).toMatchObject([{ start: '2026-12-12', end: '2026-12-15' }])
+  })
+})
