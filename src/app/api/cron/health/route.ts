@@ -11,6 +11,7 @@ import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
 import { WYMAGANE } from '@/lib/schematWymagany'
+import { regulaminMarkdown } from '@/lib/regulaminTresc'
 
 export const runtime = 'nodejs'
 
@@ -407,6 +408,9 @@ export async function GET(request: NextRequest) {
     botWlaczony,
     botToken,
     kalendarzeZBledem,
+    // Ta trasa ma w next.config.ts ten sam wpis co webhook, więc jest jego
+    // pośrednim świadkiem: tu plik jest — tam też powinien być.
+    regulaminDostepny: regulaminMarkdown() !== null,
   }
 
   const znaleziska = ocenStan(stan)

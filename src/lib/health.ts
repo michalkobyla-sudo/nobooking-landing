@@ -87,6 +87,9 @@ export interface StanSystemu {
     blad: string
     godzinBezSynchronizacji: number | null
   }>
+  /** Czy funkcja ma w paczce `docs/PRAWNE-regulamin.md` — mail po płatności
+   *  dołącza go jako potwierdzenie umowy. */
+  regulaminDostepny: boolean
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -157,6 +160,14 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: `Kalendarz ${k.zrodlo} nie synchronizuje się (${k.slug})`,
       szczegol: `${przyczyna} Terminy sprzedane w portalu mogą być u nas wolne, czyli grozi to podwójną rezerwacją.`,
+    })
+  }
+
+  if (!s.regulaminDostepny) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Regulamin nie trafił do paczki funkcji',
+      szczegol: 'Mail po płatności wychodzi z samym linkiem zamiast pełnej treści regulaminu, a to ona jest potwierdzeniem umowy (art. 21 ustawy o prawach konsumenta). Sprawdź outputFileTracingIncludes w next.config.ts.',
     })
   }
 

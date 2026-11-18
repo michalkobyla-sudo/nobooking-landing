@@ -1,6 +1,8 @@
 import type { Order } from './types'
 import { opisZrodla } from '@/lib/attribution'
 import { PRICE_LABELS } from './prices'
+import { htmlPotwierdzenia } from './potwierdzenieUmowy'
+import { regulaminMarkdown } from './regulaminTresc'
 
 const FROM_EMAIL = 'noreply@nobooking.eu'
 const FROM_NAME = 'Nobooking'
@@ -152,12 +154,20 @@ export async function sendNewOrderNotification(order: Order) {
 }
 
 /** Email 2: Send onboarding form link to client */
-export async function sendOnboardingEmail(order: Order) {
+/**
+ * Mail po płatności: link do formularza onboardingowego i potwierdzenie umowy
+ * z pouczeniem o odstąpieniu i pełnym regulaminem (art. 21 upk).
+ *
+ * `zawarcie` — chwila zawarcia umowy, od której liczy się 14 dni na
+ * odstąpienie. Webhook podaje chwilę płatności; ponowna wysyłka z panelu nie
+ * zna jej dokładnie i podaje datę zamówienia z zapasem na korzyść klienta.
+ */
+export async function sendOnboardingEmail(order: Order, zawarcie: Date) {
   const onboardingUrl = `${SITE_URL}/onboarding/${order.onboarding_token}`
 
   await sendEmail(
     order.email,
-    `Twoja strona apartamentu — wypełnij formularz`,
+    `Potwierdzenie zamówienia — wypełnij formularz swojej strony`,
     wrapEmail(`
       ${renderHeader('Jeden krok do Twojej strony')}
 
@@ -192,8 +202,16 @@ export async function sendOnboardingEmail(order: Order) {
         </p>
 
         <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0;">W razie pytań odpowiedz na tego emaila.<br/>
+        <p style="color: #374151; margin: 0 0 2rem;">W razie pytań odpowiedz na tego emaila.<br/>
         <strong>Michał · Nobooking</strong></p>
+
+        ${htmlPotwierdzenia({
+          plan: order.plan,
+          currency: order.currency,
+          numer: order.id,
+          zawarcie,
+          regulaminMd: regulaminMarkdown(),
+        })}
       </div>
 
       ${renderFooter()}

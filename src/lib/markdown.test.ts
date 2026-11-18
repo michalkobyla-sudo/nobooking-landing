@@ -61,3 +61,13 @@ describe('markdownNaHtml', () => {
     expect(markdownNaHtml('')).toBe('')
   })
 })
+
+// Pogrubienie łamane na kontynuację pozycji listy. Wcześniej każdy wiersz
+// formatował się osobno i w regulaminie (pkt 13) zostawały gwiazdki —
+// widoczne na /regulamin i w mailu z potwierdzeniem umowy.
+describe('pogrubienie przez kilka wierszy pozycji listy', () => {
+  it('skleja przed formatowaniem', () => {
+    expect(markdownNaHtml('1. oraz **automatyczne usuwanie\n   po 7 dniach**;'))
+      .toBe('<ol><li>oraz <strong>automatyczne usuwanie po 7 dniach</strong>;</li></ol>')
+  })
+})

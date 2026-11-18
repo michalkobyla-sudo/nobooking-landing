@@ -40,6 +40,16 @@ const csp = [
 const nextConfig: NextConfig = {
   serverExternalPackages: ['stripe'],
 
+  // Regulamin czytany z dysku w trakcie działania funkcji (pełna treść w mailu
+  // po płatności, lib/regulaminTresc.ts). Bez tego wpisu plik nie trafia do
+  // paczki funkcji na Vercelu i mail wychodzi z samym linkiem. Raport zdrowia
+  // ma ten sam wpis i codziennie sprawdza, czy plik jest.
+  outputFileTracingIncludes: {
+    '/api/stripe/webhook': ['./docs/PRAWNE-regulamin.md'],
+    '/api/admin/orders/\\[id\\]/send-onboarding': ['./docs/PRAWNE-regulamin.md'],
+    '/api/cron/health': ['./docs/PRAWNE-regulamin.md'],
+  },
+
   async headers() {
     return [
       {

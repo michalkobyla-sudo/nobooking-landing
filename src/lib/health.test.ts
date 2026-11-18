@@ -29,6 +29,7 @@ const zdrowy: StanSystemu = {
   botWlaczony: false,
   botToken: null,
   kalendarzeZBledem: [],
+  regulaminDostepny: true,
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -479,5 +480,19 @@ describe('kanały kalendarzy', () => {
   it('opisuje skutek, nie kod błędu', () => {
     const z = ocenStan({ ...zdrowy, kalendarzeZBledem: [kanal({ godzinBezSynchronizacji: 9 })] })
     expect(z[0].szczegol).toMatch(/podwójn|sprzedan/i)
+  })
+})
+
+/**
+ * Pełny regulamin w mailu po płatności jest potwierdzeniem umowy (art. 21 upk).
+ * Plik czytany jest z dysku funkcji — jeśli wypadnie z paczki, mail wyjdzie
+ * z samym linkiem i nikt się nie zorientuje.
+ */
+describe('regulamin w paczce funkcji', () => {
+  it('brak pliku jest znaleziskiem', () => {
+    const z = ocenStan({ ...zdrowy, regulaminDostepny: false })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].szczegol).toMatch(/outputFileTracingIncludes/)
   })
 })

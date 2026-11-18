@@ -95,20 +95,22 @@ export function markdownNaHtml(zrodlo: string): string {
     const punkt = l.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/)
     if (punkt) {
       const numerowana = /\d/.test(punkt[2])
+      // Surowy tekst pozycji; formatowanie dopiero po sklejeniu kontynuacji —
+      // inaczej pogrubienie łamane na dwa wiersze zostawiało gwiazdki.
       const pozycje: string[] = []
       while (i < linie.length) {
         const m = linie[i].match(/^(\s*)([-*]|\d+\.)\s+(.*)$/)
         if (!m) {
           // Kontynuacja pozycji: wcięty wiersz bez znacznika.
           if (pozycje.length && /^\s+\S/.test(linie[i])) {
-            pozycje[pozycje.length - 1] += ' ' + wWierszu(linie[i].trim()); i++; continue
+            pozycje[pozycje.length - 1] += ' ' + linie[i].trim(); i++; continue
           }
           break
         }
-        pozycje.push(wWierszu(m[3])); i++
+        pozycje.push(m[3]); i++
       }
       const t = numerowana ? 'ol' : 'ul'
-      out.push(`<${t}>${pozycje.map(p => `<li>${p}</li>`).join('')}</${t}>`)
+      out.push(`<${t}>${pozycje.map(p => `<li>${wWierszu(p)}</li>`).join('')}</${t}>`)
       continue
     }
 

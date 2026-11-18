@@ -166,7 +166,8 @@ export async function POST(request: NextRequest) {
               .includes(order.status as string)
 
             if (!alreadySent) {
-              await sendOnboardingEmail(order as Order)
+              // Płatność właśnie potwierdzona — to chwila zawarcia umowy.
+              await sendOnboardingEmail(order as Order, new Date())
               await supabase
                 .from('orders')
                 .update({ status: 'onboarding_sent' })

@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { WERSJA_REGULAMINU, WERSJA_POLITYKI, dataSlownie } from './dokumentyPrawne'
 import { PRICE_LABELS, RENEWAL_LABELS } from './prices'
+import { markdownNaHtml } from './markdown'
 
 const czytaj = (plik: string) => fs.readFileSync(path.join(process.cwd(), 'docs', plik), 'utf8')
 const REGULAMIN = czytaj('PRAWNE-regulamin.md')
@@ -51,6 +52,13 @@ describe('publiczne dokumenty nie zawierają notatek roboczych', () => {
     // wyświetliłaby się klientowi dosłownie.
     it(`${nazwa}: bez kursywy, której renderer nie zna`, () => {
       expect(tresc.replace(/\*\*/g, '')).not.toContain('*')
+    })
+
+    // Po wyrenderowaniu nie może zostać surowy Markdown. Do 2026-11-18 pogrubienie
+    // łamane na kontynuację punktu listy zostawiało gwiazdki na /regulamin.
+    it(`${nazwa}: renderuje się bez surowego Markdownu`, () => {
+      const tekst = markdownNaHtml(tresc).replace(/<[^>]*>/g, '')
+      expect(tekst).not.toMatch(/\*\*|^#{1,4} |\]\(/m)
     })
   }
 })

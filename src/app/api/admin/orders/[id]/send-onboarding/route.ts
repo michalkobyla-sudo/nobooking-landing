@@ -25,7 +25,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   try {
-    await sendOnboardingEmail(order as Order)
+    // Chwili płatności nie znamy — sesja Stripe żyje do 24 h od zamówienia.
+    // Dzień zapasu: termin odstąpienia podany klientowi może być dłuższy od
+    // ustawowego, nigdy krótszy.
+    const zawarcie = new Date(Date.parse(String(order.created_at)) + 86_400_000)
+    await sendOnboardingEmail(order as Order, zawarcie)
   } catch (err) {
     console.error('[send-onboarding] email error:', err)
     return NextResponse.json({ error: 'email_error' }, { status: 500 })
