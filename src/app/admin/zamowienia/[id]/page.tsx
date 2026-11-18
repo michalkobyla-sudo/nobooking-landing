@@ -164,7 +164,7 @@ export default function OrderDetailPage() {
         {(order.invoice_company || order.invoice_nip || order.invoice_address) ? (
           <Section title="Dane do faktury">
             <Row label="Firma" value={order.invoice_company} />
-            <Row label="NIP" value={order.invoice_nip} />
+            <Row label="NIP / VAT UE" value={order.invoice_nip} />
             <Row label="Adres" value={order.invoice_address} />
           </Section>
         ) : (

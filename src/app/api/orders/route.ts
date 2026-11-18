@@ -5,14 +5,12 @@ import { zBody, opisZrodla } from '@/lib/attribution'
 import type { Order } from '@/lib/types'
 import { utworzSesjeZamowienia } from '@/lib/checkoutZamowienia'
 import { WERSJA_REGULAMINU } from '@/lib/dokumentyPrawne'
+import { normalizujNumerPodatkowy } from '@/lib/numerPodatkowy'
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-function validateNip(nip: string): boolean {
-  return /^\d{10}$/.test(nip.replace(/[-\s]/g, ''))
-}
 
 export async function POST(request: NextRequest) {
   const body = await request.json() as {
@@ -55,8 +53,13 @@ export async function POST(request: NextRequest) {
   if (!validateEmail(body.email!)) {
     return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
   }
-  if (body.invoice_nip && !validateNip(body.invoice_nip)) {
-    return NextResponse.json({ error: 'invalid_nip' }, { status: 400 })
+  // NIP albo numer VAT UE. Zapisujemy postać znormalizowaną — bez spacji
+  // i myślników — bo trafia wprost na fakturę.
+  let numerPodatkowy: string | null = null
+  if (body.invoice_nip?.trim()) {
+    const wynik = normalizujNumerPodatkowy(body.invoice_nip)
+    if (!wynik.ok) return NextResponse.json({ error: 'invalid_nip' }, { status: 400 })
+    numerPodatkowy = wynik.numer
   }
 
   const zrodlo = zBody(body.zrodlo)
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
       email: body.email!.trim().toLowerCase(),
       phone: body.phone!.trim(),
       invoice_company: body.invoice_company?.trim() || null,
-      invoice_nip: body.invoice_nip?.trim() || null,
+      invoice_nip: numerPodatkowy,
       invoice_address: body.invoice_address?.trim() || null,
       apartment_name: body.apartment_name!.trim(),
       apartment_location: body.apartment_location!.trim(),

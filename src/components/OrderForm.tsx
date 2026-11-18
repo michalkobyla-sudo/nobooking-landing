@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { normalizujNumerPodatkowy } from '@/lib/numerPodatkowy'
 import { PRICE_LABELS } from '@/lib/prices'
 import { zJson, PUSTE_ZRODLO, KLUCZ_ZRODLA } from '@/lib/attribution'
 
@@ -86,11 +87,9 @@ export default function OrderForm({ plan, currency }: Props) {
       setError('Wypełnij dane apartamentu.')
       return
     }
-    if (form.want_invoice && form.invoice_nip) {
-      if (!/^\d{10}$/.test(form.invoice_nip.replace(/[-\s]/g, ''))) {
-        setError('NIP musi zawierać 10 cyfr.')
-        return
-      }
+    if (form.want_invoice && form.invoice_nip.trim() && !normalizujNumerPodatkowy(form.invoice_nip).ok) {
+      setError('Sprawdź numer: polski NIP ma 10 cyfr, numer VAT z innego kraju UE zaczyna się od jego kodu, np. ESB12345678.')
+      return
     }
 
     if (!akceptacja) {
@@ -198,8 +197,8 @@ export default function OrderForm({ plan, currency }: Props) {
               <Field label="Nazwa firmy">
                 <input style={inputStyle} type="text" value={form.invoice_company} onChange={e => set('invoice_company', e.target.value)} />
               </Field>
-              <Field label="NIP (10 cyfr)">
-                <input style={inputStyle} type="text" value={form.invoice_nip} onChange={e => set('invoice_nip', e.target.value)} placeholder="1234567890" />
+              <Field label="NIP lub numer VAT UE">
+                <input style={inputStyle} type="text" value={form.invoice_nip} onChange={e => set('invoice_nip', e.target.value)} placeholder="np. 5342334497 albo ESB12345678" autoComplete="off" />
               </Field>
               <Field label="Adres">
                 <textarea style={textareaStyle} value={form.invoice_address} onChange={e => set('invoice_address', e.target.value)} />
