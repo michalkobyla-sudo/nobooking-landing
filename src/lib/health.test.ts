@@ -31,6 +31,7 @@ const zdrowy: StanSystemu = {
   kalendarzeZBledem: [],
   regulaminDostepny: true,
   stronyDoUsuniecia: [],
+  subdomenyAutomatyczne: true,
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -509,5 +510,14 @@ describe('dane po 12 miesiącach od wygaśnięcia', () => {
     expect(z).toHaveLength(1)
     expect(z[0].waga).toBe('ostrzezenie')
     expect(z[0].szczegol).toContain('villa-mar')
+  })
+})
+
+describe('subdomeny nowych stron', () => {
+  it('brak tokenu Vercel to informacja', () => {
+    const z = ocenStan({ ...zdrowy, subdomenyAutomatyczne: false })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('info')
+    expect(z[0].szczegol).toContain('VERCEL_API_TOKEN')
   })
 })

@@ -420,6 +420,7 @@ export async function GET(request: NextRequest) {
     // pośrednim świadkiem: tu plik jest — tam też powinien być.
     regulaminDostepny: regulaminMarkdown() !== null,
     stronyDoUsuniecia,
+    subdomenyAutomatyczne: Boolean((process.env.VERCEL_API_TOKEN ?? '').trim()),
   }
 
   const znaleziska = ocenStan(stan)

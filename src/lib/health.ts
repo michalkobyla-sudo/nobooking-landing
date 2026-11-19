@@ -92,6 +92,8 @@ export interface StanSystemu {
   regulaminDostepny: boolean
   /** Wyłączone strony wygasłe ponad 12 miesięcy temu — regulamin obiecuje usunięcie ich danych. */
   stronyDoUsuniecia: string[]
+  /** Czy provisioning może dodawać subdomeny slug.nobooking.eu (jest VERCEL_API_TOKEN). */
+  subdomenyAutomatyczne: boolean
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -172,6 +174,14 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Dane stron do usunięcia',
       szczegol: `Ponad 12 miesięcy od wygaśnięcia: ${s.stronyDoUsuniecia.join(', ')}. Regulamin i polityka prywatności obiecują wtedy usunięcie rezerwacji, opinii i zdjęć.`,
+    })
+  }
+
+  if (!s.subdomenyAutomatyczne) {
+    z.push({
+      waga: 'info',
+      tytul: 'Nowe strony nie dostaną subdomeny',
+      szczegol: 'Brak VERCEL_API_TOKEN w zmiennych środowiska. Strony działają pod nobooking.eu/sites/<slug>, ale adres slug.nobooking.eu trzeba będzie dodać ręcznie w Vercelu.',
     })
   }
 

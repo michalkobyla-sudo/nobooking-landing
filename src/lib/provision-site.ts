@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { dodajSubdomene } from '@/lib/vercelSubdomena'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase'
 import { createConnectAccount } from '@/lib/stripe-connect'
@@ -240,6 +241,11 @@ export async function provisionSite(
     renewal_price_eur: renewalPriceEur,
     renewal_currency: currency,
   })
+
+  // Subdomena slug.nobooking.eu. Nie blokuje provisioningu: strona działa
+  // i bez niej pod nobooking.eu/sites/<slug>, a raport zdrowia zgłasza brak tokenu.
+  const subdomena = await dodajSubdomene(slug)
+  if (!subdomena.ok) console.error(`[provision] subdomena ${slug}: ${subdomena.powod}`)
 
   return {
     siteId,
