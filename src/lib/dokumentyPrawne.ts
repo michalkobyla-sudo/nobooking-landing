@@ -10,8 +10,10 @@
  * Zmieniając treść `docs/PRAWNE-*.md`, zmień datę w dokumencie i tutaj —
  * `dokumentyPrawne.test.ts` nie przepuści rozjazdu.
  */
-export const WERSJA_REGULAMINU = '2026-11-09'
-export const WERSJA_POLITYKI = '2026-11-09'
+// 2026-11-19: telefon, usuwanie danych 12 miesięcy po wygaśnięciu. Poprzedniej
+// wersji (2026-11-09) nikt nie zaakceptował — w bazie nie było zamówień.
+export const WERSJA_REGULAMINU = '2026-11-19'
+export const WERSJA_POLITYKI = '2026-11-19'
 
 const MIESIACE = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca',
   'sierpnia', 'września', 'października', 'listopada', 'grudnia']

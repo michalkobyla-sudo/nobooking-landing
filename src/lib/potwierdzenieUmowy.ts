@@ -53,7 +53,7 @@ export function htmlPotwierdzenia(p: {
   return `
     <h2 style="font-size:1.05rem;margin:0 0 0.75rem;color:#111827">Potwierdzenie zawarcia umowy</h2>
     <table style="border-collapse:collapse;font-size:0.875rem;margin-bottom:1rem">
-      ${wiersz('Sprzedawca', 'KobylinskiStudio.pl Michał Kobyliński, ul. Łagowska 4/1U, 01-464 Warszawa, NIP 5342334497')}
+      ${wiersz('Sprzedawca', 'KobylinskiStudio.pl Michał Kobyliński, ul. Łagowska 4/1U, 01-464 Warszawa, NIP 5342334497, tel. +48 505 594 294')}
       ${wiersz('Usługa', `${PLAN_NAMES[p.plan]} — strona rezerwacyjna z utrzymaniem przez 2 lata od uruchomienia`)}
       ${wiersz('Cena', `${PRICE_LABELS[p.plan][p.currency]} (cena końcowa, zapłacona)`)}
       ${wiersz('Numer zamówienia', p.numer.slice(0, 8))}

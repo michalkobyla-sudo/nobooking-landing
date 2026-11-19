@@ -1,6 +1,6 @@
 # Polityka prywatności
 
-Obowiązuje od 9 listopada 2026 r.
+Obowiązuje od 19 listopada 2026 r.
 
 ## 1. Kto przetwarza Twoje dane
 
@@ -121,7 +121,7 @@ prywatności YouTube.
 | faktury i dane rozliczeniowe | 5 lat od końca roku kalendarzowego, w którym upłynął termin płatności podatku |
 | źródło wejścia | razem z zamówieniem, którego dotyczy |
 | rezerwacje i opinie | przez czas działania strony właściciela |
-| dane strony po wygaśnięciu | zostają, żeby odnowienie przywróciło stronę w całości; usuwamy je na żądanie właściciela |
+| dane strony po wygaśnięciu | 12 miesięcy od wygaśnięcia, żeby odnowienie przywróciło stronę w całości; potem je usuwamy, a na żądanie właściciela — wcześniej |
 | rozmowy przez Facebooka | do zakończenia rozmowy o ofercie albo do Twojego sprzeciwu |
 
 ## 10. Twoje prawa

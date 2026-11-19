@@ -1,13 +1,13 @@
 # Regulamin
 
-Obowiązuje od 9 listopada 2026 r.
+Obowiązuje od 19 listopada 2026 r.
 
 ## 1. Kto sprzedaje
 
 Usługę świadczy **KobylinskiStudio.pl Michał Kobyliński**, ul. Łagowska 4/1U, 01-464 Warszawa,
 NIP 5342334497.
 
-Kontakt we wszystkich sprawach: **kontakt@nobooking.eu**.
+Kontakt we wszystkich sprawach: **kontakt@nobooking.eu**, tel. **+48 505 594 294**.
 
 ## 2. Co kupujesz
 
@@ -76,8 +76,8 @@ Odnowienie Basic: **299 zł / 99 €**. Odnowienie Pro: **499 zł / 119 €**.
 
 Przypomnienia mailem na **90, 30, 14, 7 i 1 dzień** przed końcem. Po wygaśnięciu masz **14 dni
 karencji**; jeśli w tym czasie nie odnowisz, strona przestaje być dostępna dla gości. Dane — rezerwacje,
-zdjęcia, opinie — zostają, żeby odnowienie przywróciło stronę w stanie, w jakim była. Na Twoje żądanie
-usuniemy je wcześniej.
+zdjęcia, opinie — przechowujemy jeszcze przez **12 miesięcy od wygaśnięcia**, żeby odnowienie
+przywróciło stronę w stanie, w jakim była. Potem je usuwamy. Na Twoje żądanie usuniemy je wcześniej.
 
 Możesz zrezygnować z usługi w każdej chwili, pisząc na kontakt@nobooking.eu. Zwrot przysługuje
 w przypadkach opisanych w pkt 7 i 8.
@@ -190,8 +190,8 @@ osób towarzyszących, numery dokumentów, obywatelstwo i godzina przyjazdu.
    z art. 32–36 RODO;
 6. zgłosić Ci naruszenie ochrony danych **bez zbędnej zwłoki, nie później niż w ciągu 48 godzin**
    od jego wykrycia;
-7. po zakończeniu umowy usunąć dane gości na Twoje żądanie albo przekazać Ci je przed usunięciem,
-   chyba że przepisy nakazują ich przechowywanie;
+7. usunąć dane gości najpóźniej 12 miesięcy po wygaśnięciu strony, a na Twoje żądanie wcześniej,
+   albo przekazać Ci je przed usunięciem — chyba że przepisy nakazują ich przechowywanie;
 8. udostępnić Ci informacje potrzebne do wykazania, że wypełniamy te obowiązki, i umożliwić audyt
    po wcześniejszym uzgodnieniu terminu.
 
@@ -215,7 +215,7 @@ przepisy Twojego państwa.
 Wypełnij i odeślij tylko wtedy, gdy chcesz odstąpić od umowy. Możesz też napisać zwykłą wiadomość.
 
 > **Adresat:** KobylinskiStudio.pl Michał Kobyliński, ul. Łagowska 4/1U, 01-464 Warszawa,
-> kontakt@nobooking.eu
+> kontakt@nobooking.eu, tel. +48 505 594 294
 >
 > Ja, niżej podpisany, niniejszym informuję o moim odstąpieniu od umowy o świadczenie usługi:
 > strona rezerwacyjna Nobooking, pakiet ……………

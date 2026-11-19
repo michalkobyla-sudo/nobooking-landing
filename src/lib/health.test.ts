@@ -30,6 +30,7 @@ const zdrowy: StanSystemu = {
   botToken: null,
   kalendarzeZBledem: [],
   regulaminDostepny: true,
+  stronyDoUsuniecia: [],
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -494,5 +495,19 @@ describe('regulamin w paczce funkcji', () => {
     expect(z).toHaveLength(1)
     expect(z[0].waga).toBe('ostrzezenie')
     expect(z[0].szczegol).toMatch(/outputFileTracingIncludes/)
+  })
+})
+
+/**
+ * Regulamin i polityka obiecują usunięcie danych 12 miesięcy po wygaśnięciu
+ * strony. Pierwsze takie usunięcie wypada najwcześniej w maju 2029 — do czasu
+ * automatu raport pilnuje, żeby obietnica nie została bez pokrycia.
+ */
+describe('dane po 12 miesiącach od wygaśnięcia', () => {
+  it('strona do usunięcia jest znaleziskiem z nazwą', () => {
+    const z = ocenStan({ ...zdrowy, stronyDoUsuniecia: ['villa-mar'] })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+    expect(z[0].szczegol).toContain('villa-mar')
   })
 })

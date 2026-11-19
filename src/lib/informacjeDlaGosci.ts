@@ -119,7 +119,7 @@ const TRESC: Record<Lang, (d: DaneInformacji) => Informacje> = {
         tytul: 'Jak długo przechowujemy dane',
         akapity: [],
         punkty: [
-          'Dane rezerwacji — przez czas działania tej strony oraz okres, przez który przepisy podatkowe wymagają przechowywania dokumentów rozliczeniowych.',
+          'Dane rezerwacji — przez czas działania tej strony i do 12 miesięcy po jej wyłączeniu, potem są usuwane.',
           ...(d.checkin ? [`Numery dokumentów z check-inu — ${DNI_RETENCJI} dni od wyjazdu, potem są usuwane automatycznie.`] : []),
           'Opinie — do wycofania zgody albo usunięcia przez właściciela.',
         ],
@@ -190,7 +190,7 @@ const TRESC: Record<Lang, (d: DaneInformacji) => Informacje> = {
         tytul: 'How long we keep data',
         akapity: [],
         punkty: [
-          'Booking data — for as long as this website operates and for the period tax law requires accounting records to be kept.',
+          'Booking data — for as long as this website operates and up to 12 months after it is switched off, then deleted.',
           ...(d.checkin ? [`ID document numbers from check-in — ${DNI_RETENCJI} days after departure, then deleted automatically.`] : []),
           'Reviews — until you withdraw consent or the owner removes them.',
         ],
@@ -261,7 +261,7 @@ const TRESC: Record<Lang, (d: DaneInformacji) => Informacje> = {
         tytul: 'Cuánto tiempo conservamos los datos',
         akapity: [],
         punkty: [
-          'Datos de la reserva — mientras funcione esta web y durante el plazo que la normativa fiscal exige conservar la documentación contable.',
+          'Datos de la reserva — mientras funcione esta web y hasta 12 meses después de su desactivación; después se eliminan.',
           ...(d.checkin ? [`Números de documento del check-in — ${DNI_RETENCJI} días desde la salida; después se eliminan automáticamente.`] : []),
           'Opiniones — hasta que retires tu consentimiento o el propietario las elimine.',
         ],
@@ -332,7 +332,7 @@ const TRESC: Record<Lang, (d: DaneInformacji) => Informacje> = {
         tytul: 'Wie lange wir Daten speichern',
         akapity: [],
         punkty: [
-          'Buchungsdaten — solange diese Website betrieben wird und so lange, wie das Steuerrecht die Aufbewahrung von Buchhaltungsunterlagen verlangt.',
+          'Buchungsdaten — solange diese Website betrieben wird und bis zu 12 Monate nach ihrer Abschaltung, danach werden sie gelöscht.',
           ...(d.checkin ? [`Ausweisnummern aus dem Check-in — ${DNI_RETENCJI} Tage nach der Abreise, danach automatische Löschung.`] : []),
           'Bewertungen — bis zum Widerruf Ihrer Einwilligung oder bis zur Löschung durch den Eigentümer.',
         ],

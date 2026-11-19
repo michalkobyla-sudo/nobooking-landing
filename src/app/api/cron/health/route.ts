@@ -380,6 +380,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Strony wyłączone ponad 12 miesięcy po wygaśnięciu — patrz regulamin pkt 6.
+  const { data: wygasle } = await db
+    .from('sites')
+    .select('slug')
+    .eq('active', false)
+    .lt('expires_at', new Date(teraz - 365 * 86_400_000).toISOString())
+  const stronyDoUsuniecia = (wygasle ?? []).map(s => String(s.slug))
+
   const stan: StanSystemu = {
     ostatniaKopiaGodzinTemu,
     zamowieniaUtkniete: zamowieniaUtkniete ?? 0,
@@ -411,6 +419,7 @@ export async function GET(request: NextRequest) {
     // Ta trasa ma w next.config.ts ten sam wpis co webhook, więc jest jego
     // pośrednim świadkiem: tu plik jest — tam też powinien być.
     regulaminDostepny: regulaminMarkdown() !== null,
+    stronyDoUsuniecia,
   }
 
   const znaleziska = ocenStan(stan)

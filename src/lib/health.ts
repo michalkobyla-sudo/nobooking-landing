@@ -90,6 +90,8 @@ export interface StanSystemu {
   /** Czy funkcja ma w paczce `docs/PRAWNE-regulamin.md` — mail po płatności
    *  dołącza go jako potwierdzenie umowy. */
   regulaminDostepny: boolean
+  /** Wyłączone strony wygasłe ponad 12 miesięcy temu — regulamin obiecuje usunięcie ich danych. */
+  stronyDoUsuniecia: string[]
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -160,6 +162,16 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: `Kalendarz ${k.zrodlo} nie synchronizuje się (${k.slug})`,
       szczegol: `${przyczyna} Terminy sprzedane w portalu mogą być u nas wolne, czyli grozi to podwójną rezerwacją.`,
+    })
+  }
+
+  // Obietnica z regulaminu (pkt 6 i 13) i polityki prywatności. Automat
+  // usuwający dane powstanie przed pierwszym takim terminem (maj 2029).
+  if (s.stronyDoUsuniecia.length > 0) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Dane stron do usunięcia',
+      szczegol: `Ponad 12 miesięcy od wygaśnięcia: ${s.stronyDoUsuniecia.join(', ')}. Regulamin i polityka prywatności obiecują wtedy usunięcie rezerwacji, opinii i zdjęć.`,
     })
   }
 
