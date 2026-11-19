@@ -162,7 +162,7 @@ export async function sendNewOrderNotification(order: Order) {
  * odstąpienie. Webhook podaje chwilę płatności; ponowna wysyłka z panelu nie
  * zna jej dokładnie i podaje datę zamówienia z zapasem na korzyść klienta.
  */
-export async function sendOnboardingEmail(order: Order, zawarcie: Date) {
+export async function sendOnboardingEmail(order: Order, zawarcie: Date, wczesnyStart: boolean | null) {
   const onboardingUrl = `${SITE_URL}/onboarding/${order.onboarding_token}`
 
   await sendEmail(
@@ -211,6 +211,7 @@ export async function sendOnboardingEmail(order: Order, zawarcie: Date) {
           numer: order.id,
           zawarcie,
           regulaminMd: regulaminMarkdown(),
+          wczesnyStart,
         })}
       </div>
 

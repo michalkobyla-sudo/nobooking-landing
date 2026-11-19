@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyStripeEvent, webhookSecrets, type StripeWebhooks } from '@/lib/stripeWebhook'
 import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, type BookingEmailData } from '@/lib/email'
+import { wczesnyStartZMetadanych } from '@/lib/checkoutZamowienia'
 import { powiadomORezerwacji } from '@/lib/smsSend'
 import type { Order } from '@/lib/types'
 
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
 
             if (!alreadySent) {
               // Płatność właśnie potwierdzona — to chwila zawarcia umowy.
-              await sendOnboardingEmail(order as Order, new Date())
+              await sendOnboardingEmail(order as Order, new Date(), wczesnyStartZMetadanych(session.metadata))
               await supabase
                 .from('orders')
                 .update({ status: 'onboarding_sent' })

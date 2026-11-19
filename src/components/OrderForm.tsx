@@ -62,6 +62,9 @@ export default function OrderForm({ plan, currency }: Props) {
   // Akceptacja regulaminu. Osobny stan, nie pole `form`: nie jest daną
   // zamówienia, tylko warunkiem jego złożenia.
   const [akceptacja, setAkceptacja] = useState(false)
+  // Żądanie wcześniejszego startu (art. 15 ust. 3 upk). Dobrowolne i domyślnie
+  // niezaznaczone — zgoda zaznaczona z góry nie byłaby „wyraźna”.
+  const [wczesnyStart, setWczesnyStart] = useState(false)
 
   const planLabel = plan === 'pro' ? 'Pro' : 'Basic'
   const priceLabel = PRICE_LABELS[plan][currency]
@@ -115,6 +118,7 @@ export default function OrderForm({ plan, currency }: Props) {
           apartment_location: form.apartment_location.trim(),
           notes: form.notes.trim() || null,
           akceptacja_regulaminu: akceptacja,
+          wczesny_start: wczesnyStart,
           // Źródło zapisane przy pierwszej wizycie (`ZapiszZrodlo`). Odczyt
           // w try/catch, bo tryb prywatny rzuca — brak atrybucji nie może
           // zablokować zamówienia.
@@ -238,6 +242,23 @@ export default function OrderForm({ plan, currency }: Props) {
               {' '}i potwierdzam zapoznanie się z{' '}
               <a href="/polityka-prywatnosci" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>polityką prywatności</a>.
               {' '}Jako konsument masz 14 dni na odstąpienie od umowy.
+            </span>
+          </label>
+
+          {/* Żądanie wcześniejszego startu. Strona powstaje od razu niezależnie
+              od tego pola — decyduje ono tylko o tym, ile zwracamy przy
+              odstąpieniu (art. 35 i 36 ustawy o prawach konsumenta). */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.82rem', lineHeight: 1.5, color: '#4B5563', marginBottom: '1.5rem' }}>
+            <input
+              type="checkbox"
+              checked={wczesnyStart}
+              onChange={e => setWczesnyStart(e.target.checked)}
+              style={{ width: '18px', height: '18px', marginTop: '0.1rem', flexShrink: 0, accentColor: 'var(--color-accent)', cursor: 'pointer' }}
+            />
+            <span>
+              <strong style={{ color: '#374151' }}>Nieobowiązkowe:</strong> żądam rozpoczęcia usługi przed upływem 14 dni na odstąpienie od umowy.
+              {' '}Wiem, że jeśli potem odstąpię, zapłacę za część usługi wykonaną do tego czasu.
+              {' '}Bez zaznaczenia strona też powstaje od razu, a przy odstąpieniu zwracamy całość.
             </span>
           </label>
 

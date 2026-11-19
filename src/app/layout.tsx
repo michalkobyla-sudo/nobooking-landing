@@ -13,11 +13,11 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'Nobooking — własna strona rezerwacyjna bez prowizji',
-  description: 'Własna strona dla apartamentu wakacyjnego. Płatności bezpośrednie, panel admina, portal gościa. Zero prowizji. Gotowa w 7 dni.',
+  description: 'Własna strona dla apartamentu wakacyjnego. Płatności bezpośrednie, panel admina, portal gościa. Zero prowizji. Gotowa w 24 godziny.',
   metadataBase: new URL('https://nobooking.eu'),
   openGraph: {
     title: 'Nobooking — własna strona rezerwacyjna bez prowizji',
-    description: 'Przestań płacić prowizje. Własna strona dla apartamentu — gotowa w 7 dni.',
+    description: 'Przestań płacić prowizje. Własna strona dla apartamentu — gotowa w 24 godziny.',
     url: 'https://nobooking.eu',
     siteName: 'Nobooking',
     locale: 'pl_PL',

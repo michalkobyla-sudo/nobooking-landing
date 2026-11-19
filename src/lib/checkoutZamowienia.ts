@@ -33,6 +33,8 @@ export interface DaneSesji {
   orderId: string
   /** Data wersji regulaminu zaakceptowanej w formularzu — `WERSJA_REGULAMINU`. */
   wersjaRegulaminu: string
+  /** Czy klient zażądał rozpoczęcia usługi przed upływem 14 dni (pole dobrowolne). */
+  wczesnyStart: boolean
   /** Adres, na który Stripe odeśle gościa. Bierzemy go z **bieżącego żądania**,
    *  nie z konfiguracji — adres zwrotny ma prowadzić tam, skąd przyszedł klient. */
   adresPowrotu: string
@@ -81,7 +83,13 @@ export async function utworzSesjeZamowienia(dane: DaneSesji): Promise<WynikSesji
       // wywracała odnowienia po zmianie konta platformy (p24 nie istniał na nowym).
       // `regulamin` to jedyny trwały ślad tego, którą wersję zaakceptował
       // klient — regulamin stosuje się w brzmieniu z dnia zakupu.
-      metadata: { plan, currency, order_id: orderId, regulamin: dane.wersjaRegulaminu },
+      // `wczesny_start` — żądanie z art. 15 ust. 3 upk; trafia do maila
+      // z potwierdzeniem umowy i rozstrzyga, ile zwracamy przy odstąpieniu.
+      metadata: {
+        plan, currency, order_id: orderId,
+        regulamin: dane.wersjaRegulaminu,
+        wczesny_start: dane.wczesnyStart ? 'tak' : 'nie',
+      },
     })
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -92,5 +100,32 @@ export async function utworzSesjeZamowienia(dane: DaneSesji): Promise<WynikSesji
     const blad = err instanceof Error ? err.message : 'Stripe error'
     console.error('[checkout] Stripe error:', err)
     return { ok: false, blad }
+  }
+}
+
+/** `wczesny_start` z metadanych sesji: 'tak' / 'nie' / brak (starsze sesje). */
+export function wczesnyStartZMetadanych(metadata: Record<string, unknown> | null | undefined): boolean | null {
+  const w = metadata?.wczesny_start
+  return w === 'tak' ? true : w === 'nie' ? false : null
+}
+
+/**
+ * Żądanie wcześniejszego startu dla ponownej wysyłki maila z panelu admina,
+ * gdzie nie ma pod ręką zdarzenia Stripe. Null przy każdym kłopocie — mail
+ * wtedy nie twierdzi niczego i odsyła do regulaminu.
+ */
+export async function wczesnyStartZSesji(sessionId: string | null | undefined): Promise<boolean | null> {
+  const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
+  if (!sessionId || !klucz) return null
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const stripe = new StripeLib(klucz, { apiVersion: '2026-04-22.dahlia' })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return wczesnyStartZMetadanych(session.metadata as Record<string, unknown>)
+  } catch (err) {
+    console.error('[checkout] odczyt sesji nie powiódł się:', err)
+    return null
   }
 }

@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     notes?: string
     zrodlo?: unknown
     akceptacja_regulaminu?: unknown
+    wczesny_start?: unknown
   }
 
   // Validate required fields
@@ -105,6 +106,8 @@ export async function POST(request: NextRequest) {
     currency: order.currency as 'pln' | 'eur',
     orderId: order.id as string,
     wersjaRegulaminu: WERSJA_REGULAMINU,
+    // Pole dobrowolne: ściśle `true`, wszystko inne to brak żądania.
+    wczesnyStart: body.wczesny_start === true,
     adresPowrotu: request.nextUrl.origin,
   })
 

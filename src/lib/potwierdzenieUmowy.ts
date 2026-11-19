@@ -26,6 +26,21 @@ export function terminOdstapienia(zawarcie: Date): string {
 
 const bezRoku = (s: string) => s.replace(/ r\.$/, '')
 
+/**
+ * Co zwracamy przy odstąpieniu. Żądanie wcześniejszego startu potwierdzamy
+ * tutaj, na trwałym nośniku (art. 21 ust. 2 upk) — bez tego potwierdzenia nie
+ * można żądać zapłaty za wykonaną część (art. 36).
+ */
+function zwrot(wczesnyStart: boolean | null): string {
+  if (wczesnyStart === true) {
+    return 'W zamówieniu zażądano rozpoczęcia usługi przed upływem tego terminu — potwierdzamy to żądanie. Jeśli odstąpisz od umowy, zwrócimy zapłaconą kwotę pomniejszoną o wartość usługi wykonanej do chwili odstąpienia, liczoną proporcjonalnie do jej zakresu, w ciągu 14 dni, tą samą metodą płatności.'
+  }
+  if (wczesnyStart === false) {
+    return 'Zwracamy całą zapłaconą kwotę w ciągu 14 dni, tą samą metodą płatności.'
+  }
+  return 'Zasady zwrotu opisuje pkt 7 regulaminu poniżej.'
+}
+
 /** Regulamin linkuje względnie (`/polityka-prywatnosci`) — w mailu taki link
  *  prowadzi donikąd, bo klient pocztowy nie zna domeny. */
 const bezwzgledneLinki = (html: string) => html.replace(/href="\//g, 'href="https://nobooking.eu/')
@@ -38,6 +53,9 @@ export function htmlPotwierdzenia(p: {
   zawarcie: Date
   /** Treść `docs/PRAWNE-regulamin.md`; null, gdy pliku nie udało się wczytać. */
   regulaminMd: string | null
+  /** Czy klient zaznaczył żądanie rozpoczęcia usługi przed upływem 14 dni.
+   *  null = nie wiadomo (ponowna wysyłka, Stripe nie odpowiedział). */
+  wczesnyStart: boolean | null
 }): string {
   const dataZawarcia = bezRoku(dataSlownie(p.zawarcie.toISOString().slice(0, 10)))
   const termin = bezRoku(dataSlownie(terminOdstapienia(p.zawarcie)))
@@ -65,8 +83,7 @@ export function htmlPotwierdzenia(p: {
       <strong>Prawo odstąpienia od umowy.</strong> Jako konsument możesz odstąpić od umowy bez podania
       przyczyny do <strong>${termin}</strong> włącznie (14 dni od zawarcia umowy). Wystarczy wysłać
       oświadczenie na <a href="mailto:${KONTAKT}" style="color:#059669">${KONTAKT}</a> — zwykłą
-      wiadomością albo wzorem formularza z końca regulaminu. Zwracamy całą zapłaconą kwotę w ciągu
-      14 dni, tą samą metodą płatności.
+      wiadomością albo wzorem formularza z końca regulaminu. ${zwrot(p.wczesnyStart)}
     </div>
 
     <p style="font-size:0.85rem;color:#374151;margin:0">

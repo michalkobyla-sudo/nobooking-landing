@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { poprawneDane, normalizujAdres } from './checkoutZamowienia'
+import { poprawneDane, normalizujAdres, wczesnyStartZMetadanych } from './checkoutZamowienia'
 
 /**
  * Ta funkcja powstala po bledzie, ktory kosztowal dwie prawdziwe sesje
@@ -30,5 +30,16 @@ describe('normalizujAdres', () => {
 
   it('zostawia poprawny adres bez zmian', () => {
     expect(normalizujAdres('http://localhost:3000')).toBe('http://localhost:3000')
+  })
+})
+
+// Starsze sesje (sprzed 2026-11-19) nie mają pola — to nie „nie”, tylko „nie wiadomo”.
+describe('wczesnyStartZMetadanych', () => {
+  it('tak / nie / brak', () => {
+    expect(wczesnyStartZMetadanych({ wczesny_start: 'tak' })).toBe(true)
+    expect(wczesnyStartZMetadanych({ wczesny_start: 'nie' })).toBe(false)
+    expect(wczesnyStartZMetadanych({})).toBeNull()
+    expect(wczesnyStartZMetadanych(null)).toBeNull()
+    expect(wczesnyStartZMetadanych({ wczesny_start: 'true' })).toBeNull()
   })
 })

@@ -31,7 +31,7 @@ opinii prawnika — pytania do niego w sekcji D.
 
 ## B. Decyzje do podjęcia przez Ciebie
 
-**B1. Zgoda na rozpoczęcie usługi przed upływem 14 dni.** Dziś klient może odstąpić przez
+**B1. ✅ Zdecydowane 2026-11-19 i wdrożone:** dobrowolne pole w formularzu, strona powstaje od razu niezależnie od niego; żądanie zapisane w metadanych Stripe i potwierdzone w mailu; regulamin pkt 7 opisuje oba warianty zwrotu. Pierwotny opis: **Zgoda na rozpoczęcie usługi przed upływem 14 dni.** Dziś klient może odstąpić przez
 14 dni i odzyskać całość, nawet jeśli strona już działa. Dwie drogi:
 
 - **zostawić tak** — najprościej; ryzyko: ktoś dostaje gotową stronę w 7 dni i rezygnuje;
@@ -41,17 +41,17 @@ opinii prawnika — pytania do niego w sekcji D.
   w provisioningu i potwierdzenia mailem. Rekomenduję tę drogę — szybkie wykonanie to argument
   sprzedażowy, więc większość klientów zaznaczy pole.
 
-**B2. Jak długo trzymamy dane po wygaśnięciu strony.** Dziś: bezterminowo, do żądania. To stoi
+**B2. ✅ 12 miesięcy (2026-11-19).** Pierwotny opis: **Jak długo trzymamy dane po wygaśnięciu strony.** Dziś: bezterminowo, do żądania. To stoi
 w sprzeczności z zasadą ograniczenia przechowywania (art. 5 ust. 1 lit. e RODO) i z obowiązkiem
 podmiotu przetwarzającego po zakończeniu usługi (art. 28 ust. 3 lit. g). Propozycja: 12 miesięcy
 po wygaśnięciu, z mailem przed usunięciem. Pierwsze wygaśnięcie wypada w maju 2028, więc kod
 może poczekać, ale okres powinien trafić do dokumentów przed startem.
 
-**B3. Numer telefonu w regulaminie.** Informacja przedumowna obejmuje numer telefonu, jeśli
+**B3. ✅ Dodany (2026-11-19).** Pierwotny opis: **Numer telefonu w regulaminie.** Informacja przedumowna obejmuje numer telefonu, jeśli
 przedsiębiorca go udostępnia. Strona Nobooking.eu na Facebooku pokazuje publicznie 505 594 294 —
 skoro numer jest publiczny, lepiej podać go też w regulaminie.
 
-**B4. Kto jest sprzedawcą w dniu startu.** Dokumenty podają firmę „KobylinskiStudio.pl Michał
+**B4. ✅ JDG zarejestrowana przed pierwszą sprzedażą (2026-11-19).** Pierwotny opis: **Kto jest sprzedawcą w dniu startu.** Dokumenty podają firmę „KobylinskiStudio.pl Michał
 Kobyliński”. Jeśli w dniu pierwszej sprzedaży JDG nie będzie zarejestrowana (albo będzie
 zawieszona), sprzedawcą jest osoba fizyczna i dane w dokumentach trzeba dopasować. Po rejestracji
 dopisać informację o wpisie do CEIDG.

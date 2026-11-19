@@ -42,7 +42,8 @@ Stripe, z pominięciem naszego.
 2. Po wypełnieniu formularza generujemy stronę i wysyłamy dostęp do panelu.
 3. Przysługują Ci **cztery rundy poprawek** treści i wyglądu.
 
-**Termin:** 7 dni roboczych od przesłania kompletnie wypełnionego formularza.
+**Termin:** zwykle 24 godziny, najpóźniej 7 dni roboczych od przesłania kompletnie wypełnionego
+formularza.
 
 ## 5. Czego potrzebujesz od siebie
 
@@ -93,9 +94,16 @@ podania przyczyny.
 Wystarczy wysłać oświadczenie na **kontakt@nobooking.eu** — może to być zwykła wiadomość albo wzór
 formularza z końca regulaminu. Do zachowania terminu wystarczy wysłać je przed jego upływem.
 
-**Zwracamy całą zapłaconą kwotę** w ciągu 14 dni od otrzymania oświadczenia, tą samą metodą
-płatności, której użyłeś, bez żadnych kosztów po Twojej stronie. Po odstąpieniu strona przestaje być
-dostępna.
+**Ile zwracamy** zależy od dobrowolnego pola w formularzu zamówienia — żądania rozpoczęcia usługi
+przed upływem tych 14 dni. Stronę przygotowujemy od razu w obu przypadkach.
+
+- **Bez żądania** — zwracamy **całą zapłaconą kwotę**.
+- **Z żądaniem** — zwracamy zapłaconą kwotę pomniejszoną o wartość usługi wykonanej do chwili
+  odstąpienia, liczoną proporcjonalnie do jej zakresu (art. 35 ustawy o prawach konsumenta).
+
+To, czy żądanie złożono, potwierdzamy w mailu po zakupie. Zwrot następuje w ciągu 14 dni od
+otrzymania oświadczenia, tą samą metodą płatności, bez innych kosztów po Twojej stronie. Po
+odstąpieniu strona przestaje być dostępna.
 
 ## 8. Reklamacje i zgodność usługi z umową
 

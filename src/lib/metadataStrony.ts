@@ -9,7 +9,7 @@ import type { ApartmentConfig, T } from '@/lib/apartmentTypes'
  * „Nobooking — własna strona rezerwacyjna bez prowizji", Google indeksował
  * wszystkie strony klientów pod jednym tytułem i jednym opisem, a wklejenie
  * linku na Facebooku albo w WhatsAppie pokazywało gościowi zapowiedź
- * *„Przestań płacić prowizje. Własna strona dla apartamentu — gotowa w 7 dni"*
+ * *„Przestań płacić prowizje. Własna strona dla apartamentu — gotowa w 24 godziny"*
  * zamiast zdjęcia apartamentu.
  *
  * To dokładne odwrócenie tego, co klient kupuje. Płaci 799 zł za własną stronę,

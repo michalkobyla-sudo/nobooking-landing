@@ -32,7 +32,7 @@ const STEPS = [
         <polyline points="12 6 12 12 16 14"/>
       </svg>
     ),
-    text: <>Zbudujemy Twoją stronę w ciągu <strong style={{ color: '#111827' }}>7 dni roboczych</strong>.</>,
+    text: <>Stronę budujemy zwykle w ciągu <strong style={{ color: '#111827' }}>24 godzin</strong> od wypełnienia formularza.</>,
   },
 ]
 

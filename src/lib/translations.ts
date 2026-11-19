@@ -93,7 +93,7 @@ export const TR: Record<Lang, {
     demo: 'Demo',
     buyNow: 'Kup teraz',
     heroH1: 'Twoja strona.\nTwoje pieniądze.\nZero prowizji.',
-    heroSub: 'Własna profesjonalna strona rezerwacji gotowa w 7 dni. Jednorazowa opłata — zero prowizji na zawsze.',
+    heroSub: 'Własna profesjonalna strona rezerwacji gotowa w 24 godziny. Jednorazowa opłata — zero prowizji na zawsze.',
     heroPrimary: 'Zamów stronę — od 799 zł →',
     heroSecondary: 'Zobacz demo działającej strony',
     heroTrust: [
@@ -126,7 +126,7 @@ export const TR: Record<Lang, {
     howStep1Desc: 'Płatność kartą, BLIK lub Przelewy24. Bezpiecznie przez Stripe.',
     howStep2Title: 'Wypełnij formularz',
     howStep2Desc: 'Zbieramy dane o apartamencie: zdjęcia, opisy, ceny, zasady. Ty nic nie musisz konfigurować.',
-    howStep3Title: 'Gotowa strona w 7 dni',
+    howStep3Title: 'Gotowa strona w 24 godziny',
     howStep3Desc: 'Własna domena, panel admina, strona gotowa do przyjmowania rezerwacji.',
     featuresTitle: 'Co dostajesz?',
     features: [
@@ -213,7 +213,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'Ile trwa wdrożenie?',
-        a: '7 dni roboczych od momentu przesłania wypełnionego formularza onboardingowego ze wszystkimi materiałami (zdjęcia, opisy, ceny).',
+        a: 'Zwykle 24 godziny od przesłania wypełnionego formularza onboardingowego ze wszystkimi materiałami (zdjęcia, opisy, ceny). Najpóźniej 7 dni roboczych.',
       },
       {
         q: 'Jakie są opcje płatności dla moich gości?',
@@ -223,14 +223,14 @@ export const TR: Record<Lang, {
     footerPrivacy: 'Polityka prywatności',
     footerCopyright: '© 2026 Nobooking',
     successTitle: 'Dziękujemy za zakup!',
-    successText: 'Sprawdź email — wyślemy Ci formularz onboardingowy w ciągu 24 godzin. Wypełnij go, a Twoja strona będzie gotowa w 7 dni.',
+    successText: 'Sprawdź email — formularz onboardingowy już do Ciebie wysłaliśmy. Wypełnij go, a Twoja strona będzie gotowa zwykle w ciągu 24 godzin.',
     successCta: 'Przetestuj demo →',
   },
   en: {
     demo: 'Demo',
     buyNow: 'Buy now',
     heroH1: 'Your site.\nYour money.\nZero commission.',
-    heroSub: 'Your own professional booking site ready in 7 days. One-time fee — zero commissions forever.',
+    heroSub: 'Your own professional booking site ready in 24 hours. One-time fee — zero commissions forever.',
     heroPrimary: 'Order your site — from €199 →',
     heroSecondary: 'See a live demo',
     heroTrust: [
@@ -263,7 +263,7 @@ export const TR: Record<Lang, {
     howStep1Desc: 'Payment by card, BLIK or Przelewy24. Securely via Stripe.',
     howStep2Title: 'Fill in the form',
     howStep2Desc: 'We collect apartment details: photos, descriptions, prices, rules. You configure nothing.',
-    howStep3Title: 'Live site in 7 days',
+    howStep3Title: 'Live site in 24 hours',
     howStep3Desc: 'Your own domain, admin panel, site ready to accept bookings.',
     featuresTitle: 'What do you get?',
     features: [
@@ -350,7 +350,7 @@ export const TR: Record<Lang, {
       },
       {
         q: 'How long does setup take?',
-        a: '7 business days from when you submit the completed onboarding form with all materials (photos, descriptions, prices).',
+        a: 'Usually 24 hours from when you submit the completed onboarding form with all materials (photos, descriptions, prices). At most 7 business days.',
       },
       {
         q: 'What payment options do my guests have?',
@@ -360,7 +360,7 @@ export const TR: Record<Lang, {
     footerPrivacy: 'Privacy policy',
     footerCopyright: '© 2026 Nobooking',
     successTitle: 'Thank you for your purchase!',
-    successText: "Check your email — we'll send you the onboarding form within 24 hours. Fill it in and your site will be ready in 7 days.",
+    successText: "Check your email — we've already sent you the onboarding form. Fill it in and your site will usually be ready within 24 hours.",
     successCta: 'Try the demo →',
   },
 }
