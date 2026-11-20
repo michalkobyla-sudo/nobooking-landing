@@ -1,25 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import fs from 'fs'
 import path from 'path'
+import { tabeleWKodzie } from './tabeleWKodzie'
 import { KOPIOWANE, POMINIETE_W_KOPII, zbudujPlikKopii, type TabelaKopii } from './kopiaZapasowa'
 import { sqlOdtworzenia } from '../../scripts/odtworz-kopie.mjs'
 
 const KORZEN = path.join(__dirname, '..')
-
-function tabeleWKodzie(): Set<string> {
-  const wynik = new Set<string>()
-  const chodz = (k: string) => {
-    for (const w of fs.readdirSync(k, { withFileTypes: true })) {
-      const p = path.join(k, w.name)
-      if (w.isDirectory()) chodz(p)
-      else if (/\.tsx?$/.test(w.name) && !/\.test\.tsx?$/.test(w.name)) {
-        for (const m of fs.readFileSync(p, 'utf8').matchAll(/\.from\(\s*'([a-z_]+)'\s*\)/g)) wynik.add(m[1])
-      }
-    }
-  }
-  chodz(KORZEN)
-  return wynik
-}
 
 function pustePliki(): Record<TabelaKopii, unknown[]> {
   return Object.fromEntries(KOPIOWANE.map(t => [t, []])) as unknown as Record<TabelaKopii, unknown[]>
@@ -27,7 +12,7 @@ function pustePliki(): Record<TabelaKopii, unknown[]> {
 
 describe('zakres kopii zapasowej', () => {
   it('każda tabela używana w kodzie jest kopiowana albo świadomie pominięta', () => {
-    const bezDecyzji = [...tabeleWKodzie()].filter(
+    const bezDecyzji = [...tabeleWKodzie(KORZEN).keys()].filter(
       t => !(KOPIOWANE as readonly string[]).includes(t) && !(t in POMINIETE_W_KOPII),
     )
     expect(

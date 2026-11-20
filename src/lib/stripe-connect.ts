@@ -6,12 +6,10 @@ const StripeLib = _require('stripe') as any
 
 const API_WERSJA = '2026-04-22.dahlia'
 
-function getStripe() {
+/** Klient Stripe konta platformy — jedno miejsce z kluczem i wersją API. */
+export function getStripe() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  return new StripeLib(
-    (process.env.STRIPE_SECRET_KEY ?? '').trim(),
-    { apiVersion: '2026-04-22.dahlia' }
-  )
+  return new StripeLib((process.env.STRIPE_SECRET_KEY ?? '').trim(), { apiVersion: API_WERSJA })
 }
 
 /** Domyslny kraj wlasciciela. Onboarding go nie zbiera, a klienci sa polscy;

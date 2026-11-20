@@ -93,11 +93,12 @@ const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
                 { label: lang === 'pl' ? 'Polityka prywatności' : 'Privacy Policy', href: '/polityka-prywatnosci' },
               ].map(poz => (
                 <div key={poz.href} style={{ marginBottom: '0.5rem' }}>
-                  <a href={poz.href} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
+                  {/* `<Link>`, nie `<a>`: przeładowanie gubi źródło wejścia (`lib/zrodloWPamieci.ts`). */}
+                  <Link href={poz.href} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'white')}
                     onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
                     {poz.label}
-                  </a>
+                  </Link>
                 </div>
               ))}
             </div>

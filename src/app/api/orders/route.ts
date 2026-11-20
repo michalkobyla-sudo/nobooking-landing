@@ -99,12 +99,13 @@ export async function POST(request: NextRequest) {
   // Kraj z adresu IP — pierwszy z dowodów kraju nabywcy (`lib/krajNabywcy.ts`).
   // Osobny zapis, poza insertem: przed migracją kolumny nie ma, a zamówienie
   // nie może przez to przepaść.
+  // Równolegle z sesją płatności — nie wpływa na nią, a nie ma po co czekać.
   const krajIp = krajZIp(request.headers)
-  if (krajIp) {
-    const { error: bladKraju } = await supabase
-      .from('orders').update({ kraj_ip: krajIp }).eq('id', order.id)
-    if (bladKraju) console.error('[orders] zapis kraju IP nie powiódł się:', bladKraju.message)
-  }
+  const zapisKraju = krajIp
+    ? supabase.from('orders').update({ kraj_ip: krajIp }).eq('id', order.id).then(({ error: bladKraju }) => {
+        if (bladKraju) console.error('[orders] zapis kraju IP nie powiódł się:', bladKraju.message)
+      })
+    : Promise.resolve()
 
   // Sesja platnosci — wywolanie bezposrednie, bez wychodzenia na siec.
   //
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
   // czyli pod adres bezwzgledny z konfiguracji. Lokalnie wskazywal on produkcje,
   // wiec serwer deweloperski zapisywal zamowienie u siebie, a sesje platnosci
   // tworzyl na produkcji, kluczem live.
-  const wynikSesji = await utworzSesjeZamowienia({
+  const [wynikSesji] = await Promise.all([utworzSesjeZamowienia({
     plan: order.plan as 'basic' | 'pro',
     currency: order.currency as 'pln' | 'eur',
     orderId: order.id as string,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Pole dobrowolne: ściśle `true`, wszystko inne to brak żądania.
     wczesnyStart: body.wczesny_start === true,
     adresPowrotu: request.nextUrl.origin,
-  })
+  }), zapisKraju])
 
   if (!wynikSesji.ok) {
     console.error('[orders] Stripe checkout error:', wynikSesji.blad)

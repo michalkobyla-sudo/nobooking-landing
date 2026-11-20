@@ -3,7 +3,7 @@ import { createRequire } from 'module'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyStripeEvent, webhookSecrets, type StripeWebhooks } from '@/lib/stripeWebhook'
-import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, type BookingEmailData } from '@/lib/email'
+import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEmail, sendHealthReport, type BookingEmailData } from '@/lib/email'
 import { wczesnyStartZMetadanych } from '@/lib/checkoutZamowienia'
 import { powiadomORezerwacji } from '@/lib/smsSend'
 import type { Order } from '@/lib/types'
@@ -311,6 +311,20 @@ export async function POST(request: NextRequest) {
           `[webhook] PŁATNOŚĆ BEZ REZERWACJI: ${bookingId} (strona ${bookingSite?.slug as string}) — ` +
           `zapłacono, ale nie udało się potwierdzić: ${bladPotwierdzenia.message}. Wymaga zwrotu lub kontaktu z gościem.`
         )
+        // Sam log to za mało: Stripe nie ponowi zdarzenia, a gość zapłacił.
+        // Mail do administratora — pieniądze trzeba zwrócić ręcznie.
+        try {
+          await sendHealthReport(
+            `PILNE: płatność bez rezerwacji — ${String(bookingSite?.slug ?? booking.site_id)}`,
+            `<p>Gość zapłacił, ale rezerwacji <code>${String(bookingId)}</code> nie udało się potwierdzić ` +
+            `(najpewniej terminy zajęła w międzyczasie inna rezerwacja).</p>` +
+            `<p>Płatność: <code>${String(session.payment_intent ?? sessionId)}</code> na koncie ` +
+            `<code>${String(connectedAccountId)}</code>, terminy ${String(booking.check_in)} – ${String(booking.check_out)}.</p>` +
+            `<p>Do zrobienia: zwrot w Stripe i kontakt z gościem.</p>`,
+          )
+        } catch (err) {
+          console.error('[webhook] nie wysłano alarmu o płatności bez rezerwacji:', err)
+        }
         return NextResponse.json({ received: true, flagged: 'confirm_failed' })
       }
 

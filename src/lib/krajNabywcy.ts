@@ -1,9 +1,4 @@
-import { createRequire } from 'module'
-
-const _require = createRequire(import.meta.url)
-// Ten sam sposób ładowania co w `checkoutZamowienia.ts`.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const StripeLib = _require('stripe') as any
+import { getStripe } from '@/lib/stripe-connect'
 
 /**
  * Kraj nabywcy — do rozstrzygnięcia reżimu VAT i liczenia progu OSS.
@@ -52,11 +47,9 @@ export function krajKartyZPlatnosci(platnosc: unknown): string | null {
 
 /** Pobiera kraj karty ze Stripe. `null` przy czymkolwiek nieoczekiwanym. */
 export async function pobierzKrajKarty(paymentIntentId: unknown): Promise<string | null> {
-  const klucz = (process.env.STRIPE_SECRET_KEY ?? '').trim()
-  if (typeof paymentIntentId !== 'string' || !paymentIntentId || !klucz) return null
+  if (typeof paymentIntentId !== 'string' || !paymentIntentId || !(process.env.STRIPE_SECRET_KEY ?? '').trim()) return null
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const stripe = new StripeLib(klucz, { apiVersion: '2026-04-22.dahlia' })
+    const stripe = getStripe()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const platnosc: unknown = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ['payment_method'] })
     return krajKartyZPlatnosci(platnosc)

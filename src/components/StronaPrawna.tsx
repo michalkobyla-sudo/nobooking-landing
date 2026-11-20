@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import Link from 'next/link'
 import { markdownNaHtml } from '@/lib/markdown'
 
 /**
@@ -34,7 +35,7 @@ export function StronaPrawna({ plik }: { plik: string }) {
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <p style={{ maxWidth: 760, margin: '1.5rem auto 0', textAlign: 'center', fontSize: '0.82rem' }}>
-        <a href="/" style={{ color: '#6B7280', textDecoration: 'none' }}>← Nobooking</a>
+        <Link href="/" style={{ color: '#6B7280', textDecoration: 'none' }}>← Nobooking</Link>
       </p>
 
       {/* Style dla treści z Markdowna. Zwykły `style` nie sięga elementów

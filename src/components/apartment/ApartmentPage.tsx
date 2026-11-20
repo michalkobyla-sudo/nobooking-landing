@@ -189,12 +189,12 @@ function DemoBanner({ ui, showDemo, isMobile }: { ui: typeof UI.pl; showDemo: bo
   const router = useRouter()
   if (!showDemo || !visible) return null
 
-  // Na nobooking.eu przejście do cennika bez przeładowania: źródło wejścia żyje
-  // tylko w pamięci karty (`lib/zrodloWPamieci.ts`) i przeładowanie by je zgubiło.
-  // Z subdomeny demo.nobooking.eu to inna domena — tam zwykły link.
+  // Demo pod ścieżką `/demo` stoi w tej samej aplikacji co strona sprzedażowa
+  // (nobooking.eu, localhost, podgląd Vercela) — przejście bez przeładowania,
+  // bo źródło wejścia żyje tylko w pamięci karty (`lib/zrodloWPamieci.ts`).
+  // Na subdomenie demo.nobooking.eu ścieżka to `/`, więc zostaje zwykły link.
   const doCennika = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const host = window.location.hostname
-    if (host === 'nobooking.eu' || host === 'www.nobooking.eu' || host === 'localhost') {
+    if (window.location.pathname.startsWith('/demo')) {
       e.preventDefault()
       router.push('/#cennik')
     }

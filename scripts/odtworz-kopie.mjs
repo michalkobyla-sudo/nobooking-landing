@@ -53,7 +53,10 @@ export function sqlOdtworzenia(plik) {
   return linie.join('\n') + '\n'
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// Porównanie po realpath: import.meta.url jest już rozwiązany z dowiązań
+// (na macOS /tmp → /private/tmp), argv[1] nie — bez tego skrypt po cichu nic nie wypisywał.
+const uruchomionyWprost = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))
+if (uruchomionyWprost) {
   const sciezka = process.argv[2]
   if (!sciezka) {
     console.error('Użycie: node scripts/odtworz-kopie.mjs <plik-kopii.json> > odtworzenie.sql')

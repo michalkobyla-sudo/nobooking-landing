@@ -885,6 +885,11 @@ psql "$ADRES_BAZY" -f odtworzenie.sql
 Baza docelowa musi mieć schemat (migracje z `docs/supabase`). Jedna transakcja,
 `on conflict do nothing`, typy rozstrzyga `jsonb_populate_recordset`.
 
+**Po odtworzeniu do nowego projektu Supabase** konta Auth nie wracają (nie ma ich
+w kopii). Panel admina wpuszcza wyłącznie identyfikatory z `lib/czyAdmin.ts` — po
+założeniu nowego konta administratora ustaw jego id w `ADMIN_USER_IDS` w Vercelu,
+inaczej panel będzie zamknięty dla wszystkich.
+
 **Sprawdzone 2026-11-20:** pełna kopia produkcji odtworzona do lokalnego
 Postgresa 17 ze schematem z definicji PostgREST (typy, NOT NULL, klucze główne
 i obce). 14 tabel, 200 pól zgodnych z produkcją. Drugie uruchomienie przeszło

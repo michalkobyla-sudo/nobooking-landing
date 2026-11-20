@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import fs from 'fs'
 import path from 'path'
+import { tabeleWKodzie } from './tabeleWKodzie'
 import { WYMAGANE, SWIADOMIE_POMINIETE, pilnowaneTabele } from './schematWymagany'
 
 /**
@@ -15,31 +15,8 @@ import { WYMAGANE, SWIADOMIE_POMINIETE, pilnowaneTabele } from './schematWymagan
 
 const KORZEN = path.join(__dirname, '..')
 
-function plikiZrodlowe(katalog: string): string[] {
-  const wynik: string[] = []
-  for (const w of fs.readdirSync(katalog, { withFileTypes: true })) {
-    const p = path.join(katalog, w.name)
-    if (w.isDirectory()) wynik.push(...plikiZrodlowe(p))
-    else if (/\.tsx?$/.test(w.name) && !/\.test\.tsx?$/.test(w.name)) wynik.push(p)
-  }
-  return wynik
-}
-
 /** Tabele, do których kod faktycznie sięga. */
-function tabeleUzywaneWKodzie(): Map<string, string[]> {
-  const mapa = new Map<string, string[]>()
-  for (const plik of plikiZrodlowe(KORZEN)) {
-    const tresc = fs.readFileSync(plik, 'utf8')
-    for (const m of tresc.matchAll(/\.from\(\s*'([a-z_]+)'\s*\)/g)) {
-      const tabela = m[1]
-      const gdzie = path.relative(KORZEN, plik)
-      const lista = mapa.get(tabela) ?? []
-      if (!lista.includes(gdzie)) lista.push(gdzie)
-      mapa.set(tabela, lista)
-    }
-  }
-  return mapa
-}
+const tabeleUzywaneWKodzie = () => tabeleWKodzie(KORZEN)
 
 describe('kontrakt między kodem a schematem bazy', () => {
   it('każda tabela używana w kodzie jest pilnowana albo świadomie pominięta', () => {
