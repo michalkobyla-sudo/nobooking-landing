@@ -95,7 +95,7 @@ export interface StanSystemu {
   /** Stan VERCEL_API_TOKEN — od niego zależą subdomeny nowych stron. */
   tokenVercel: 'dziala' | 'nie_dziala' | 'brak' | 'nieznany'
   /** Zdarzenia Stripe z ostatnich 48 h, których nie dostarczono na webhook; `null` — nie sprawdzono. */
-  webhookiNiedostarczone: { liczba: number; typy: string[] } | null
+  webhookiNiedostarczone: { liczba: number; typy: string[]; niesprawdzone: number } | null
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -190,6 +190,13 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'krytyczne',
       tytul: 'Stripe nie może dostarczyć webhooków',
       szczegol: `${s.webhookiNiedostarczone.liczba} zdarzeń z ostatnich 48 h nie doszło do nobooking.eu/api/stripe/webhook (${s.webhookiNiedostarczone.typy.join(', ')}). Płatności mogą nie oznaczać zamówień jako opłaconych ani potwierdzać rezerwacji. Sprawdź adres endpointu i „Event deliveries” w panelu Stripe.`,
+    })
+  }
+  if (s.webhookiNiedostarczone && s.webhookiNiedostarczone.niesprawdzone > 0) {
+    z.push({
+      waga: 'info',
+      tytul: 'Webhooki rezerwacji gości niesprawdzone',
+      szczegol: `Nie udało się odczytać zdarzeń ${s.webhookiNiedostarczone.niesprawdzone} kont(a) właścicieli — klucz Stripe bez prawa „Events: read” dla kont połączonych. Zakup pakietów jest sprawdzany, rezerwacje gości nie.`,
     })
   }
 

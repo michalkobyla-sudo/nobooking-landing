@@ -32,7 +32,7 @@ const zdrowy: StanSystemu = {
   regulaminDostepny: true,
   stronyDoUsuniecia: [],
   tokenVercel: 'dziala',
-  webhookiNiedostarczone: { liczba: 0, typy: [] },
+  webhookiNiedostarczone: { liczba: 0, typy: [], niesprawdzone: 0 },
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -536,13 +536,20 @@ describe('subdomeny nowych stron', () => {
 
 describe('dostarczanie webhooków Stripe', () => {
   it('niedostarczone zdarzenia to alarm krytyczny', () => {
-    const z = ocenStan({ ...zdrowy, webhookiNiedostarczone: { liczba: 2, typy: ['checkout.session.completed'] } })
+    const z = ocenStan({ ...zdrowy, webhookiNiedostarczone: { liczba: 2, typy: ['checkout.session.completed'], niesprawdzone: 0 } })
     expect(z.map(x => x.waga)).toEqual(['krytyczne'])
     expect(z[0].szczegol).toContain('checkout.session.completed')
   })
 
   it('brak możliwości sprawdzenia — info, nie cisza', () => {
     expect(ocenStan({ ...zdrowy, webhookiNiedostarczone: null }).map(x => x.waga)).toEqual(['info'])
+  })
+})
+
+describe('webhooki kont właścicieli', () => {
+  it('nieodczytane konta połączone — info', () => {
+    const z = ocenStan({ ...zdrowy, webhookiNiedostarczone: { liczba: 0, typy: [], niesprawdzone: 1 } })
+    expect(z.map(x => x.tytul)).toEqual(['Webhooki rezerwacji gości niesprawdzone'])
   })
 })
 

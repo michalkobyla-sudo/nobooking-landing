@@ -521,13 +521,17 @@ export async function odswiezStatusConnect(
 export async function niedostarczoneZdarzeniaStripe(
   kontaPolaczone: string[],
   godzinWstecz = 48,
-): Promise<{ liczba: number; typy: string[] } | null> {
+): Promise<{ liczba: number; typy: string[]; niesprawdzone: number } | null> {
   if (!(process.env.STRIPE_SECRET_KEY ?? '').trim()) return null
   const stripe = getStripe()
   const od = Math.floor(Date.now() / 1000) - godzinWstecz * 3600
   const typy: string[] = []
-  try {
-    for (const konto of [null, ...kontaPolaczone]) {
+  let niesprawdzone = 0
+  // Konto platformy osobno: jego brak to `null` (nic nie wiemy). Konto połączone,
+  // którego nie da się odczytać (klucz bez prawa do zdarzeń kont połączonych),
+  // liczymy jako niesprawdzone — nie unieważnia wyniku dla platformy.
+  for (const konto of [null, ...kontaPolaczone]) {
+    try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const lista = await stripe.events.list(
         { delivery_success: false, created: { gte: od }, limit: 100 },
@@ -535,11 +539,13 @@ export async function niedostarczoneZdarzeniaStripe(
       )
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       for (const z of (lista.data ?? []) as Array<{ type: string }>) typy.push(z.type)
+    } catch (err) {
+      const opis = err instanceof Error ? err.message : String(err)
+      console.error(`[stripe] odczyt niedostarczonych zdarzeń (${konto ?? 'platforma'}) nie powiódł się: ${opis}`)
+      if (konto === null) return null
+      niesprawdzone++
     }
-  } catch (err) {
-    console.error('[stripe] odczyt niedostarczonych zdarzeń nie powiódł się:', err)
-    return null
   }
-  return { liczba: typy.length, typy: [...new Set(typy)] }
+  return { liczba: typy.length, typy: [...new Set(typy)], niesprawdzone }
 }
 
