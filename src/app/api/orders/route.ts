@@ -121,7 +121,6 @@ export async function POST(request: NextRequest) {
     // Pole dobrowolne: ściśle `true`, wszystko inne to brak żądania.
     wczesnyStart: body.wczesny_start === true,
     adresPowrotu: request.nextUrl.origin,
-    email: order.email as string,
   }), zapisKraju])
 
   if (!wynikSesji.ok) {

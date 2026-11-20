@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { poprawneDane, normalizujAdres, wczesnyStartZMetadanych, cenaTestowa } from './checkoutZamowienia'
+import { poprawneDane, normalizujAdres, wczesnyStartZMetadanych } from './checkoutZamowienia'
 
 /**
  * Ta funkcja powstala po bledzie, ktory kosztowal dwie prawdziwe sesje
@@ -41,19 +41,5 @@ describe('wczesnyStartZMetadanych', () => {
     expect(wczesnyStartZMetadanych({})).toBeNull()
     expect(wczesnyStartZMetadanych(null)).toBeNull()
     expect(wczesnyStartZMetadanych({ wczesny_start: 'true' })).toBeNull()
-  })
-})
-
-describe('cenaTestowa (tymczasowe)', () => {
-  const env = { ZAKUP_TESTOWY_EMAIL: 'Test@Example.com', ZAKUP_TESTOWY_GROSZE: '200' }
-  it('tylko dla dokładnego adresu i przy obu zmiennych', () => {
-    expect(cenaTestowa('test@example.com', env)).toBe(200)
-    expect(cenaTestowa('inny@example.com', env)).toBeNull()
-    expect(cenaTestowa('test@example.com', { ZAKUP_TESTOWY_EMAIL: 'test@example.com' })).toBeNull()
-    expect(cenaTestowa('test@example.com', {})).toBeNull()
-    expect(cenaTestowa(undefined, env)).toBeNull()
-  })
-  it('nie schodzi poniżej minimum Stripe', () => {
-    expect(cenaTestowa('test@example.com', { ...env, ZAKUP_TESTOWY_GROSZE: '100' })).toBeNull()
   })
 })
