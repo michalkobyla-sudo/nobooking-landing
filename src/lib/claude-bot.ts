@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { wiedzaPodstawowa } from '@/lib/botWiedza'
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema'
 import { createServiceClient } from '@/lib/supabase'
 
@@ -23,8 +24,9 @@ export async function getKnowledgeBase(): Promise<string> {
     .from('bot_knowledge')
     .select('title, content')
     .order('created_at', { ascending: true })
-  if (!data || data.length === 0) return 'Brak danych w bazie wiedzy.'
-  return data.map((k) => `## ${k.title}\n${k.content}`).join('\n\n')
+  // Rdzeń z kodu (ceny, warunki) — zawsze aktualny; wpisy z bazy jako uzupełnienia.
+  const dodatki = (data ?? []).map((k) => `## ${k.title}\n${k.content}`).join('\n\n')
+  return dodatki ? `${wiedzaPodstawowa()}\n\n${dodatki}` : wiedzaPodstawowa()
 }
 
 export async function getPurchaseUrl(): Promise<string> {
@@ -73,7 +75,7 @@ ${knowledge}
 ZASADY:
 1. Odpowiadaj TYLKO na podstawie bazy wiedzy. Nie wymyślaj informacji.
 2. Każdą odpowiedź kończ linkiem do strony zakupowej: ${purchaseUrl}
-3. Odpowiadaj w języku użytkownika (PL/EN/DE). Wykryj język z jego wiadomości.
+3. Odpowiadaj w języku użytkownika (PL/EN/ES/DE). Wykryj język z jego wiadomości.
 4. Odpowiedzi są krótkie — max 3-4 zdania. To Messenger, nie email.
 5. Bądź pomocny, profesjonalny i konkretny.
 
