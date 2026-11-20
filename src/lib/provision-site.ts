@@ -38,6 +38,8 @@ export interface ProvisionResult {
   slug: string
   stripeAccountId: string
   tempPassword: string
+  /** Czy subdomena slug.nobooking.eu została dodana — od tego zależą linki w mailu. */
+  subdomenaDodana: boolean
 }
 
 /**
@@ -139,6 +141,7 @@ export async function provisionSite(
       slug: existingSite.slug as string,
       stripeAccountId: (existingSite.stripe_account_id as string | null) ?? '',
       tempPassword: '(strona już istniała — hasło bez zmian)',
+      subdomenaDodana: true,
     }
   }
 
@@ -207,6 +210,7 @@ export async function provisionSite(
     slug,
     stripeAccountId,
     tempPassword,
+    subdomenaDodana: subdomena.ok,
   }
 }
 

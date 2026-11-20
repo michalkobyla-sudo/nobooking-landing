@@ -32,6 +32,7 @@ const zdrowy: StanSystemu = {
   regulaminDostepny: true,
   stronyDoUsuniecia: [],
   tokenVercel: 'dziala',
+  webhookiNiedostarczone: { liczba: 0, typy: [] },
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -532,3 +533,16 @@ describe('subdomeny nowych stron', () => {
     expect(ocenStan({ ...zdrowy, tokenVercel: 'nieznany' })).toEqual([])
   })
 })
+
+describe('dostarczanie webhooków Stripe', () => {
+  it('niedostarczone zdarzenia to alarm krytyczny', () => {
+    const z = ocenStan({ ...zdrowy, webhookiNiedostarczone: { liczba: 2, typy: ['checkout.session.completed'] } })
+    expect(z.map(x => x.waga)).toEqual(['krytyczne'])
+    expect(z[0].szczegol).toContain('checkout.session.completed')
+  })
+
+  it('brak możliwości sprawdzenia — info, nie cisza', () => {
+    expect(ocenStan({ ...zdrowy, webhookiNiedostarczone: null }).map(x => x.waga)).toEqual(['info'])
+  })
+})
+

@@ -5,7 +5,7 @@ import { odnotujPrzebieg, milczaceCrony } from '@/lib/cronHeartbeat'
 import { sendHealthReport } from '@/lib/email'
 import { ocenStan, wymagaUwagi, raportHtml, tematRaportu, opisSrodowiska, type StanSystemu } from '@/lib/health'
 import { MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
-import { czyMoznaZakladacKonta, tozsamoscStripe, kontoProbneDoSkasowania } from '@/lib/stripe-connect'
+import { czyMoznaZakladacKonta, tozsamoscStripe, kontoProbneDoSkasowania, niedostarczoneZdarzeniaStripe } from '@/lib/stripe-connect'
 import { wyslijSms } from '@/lib/smsSend'
 import { DNI_RETENCJI } from '@/lib/checkin'
 import { sprawdzNadawce } from '@/lib/sms'
@@ -315,7 +315,7 @@ export async function GET(request: NextRequest) {
   // ── Strony ─────────────────────────────────────────────────────────────────
   const { data: strony } = await db
     .from('sites')
-    .select('slug, stripe_onboarded, expires_at, active, config')
+    .select('slug, stripe_onboarded, stripe_account_id, expires_at, active, config')
     .eq('active', true)
 
   const stronyBezStripe = (strony ?? [])
@@ -422,6 +422,9 @@ export async function GET(request: NextRequest) {
     regulaminDostepny: regulaminMarkdown() !== null,
     stronyDoUsuniecia,
     tokenVercel: await sprawdzTokenVercel(),
+    webhookiNiedostarczone: await niedostarczoneZdarzeniaStripe(
+      (strony ?? []).map(s => s.stripe_account_id as string | null).filter((k): k is string => Boolean(k)),
+    ),
   }
 
   const znaleziska = ocenStan(stan)

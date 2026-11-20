@@ -8,6 +8,16 @@ const FROM_EMAIL = 'noreply@nobooking.eu'
 const FROM_NAME = 'Nobooking'
 const ADMIN_EMAIL = () => (process.env.ADMIN_EMAIL || 'michal.kobyla@gmail.com').trim()
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+const ROOT_DOMAIN = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'nobooking.eu').trim()
+
+/**
+ * Adres strony klienta do maili: `slug.nobooking.eu`, odkąd subdomeny działają
+ * (2026-11-19). `naSubdomenie: false` — gdy provisioning nie zdołał jej dodać —
+ * daje adres, który działa zawsze: `nobooking.eu/sites/<slug>`.
+ */
+export function adresStronyKlienta(slug: string, naSubdomenie = true): string {
+  return naSubdomenie ? `https://${slug}.${ROOT_DOMAIN}` : `${SITE_URL}/sites/${slug}`
+}
 
 function escapeHtml(value: string) {
   return value
@@ -280,7 +290,7 @@ export async function sendSiteReadyEmail(
   revisionsDone = 0,
   revisionsLeft = 4,
 ) {
-  const siteUrl = `${SITE_URL}/sites/${slug}`
+  const siteUrl = adresStronyKlienta(slug)
   const revisionUrl = `${SITE_URL}/poprawki/${order.revision_token}`
   const isFirstVersion = revisionsDone === 0
   const roundLabel = revisionsDone + 1
@@ -349,7 +359,7 @@ export async function sendSiteReadyEmail(
 
 /** Email 5: Final revision complete — no more rounds */
 export async function sendRevisionCompleteEmail(order: Order, slug: string) {
-  const siteUrl = `${SITE_URL}/sites/${slug}`
+  const siteUrl = adresStronyKlienta(slug)
 
   await sendEmail(
     order.email,
@@ -396,7 +406,15 @@ export async function sendRevisionCompleteEmail(order: Order, slug: string) {
   )
 }
 
-/** Email: Welcome owner — login credentials + Stripe Connect link */
+/**
+ * Mail „strona gotowa” — jeden, nie dwa.
+ *
+ * Do 2026-11-20 provisioning wysyłał w tej samej minucie dwa maile: ten
+ * („gotowa i zaczyna przyjmować rezerwacje”) i `sendSiteReadyEmail` („wstępny
+ * podgląd, który dopracujemy razem”). Zakup testowy pokazał, że klient nie wie,
+ * któremu wierzyć. Teraz jeden mail: adres strony, dostęp do panelu, płatności
+ * jako krok obowiązkowy (bez nich strona rezerwacji nie przyjmie) i poprawki.
+ */
 export async function sendOwnerWelcomeEmail(params: {
   email: string
   first_name: string
@@ -405,23 +423,27 @@ export async function sendOwnerWelcomeEmail(params: {
   temp_password: string
   stripe_onboard_url: string
   plan: 'basic' | 'pro'
+  /** Link do formularza poprawek (`orders.revision_token`); bez niego sekcja znika. */
+  revision_url?: string | null
+  /** Czy provisioning dodał subdomenę — inaczej adres `nobooking.eu/sites/<slug>`. */
+  na_subdomenie?: boolean
 }) {
   const { email, first_name, apartment_name, slug, temp_password, stripe_onboard_url, plan } = params
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-  const adminUrl = `${siteUrl}/sites/${slug}/admin`
-  const previewUrl = `${siteUrl}/sites/${slug}`
+  const previewUrl = adresStronyKlienta(slug, params.na_subdomenie ?? true)
+  // Panel zostaje pod adresem głównym: logowanie właściciela sprawdzone tam na żywo.
+  const adminUrl = `${SITE_URL}/sites/${slug}/admin`
 
   await sendEmail(
     email,
-    `🎉 Twoja strona jest gotowa — dostępy do panelu admina`,
+    `🎉 Twoja strona jest gotowa — adres, panel i następne kroki`,
     wrapEmail(`
-      ${renderHeader('Witaj na pokładzie!')}
+      ${renderHeader('Twoja strona jest gotowa!')}
 
       <div style="padding: 2rem;">
         <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(first_name)}</strong>! 🎉</p>
         <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Twoja strona apartamentu <strong>${escapeHtml(apartment_name)}</strong> jest gotowa
-          i zaczyna przyjmować rezerwacje!
+          Strona apartamentu <strong>${escapeHtml(apartment_name)}</strong> już działa. Zostały dwa kroki:
+          podłącz płatności, żeby goście mogli rezerwować, i — jeśli chcesz coś zmienić — wyślij nam poprawki.
         </p>
 
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
@@ -470,6 +492,20 @@ export async function sendOwnerWelcomeEmail(params: {
             Podłącz płatności →
           </a>
         </div>
+
+        ${params.revision_url ? `
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.875rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">
+            ✏️ Chcesz coś zmienić? Masz 4 rundy poprawek
+          </div>
+          <p style="font-size: 0.8rem; color: #4b5563; margin: 0 0 1rem; line-height: 1.6;">
+            Teksty, opis, okolica, kolory — napisz, co poprawić. Zdjęcia, ceny i kalendarz zmieniasz sam w panelu.
+          </p>
+          <a href="${params.revision_url}" style="display: inline-block; background: #111827; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
+            Wyślij poprawki →
+          </a>
+        </div>
+        ` : ''}
 
         ${plan === 'pro' ? `
         <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #5b21b6;">

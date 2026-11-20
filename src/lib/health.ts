@@ -94,6 +94,8 @@ export interface StanSystemu {
   stronyDoUsuniecia: string[]
   /** Stan VERCEL_API_TOKEN — od niego zależą subdomeny nowych stron. */
   tokenVercel: 'dziala' | 'nie_dziala' | 'brak' | 'nieznany'
+  /** Zdarzenia Stripe z ostatnich 48 h, których nie dostarczono na webhook; `null` — nie sprawdzono. */
+  webhookiNiedostarczone: { liczba: number; typy: string[] } | null
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -174,6 +176,20 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Dane stron do usunięcia',
       szczegol: `Ponad 12 miesięcy od wygaśnięcia: ${s.stronyDoUsuniecia.join(', ')}. Regulamin i polityka prywatności obiecują wtedy usunięcie rezerwacji, opinii i zdjęć.`,
+    })
+  }
+
+  if (s.webhookiNiedostarczone === null) {
+    z.push({
+      waga: 'info',
+      tytul: 'Nie sprawdzono dostarczania webhooków Stripe',
+      szczegol: 'Odczyt zdarzeń ze Stripe nie powiódł się — najpewniej klucz bez prawa „Events: read”. Bez tego raport nie wykryje, że webhooki nie dochodzą.',
+    })
+  } else if (s.webhookiNiedostarczone.liczba > 0) {
+    z.push({
+      waga: 'krytyczne',
+      tytul: 'Stripe nie może dostarczyć webhooków',
+      szczegol: `${s.webhookiNiedostarczone.liczba} zdarzeń z ostatnich 48 h nie doszło do nobooking.eu/api/stripe/webhook (${s.webhookiNiedostarczone.typy.join(', ')}). Płatności mogą nie oznaczać zamówień jako opłaconych ani potwierdzać rezerwacji. Sprawdź adres endpointu i „Event deliveries” w panelu Stripe.`,
     })
   }
 

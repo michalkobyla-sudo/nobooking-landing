@@ -5,7 +5,7 @@ import { provisionSite } from '@/lib/provision-site'
 import { createOnboardingLink } from '@/lib/stripe-connect'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
-import { sendOwnerWelcomeEmail, sendSiteReadyEmail } from '@/lib/email'
+import { sendOwnerWelcomeEmail } from '@/lib/email'
 import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
 
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       // 2. Provision site (Auth user + Stripe Connect + sites record).
       //    Slug ustala provisionSite — dopiero wstawienie wiersza rozstrzyga
       //    kolizje nazw, więc nie da się go wyznaczyć wcześniej.
-      const { tempPassword, stripeAccountId, slug } = await provisionSite(typedOrder, configJson)
+      const { tempPassword, stripeAccountId, slug, subdomenaDodana } = await provisionSite(typedOrder, configJson)
 
       // 3. Zapis wyniku w orders — dopiero po udanym provisioningu, żeby
       //    site_slug nie wskazywał na stronę, która nie powstała.
@@ -161,10 +161,9 @@ export async function GET(request: NextRequest) {
         temp_password: tempPassword,
         stripe_onboard_url: stripeOnboardUrl,
         plan: typedOrder.plan,
+        revision_url: typedOrder.revision_token ? `${siteUrl}/poprawki/${typedOrder.revision_token}` : null,
+        na_subdomenie: subdomenaDodana,
       })
-
-      // 7. Site-ready email with revision link
-      await sendSiteReadyEmail(typedOrder, slug, 0, 4)
 
       console.log(`[provision-cron] ✅ order ${typedOrder.id} — site "${slug}" provisioned`)
       results.push({ id: typedOrder.id, status: 'ok' })

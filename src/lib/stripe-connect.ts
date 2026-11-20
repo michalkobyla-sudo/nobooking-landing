@@ -502,3 +502,44 @@ export async function odswiezStatusConnect(
   return podniesione
   /* eslint-enable */
 }
+
+/**
+ * Zdarzenia Stripe, których nie udało się dostarczyć na nasz webhook.
+ *
+ * **Dlaczego to istnieje.** Do 2026-11-20 oba endpointy wskazywały
+ * `www.nobooking.eu`, który przekierowuje (308) na adres bez www — a Stripe nie
+ * podąża za przekierowaniami. Żaden webhook nie dochodził: zamówienia nie
+ * oznaczały się jako opłacone, rezerwacje nie potwierdzały. Raport zdrowia
+ * milczał, bo nie ma czego liczyć, kiedy nic nie przychodzi. Wyszło dopiero przy
+ * zakupie testowym.
+ *
+ * Pytamy Stripe wprost (`delivery_success=false` — zdarzenia wciąż oczekujące
+ * albo nieudane), na koncie platformy i na każdym koncie połączonym, bo
+ * rezerwacje gości to zdarzenia kont właścicieli. `null` — nie udało się
+ * sprawdzić (np. klucz ograniczony bez prawa odczytu zdarzeń).
+ */
+export async function niedostarczoneZdarzeniaStripe(
+  kontaPolaczone: string[],
+  godzinWstecz = 48,
+): Promise<{ liczba: number; typy: string[] } | null> {
+  if (!(process.env.STRIPE_SECRET_KEY ?? '').trim()) return null
+  const stripe = getStripe()
+  const od = Math.floor(Date.now() / 1000) - godzinWstecz * 3600
+  const typy: string[] = []
+  try {
+    for (const konto of [null, ...kontaPolaczone]) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const lista = await stripe.events.list(
+        { delivery_success: false, created: { gte: od }, limit: 100 },
+        konto ? { stripeAccount: konto } : undefined,
+      )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      for (const z of (lista.data ?? []) as Array<{ type: string }>) typy.push(z.type)
+    }
+  } catch (err) {
+    console.error('[stripe] odczyt niedostarczonych zdarzeń nie powiódł się:', err)
+    return null
+  }
+  return { liczba: typy.length, typy: [...new Set(typy)] }
+}
+
