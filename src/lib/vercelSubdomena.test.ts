@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { dodajSubdomene } from './vercelSubdomena'
+import { dodajSubdomene, sprawdzTokenVercel } from './vercelSubdomena'
 
 const odp = (status: number, body: unknown) => new Response(JSON.stringify(body), { status })
 
@@ -58,5 +58,37 @@ describe('dodajSubdomene', () => {
   it('błąd sieci nie rzuca', async () => {
     const pobierz = vi.fn(async () => { throw new Error('ECONNRESET') })
     expect(await dodajSubdomene('casa-sol', pobierz)).toEqual({ ok: false, powod: 'siec' })
+  })
+})
+
+/**
+ * Raport zdrowia sprawdza, czy token działa, a nie tylko czy istnieje —
+ * zakres tokenu (zespół czy projekt) widać dopiero w działaniu, a token
+ * odwołany w panelu Vercela nie zostawia śladu w zmiennych środowiska.
+ */
+describe('sprawdzTokenVercel', () => {
+  beforeEach(() => { vi.stubEnv('VERCEL_API_TOKEN', 'tok') })
+  afterEach(() => { vi.unstubAllEnvs() })
+
+  it('odczyt demo.nobooking.eu z projektu = token działa', async () => {
+    const pobierz = vi.fn(async () => odp(200, { name: 'demo.nobooking.eu' }))
+    expect(await sprawdzTokenVercel(pobierz)).toBe('dziala')
+    expect(String((pobierz.mock.calls[0] as unknown[])[0])).toContain('/v9/projects/prj_')
+  })
+
+  it('odmowa = token nie działa', async () => {
+    expect(await sprawdzTokenVercel(vi.fn(async () => odp(403, {})))).toBe('nie_dziala')
+    expect(await sprawdzTokenVercel(vi.fn(async () => odp(401, {})))).toBe('nie_dziala')
+  })
+
+  it('brak tokenu', async () => {
+    vi.stubEnv('VERCEL_API_TOKEN', '')
+    expect(await sprawdzTokenVercel(vi.fn())).toBe('brak')
+  })
+
+  // Awaria Vercela to nie zepsuty token — nie budzimy alarmu o tokenie.
+  it('błąd sieci albo 5xx = nie wiadomo', async () => {
+    expect(await sprawdzTokenVercel(vi.fn(async () => { throw new Error('x') }))).toBe('nieznany')
+    expect(await sprawdzTokenVercel(vi.fn(async () => odp(503, {})))).toBe('nieznany')
   })
 })

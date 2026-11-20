@@ -12,6 +12,7 @@ import { sprawdzNadawce } from '@/lib/sms'
 import { parsujConfig } from '@/lib/configMerge'
 import { WYMAGANE } from '@/lib/schematWymagany'
 import { regulaminMarkdown } from '@/lib/regulaminTresc'
+import { sprawdzTokenVercel } from '@/lib/vercelSubdomena'
 
 export const runtime = 'nodejs'
 
@@ -420,7 +421,7 @@ export async function GET(request: NextRequest) {
     // pośrednim świadkiem: tu plik jest — tam też powinien być.
     regulaminDostepny: regulaminMarkdown() !== null,
     stronyDoUsuniecia,
-    subdomenyAutomatyczne: Boolean((process.env.VERCEL_API_TOKEN ?? '').trim()),
+    tokenVercel: await sprawdzTokenVercel(),
   }
 
   const znaleziska = ocenStan(stan)

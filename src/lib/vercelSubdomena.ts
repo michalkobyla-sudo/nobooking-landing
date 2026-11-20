@@ -61,3 +61,24 @@ export async function dodajSubdomene(slug: string, pobierz: Pobieracz = fetch): 
   }
   return { ok: false, powod }
 }
+
+export type StanTokenu = 'dziala' | 'nie_dziala' | 'brak' | 'nieznany'
+
+/**
+ * Czy token faktycznie pozwala czytać domeny projektu. Pytamy o
+ * `demo.nobooking.eu`, które na pewno jest w projekcie (dodane 2026-11-19).
+ */
+export async function sprawdzTokenVercel(pobierz: Pobieracz = fetch): Promise<StanTokenu> {
+  const token = (process.env.VERCEL_API_TOKEN ?? '').trim()
+  if (!token) return 'brak'
+  try {
+    const odp = await pobierz(
+      `https://api.vercel.com/v9/projects/${PROJEKT}/domains/demo.${DOMENA}?teamId=${ZESPOL}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+    if (odp.ok) return 'dziala'
+    return odp.status >= 500 ? 'nieznany' : 'nie_dziala'
+  } catch {
+    return 'nieznany'
+  }
+}

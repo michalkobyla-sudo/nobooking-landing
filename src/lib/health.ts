@@ -92,8 +92,8 @@ export interface StanSystemu {
   regulaminDostepny: boolean
   /** Wyłączone strony wygasłe ponad 12 miesięcy temu — regulamin obiecuje usunięcie ich danych. */
   stronyDoUsuniecia: string[]
-  /** Czy provisioning może dodawać subdomeny slug.nobooking.eu (jest VERCEL_API_TOKEN). */
-  subdomenyAutomatyczne: boolean
+  /** Stan VERCEL_API_TOKEN — od niego zależą subdomeny nowych stron. */
+  tokenVercel: 'dziala' | 'nie_dziala' | 'brak' | 'nieznany'
 }
 
 /** Po tylu godzinach bez udanego pobrania błąd kanału przestaje być chwilową
@@ -177,11 +177,17 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
     })
   }
 
-  if (!s.subdomenyAutomatyczne) {
+  if (s.tokenVercel === 'brak') {
     z.push({
       waga: 'info',
       tytul: 'Nowe strony nie dostaną subdomeny',
       szczegol: 'Brak VERCEL_API_TOKEN w zmiennych środowiska. Strony działają pod nobooking.eu/sites/<slug>, ale adres slug.nobooking.eu trzeba będzie dodać ręcznie w Vercelu.',
+    })
+  } else if (s.tokenVercel === 'nie_dziala') {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Token Vercel nie działa',
+      szczegol: 'VERCEL_API_TOKEN jest ustawiony, ale Vercel odmawia odczytu domen projektu — token odwołany albo z za wąskim zakresem. Nowe strony nie dostaną subdomeny slug.nobooking.eu.',
     })
   }
 

@@ -31,7 +31,7 @@ const zdrowy: StanSystemu = {
   kalendarzeZBledem: [],
   regulaminDostepny: true,
   stronyDoUsuniecia: [],
-  subdomenyAutomatyczne: true,
+  tokenVercel: 'dziala',
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -515,9 +515,20 @@ describe('dane po 12 miesiącach od wygaśnięcia', () => {
 
 describe('subdomeny nowych stron', () => {
   it('brak tokenu Vercel to informacja', () => {
-    const z = ocenStan({ ...zdrowy, subdomenyAutomatyczne: false })
+    const z = ocenStan({ ...zdrowy, tokenVercel: 'brak' })
     expect(z).toHaveLength(1)
     expect(z[0].waga).toBe('info')
     expect(z[0].szczegol).toContain('VERCEL_API_TOKEN')
+  })
+
+  it('niedziałający token to ostrzeżenie', () => {
+    const z = ocenStan({ ...zdrowy, tokenVercel: 'nie_dziala' })
+    expect(z).toHaveLength(1)
+    expect(z[0].waga).toBe('ostrzezenie')
+  })
+
+  // Chwilowa awaria Vercela nie jest problemem z tokenem.
+  it('stan nieznany nie alarmuje', () => {
+    expect(ocenStan({ ...zdrowy, tokenVercel: 'nieznany' })).toEqual([])
   })
 })
