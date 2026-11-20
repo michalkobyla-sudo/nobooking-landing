@@ -3,6 +3,7 @@ import { sciezkaDlaSubdomeny } from '@/lib/subdomena'
 import { createServerClient } from '@supabase/ssr'
 import { czyPrzekroczono, type Wpis } from '@/lib/rateLimit'
 import { czyPrzekroczonoWBazie } from '@/lib/rateLimitDb'
+import { czyAdmin } from '@/lib/czyAdmin'
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'nobooking.eu'
 
@@ -193,9 +194,10 @@ export async function proxy(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
+    // Tożsamość, nie samo zalogowanie — patrz `lib/czyAdmin.ts`.
+    if (!user || !czyAdmin(user)) {
       if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: user ? 'forbidden' : 'unauthorized' }, { status: user ? 403 : 401 })
       }
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }

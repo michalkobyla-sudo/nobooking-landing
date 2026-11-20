@@ -22,8 +22,7 @@ const PG_UNIQUE_VIOLATION = '23505'
 /**
  * Hasło tymczasowe właściciela.
  *
- * crypto.randomInt, nie Math.random — to hasło trafia jednocześnie do konta
- * Supabase Auth i do panelu właściciela. Math.random w V8 to xorshift128+,
+ * crypto.randomInt, nie Math.random — to hasło trafia do panelu właściciela. Math.random w V8 to xorshift128+,
  * którego stan da się odtworzyć z kilku kolejnych wyników; przy provisioningu
  * seryjnym oznaczało to, że znajomość jednego hasła pomaga przewidzieć kolejne.
  * randomInt robi też rejection sampling, więc nie ma przesunięcia modulo.
@@ -37,33 +36,8 @@ function generateTempPassword(): string {
 export interface ProvisionResult {
   siteId: string
   slug: string
-  ownerUserId: string
   stripeAccountId: string
   tempPassword: string
-}
-
-/**
- * Znajduje id użytkownika Auth po adresie email.
- *
- * listUsers() zwraca domyślnie tylko pierwszą stronę (50 kont), więc przy
- * większej liczbie klientów poprzednia wersja przestawała znajdować istniejące
- * konta i provisioning zatrzymywał się na stałe.
- */
-async function findAuthUserIdByEmail(
-  supabase: SupabaseClient,
-  email: string,
-): Promise<string | null> {
-  const perPage = 200
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
-    if (error) throw new Error(`listUsers failed: ${error.message}`)
-
-    const match = data?.users?.find(u => u.email?.toLowerCase() === email)
-    if (match) return match.id
-
-    if (!data?.users || data.users.length < perPage) return null // ostatnia strona
-  }
-  return null
 }
 
 /**
@@ -154,7 +128,7 @@ export async function provisionSite(
   // wznowienie tworzyłoby drugą stronę dla tego samego klienta.
   const { data: existingSite } = await supabase
     .from('sites')
-    .select('id, slug, owner_user_id, stripe_account_id')
+    .select('id, slug, stripe_account_id')
     .eq('order_id', order.id)
     .maybeSingle()
 
@@ -163,37 +137,18 @@ export async function provisionSite(
     return {
       siteId: existingSite.id as string,
       slug: existingSite.slug as string,
-      ownerUserId: (existingSite.owner_user_id as string | null) ?? '',
       stripeAccountId: (existingSite.stripe_account_id as string | null) ?? '',
       tempPassword: '(strona już istniała — hasło bez zmian)',
     }
   }
 
-  // ── 1. Create Supabase Auth user ────────────────────────────────────────────
+  // ── 1. Hasło do panelu właściciela ───────────────────────────────────────
+  // Do 2026-11-21 zakładaliśmy tu także konto Supabase Auth z tym samym hasłem.
+  // Panel właściciela go nie używał (ma własny skrót i ciasteczko), a panel
+  // admina wpuszczał każde konto Auth — klient mógł się tam zalogować hasłem
+  // z maila powitalnego. Konta Auth ma tylko administrator.
   const tempPassword = generateTempPassword()
   const adminPasswordHash = hashPassword(tempPassword)
-
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: ownerEmail,
-    password: tempPassword,
-    email_confirm: true,
-  })
-
-  let ownerUserId: string
-
-  if (authError) {
-    if (authError.message.toLowerCase().includes('already been registered') ||
-        authError.message.toLowerCase().includes('already exists')) {
-      // User exists — find their id
-      const existingId = await findAuthUserIdByEmail(supabase, ownerEmail)
-      if (!existingId) throw new Error(`Auth user not found for ${ownerEmail}`)
-      ownerUserId = existingId
-    } else {
-      throw new Error(`Auth user creation failed: ${authError.message}`)
-    }
-  } else {
-    ownerUserId = authData.user!.id
-  }
 
   // ── 2. Konto polaczone Stripe (Accounts v2, oplaty po stronie wlasciciela) ──
   let stripeAccountId = ''
@@ -232,7 +187,7 @@ export async function provisionSite(
     // Numer do SMS-ów zbieramy w onboardingu, ale wysyłka operuje na `sites`.
     // Normalizacja tutaj, raz — żeby wysyłka nie musiała zgadywać formatu.
     sms_phone: numerSms,
-    owner_user_id: ownerUserId,
+    owner_user_id: null,
     stripe_account_id: stripeAccountId || null,
     stripe_onboarded: false,
     admin_password_hash: adminPasswordHash,
@@ -250,9 +205,8 @@ export async function provisionSite(
   return {
     siteId,
     slug,
-    ownerUserId,
     stripeAccountId,
-    tempPassword: authError ? '(konto już istnieje — hasło bez zmian)' : tempPassword,
+    tempPassword,
   }
 }
 

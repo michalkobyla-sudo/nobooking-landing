@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { czyAdmin } from '@/lib/czyAdmin'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -31,12 +32,18 @@ export async function createAdminSessionClient() {
   })
 }
 
-/** Verify admin session in API routes. Returns null if authenticated, or a 401 response. */
+/**
+ * Sesja administratora w trasach API. `null`, gdy wolno; inaczej 401/403.
+ * Samo zalogowanie nie wystarcza — patrz `lib/czyAdmin.ts`.
+ */
 export async function requireAdmin(_request: NextRequest): Promise<NextResponse | null> {
   const supabase = await createAdminSessionClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+  if (!czyAdmin(user)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
   return null
 }
