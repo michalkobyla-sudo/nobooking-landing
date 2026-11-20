@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import type { Order } from '@/lib/types'
+import { adresStronyKlienta } from '@/lib/email'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 /**
  * Prośba o opinię **o Nobookingu** — do właściciela apartamentu, czyli naszego
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sent: 0, message: 'nic do wyslania' })
   }
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
   const apiKey = process.env.BREVO_API_KEY
 
   let sent = 0
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
       continue
     }
 
-    const siteLink = order.site_slug ? `${siteUrl}/sites/${order.site_slug}` : siteUrl
+    const siteLink = order.site_slug ? adresStronyKlienta(order.site_slug) : siteUrl
 
     try {
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {

@@ -269,7 +269,7 @@ wynik poprzedniej próby i nie odświeża się w trakcie bieżącej.
 w bazie faktycznie spadła i **dlaczego**. Jeśli to utrata danych — nie ruszaj
 kopii, odtwórz z niej dane. Jeśli spadek jest zamierzony (np. wyniesienie danych
 innego projektu), przebazuj punkt odniesienia:
-`curl -H "Authorization: Bearer $CRON_SECRET" "https://www.nobooking.eu/api/cron/backup-bookings?rebaseline=1"`
+`curl -H "Authorization: Bearer $CRON_SECRET" "https://nobooking.eu/api/cron/backup-bookings?rebaseline=1"`
 
 **Cokolwiek dziwnego z danymi Casa Sol** → `casa-sol/docs/DIAGNOSTYKA-kalendarz.sql`
 (tylko odczyt) i kopia z `backups/casasol_bookings_latest.json`.

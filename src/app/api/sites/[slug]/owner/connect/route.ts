@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
 import { createConnectAccount, createOnboardingLink } from '@/lib/stripe-connect'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 interface Params {
   params: Promise<{ slug: string }>
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[owner/connect] createConnectAccount error:', msg)
-      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').replace(/\/$/, '')
+      const siteUrl = adresSerwisu()
       return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1&stripe_msg=${encodeURIComponent(msg)}`)
     }
   }
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[owner/connect] createOnboardingLink error:', msg)
-    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').replace(/\/$/, '')
+    const siteUrl = adresSerwisu()
     return NextResponse.redirect(`${siteUrl}/sites/${slug}/admin?stripe_error=1&stripe_msg=${encodeURIComponent(msg)}`)
   }
 }

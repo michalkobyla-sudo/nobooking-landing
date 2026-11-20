@@ -877,7 +877,7 @@ function KodyRabatowe({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) {
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(2px)' }}>
           <ProBadge />
           <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem', textAlign: 'center' }}>Kody rabatowe dostępne w planie PRO</div>
-          <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.75rem', background: GOLD, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
+          <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.75rem', background: GOLD, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
             Przejdź na PRO →
           </a>
         </div>
@@ -1134,7 +1134,7 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
           <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '1.25rem', maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
             Obłożenie miesiąc po miesiącu, przychód roczny, średnia długość pobytu i to, z jakim wyprzedzeniem rezerwują goście.
           </p>
-          <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: GOLD, color: 'white', borderRadius: 10, padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 800, fontFamily: 'inherit', textDecoration: 'none' }}>
+          <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: GOLD, color: 'white', borderRadius: 10, padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 800, fontFamily: 'inherit', textDecoration: 'none' }}>
             Przejdź na PRO →
           </a>
         </Card>
@@ -1586,7 +1586,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
 
           <div style={{ marginTop: '1rem', borderTop: `1px solid #F3F4F6`, paddingTop: '1rem' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.3rem' }}>Plan: <span style={{ color: PRIMARY }}>{settings?.plan === 'pro' ? 'PRO' : 'Basic'}</span></div>
-            <a href="https://www.nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: GOLD, fontWeight: 700 }}>
+            <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: GOLD, fontWeight: 700 }}>
               {settings?.plan !== 'pro' ? 'Przejdź na PRO →' : 'Zarządzaj subskrypcją →'}
             </a>
           </div>

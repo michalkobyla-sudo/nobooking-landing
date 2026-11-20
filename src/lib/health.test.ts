@@ -33,6 +33,7 @@ const zdrowy: StanSystemu = {
   stronyDoUsuniecia: [],
   tokenVercel: 'dziala',
   webhookiNiedostarczone: { liczba: 0, typy: [], niesprawdzone: 0 },
+  stronyBezSubdomeny: [],
 }
 
 const tytuly = (s: Partial<StanSystemu>) => ocenStan({ ...zdrowy, ...s }).map(z => z.tytul)
@@ -550,6 +551,14 @@ describe('webhooki kont właścicieli', () => {
   it('nieodczytane konta połączone — info', () => {
     const z = ocenStan({ ...zdrowy, webhookiNiedostarczone: { liczba: 0, typy: [], niesprawdzone: 1 } })
     expect(z.map(x => x.tytul)).toEqual(['Webhooki rezerwacji gości niesprawdzone'])
+  })
+})
+
+describe('subdomeny stron', () => {
+  it('niedziałająca subdomena aktywnej strony to ostrzeżenie z adresem', () => {
+    const z = ocenStan({ ...zdrowy, stronyBezSubdomeny: ['casa-sol'] })
+    expect(z.map(x => x.waga)).toEqual(['ostrzezenie'])
+    expect(z[0].szczegol).toContain('casa-sol.nobooking.eu')
   })
 })
 

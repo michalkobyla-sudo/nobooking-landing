@@ -94,6 +94,8 @@ export interface StanSystemu {
   stronyDoUsuniecia: string[]
   /** Stan VERCEL_API_TOKEN — od niego zależą subdomeny nowych stron. */
   tokenVercel: 'dziala' | 'nie_dziala' | 'brak' | 'nieznany'
+  /** Aktywne strony, których `slug.nobooking.eu` nie odpowiada 200 — maile linkują właśnie tam. */
+  stronyBezSubdomeny: string[]
   /** Zdarzenia Stripe z ostatnich 48 h, których nie dostarczono na webhook; `null` — nie sprawdzono. */
   webhookiNiedostarczone: { liczba: number; typy: string[]; niesprawdzone: number } | null
 }
@@ -176,6 +178,14 @@ export function ocenStan(s: StanSystemu): Znalezisko[] {
       waga: 'ostrzezenie',
       tytul: 'Dane stron do usunięcia',
       szczegol: `Ponad 12 miesięcy od wygaśnięcia: ${s.stronyDoUsuniecia.join(', ')}. Regulamin i polityka prywatności obiecują wtedy usunięcie rezerwacji, opinii i zdjęć.`,
+    })
+  }
+
+  if (s.stronyBezSubdomeny.length > 0) {
+    z.push({
+      waga: 'ostrzezenie',
+      tytul: 'Subdomena strony nie działa',
+      szczegol: `Nie odpowiada: ${s.stronyBezSubdomeny.map(x => `${x}.nobooking.eu`).join(', ')}. Maile do właścicieli i gości linkują pod ten adres. Dodaj domenę w projekcie Vercel albo sprawdź VERCEL_API_TOKEN.`,
     })
   }
 

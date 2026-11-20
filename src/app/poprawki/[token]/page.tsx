@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 interface RevisionData {
   found: boolean
@@ -13,7 +14,7 @@ interface RevisionData {
   revisions_left?: number
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu'
+const SITE_URL = adresSerwisu()
 
 export default function PoprawkiPage() {
   const { token } = useParams<{ token: string }>()

@@ -126,7 +126,7 @@ rezerwacje nie będą się potwierdzać mimo pobranych pieniędzy.
 
 1. Stripe Dashboard → **Developers → Webhooks**
 2. **Add endpoint**
-3. URL: `https://www.nobooking.eu/api/stripe/webhook` (ten sam co obecny)
+3. URL: `https://nobooking.eu/api/stripe/webhook` (ten sam co obecny)
 4. W sekcji wyboru zaznacz, że nasłuchujesz zdarzeń **z kont połączonych**
    (*Listen to events on Connected accounts* / typ **Connect**)
 5. Zdarzenie: `checkout.session.completed`
@@ -278,7 +278,7 @@ i jedyny, który wciąż łączył oba projekty.
 1. Założone osobne konto platformy: `acct_1UKa8vBYbNUONJ2O` („Nobooking", PL,
    PLN), Connect włączony.
 2. Utworzony cel webhooka typu *Account* — `we_1UKaVfBYbNUONJ2OETPYLB06`,
-   `https://www.nobooking.eu/api/stripe/webhook`. Sekret podpisu odłożony
+   `https://nobooking.eu/api/stripe/webhook`. Sekret podpisu odłożony
    do wpisania w Vercelu.
 3. Utworzony klucz restrykcyjny `rk_live_…POdW` i doprowadzony do kompletu
    uprawnień. Zweryfikowane wywołaniami na żywo:

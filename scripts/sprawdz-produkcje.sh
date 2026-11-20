@@ -29,7 +29,7 @@ set +a
 
 BAZA="${NEXT_PUBLIC_SUPABASE_URL:-}"
 KLUCZ="${SUPABASE_SERVICE_ROLE_KEY:-}"
-STRONA="${NEXT_PUBLIC_SITE_URL:-https://www.nobooking.eu}"
+STRONA="$(printf %s "${NEXT_PUBLIC_SITE_URL:-https://nobooking.eu}" | tr -d "[:space:]")"
 
 # Produkcja przekierowuje z golej domeny na www. Bez podazania za
 # przekierowaniem kazde sprawdzenie zwracaloby 307 zamiast wlasciwego kodu.

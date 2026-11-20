@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { verifyOwnerSession } from '@/lib/ownerAuth'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 interface Params {
   params: Promise<{ slug: string }>
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const stripe = new Stripe(stripeKey)
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
   const planLabel = PLAN_LABELS[site.plan as string] ?? 'Nobooking'
 
   try {

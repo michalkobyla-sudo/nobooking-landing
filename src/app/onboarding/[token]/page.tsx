@@ -1,4 +1,5 @@
 import OnboardingForm from '@/components/OnboardingForm'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -7,9 +8,7 @@ interface Props {
 export default async function OnboardingPage({ params }: Props) {
   const { token } = await params
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu')
-    .trim()
-    .replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
 
   const res = await fetch(`${siteUrl}/api/onboarding/${token}`, { cache: 'no-store' })
   const data = await res.json() as {

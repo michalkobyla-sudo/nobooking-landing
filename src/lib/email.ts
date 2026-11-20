@@ -3,12 +3,13 @@ import { opisZrodla } from '@/lib/attribution'
 import { PRICE_LABELS } from './prices'
 import { htmlPotwierdzenia } from './potwierdzenieUmowy'
 import { regulaminMarkdown } from './regulaminTresc'
+import { adresSerwisu, domenaGlowna } from '@/lib/adresSerwisu'
 
 const FROM_EMAIL = 'noreply@nobooking.eu'
 const FROM_NAME = 'Nobooking'
 const ADMIN_EMAIL = () => (process.env.ADMIN_EMAIL || 'michal.kobyla@gmail.com').trim()
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-const ROOT_DOMAIN = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'nobooking.eu').trim()
+const SITE_URL = adresSerwisu()
+const ROOT_DOMAIN = domenaGlowna()
 
 /**
  * Adres strony klienta do maili: `slug.nobooking.eu`, odkąd subdomeny działają
@@ -632,7 +633,6 @@ export async function sendPreArrivalReminder(params: {
   linkCheckin: string | null
 }) {
   const { booking, slug, nazwaApartamentu, linkCheckin } = params
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
 
   await sendEmail(
     booking.guest_email,
@@ -654,7 +654,7 @@ export async function sendPreArrivalReminder(params: {
           Zajmie minutę, a skróci formalności na miejscu.
         </p>` : ''}
 
-        <a href="${siteUrl}/sites/${escapeHtml(slug)}/guest/${escapeHtml(booking.id)}" style="color: #059669; font-size: 0.9rem;">
+        <a href="${escapeHtml(adresStronyKlienta(slug))}/guest/${escapeHtml(booking.id)}" style="color: #059669; font-size: 0.9rem;">
           Podgląd rezerwacji →
         </a>
       </div>
@@ -675,8 +675,7 @@ export async function sendReviewRequest(params: {
   nazwaApartamentu: string
 }) {
   const { booking, slug, nazwaApartamentu } = params
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-  const link = `${siteUrl}/sites/${slug}/guest/${booking.id}/opinia`
+  const link = `${adresStronyKlienta(slug)}/guest/${booking.id}/opinia`
 
   await sendEmail(
     booking.guest_email,

@@ -8,6 +8,7 @@ import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { sendOwnerWelcomeEmail } from '@/lib/email'
 import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 // Allow up to 300s on Vercel Pro, 60s on Hobby
 export const maxDuration = 300
@@ -69,6 +70,10 @@ export async function GET(request: NextRequest) {
         // zaklepanie wygrywa dokladnie jedno uruchomienie, wiec tylko ono
         // tu pisze.
         provisioning_attempts: (typedOrder.provisioning_attempts ?? 0) + 1,
+        // Status dla panelu admina. Do 2026-11-20 cron go nie ruszał i gotowe
+        // strony wisiały jako „Formularz wysłany”. Strona wstrzymana do przeglądu
+        // zostaje „W budowie” — widać, że czeka na człowieka.
+        status: 'building',
       })
       .eq('id', typedOrder.id)
       .is('site_slug', null)
@@ -104,7 +109,7 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', typedOrder.id)
 
-      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+      const siteUrl = adresSerwisu()
 
       // 4. Sprawdzenie własnej pracy — przed mailem do klienta.
       //    Bez tego kroku cron raportował sukces nawet dla strony z zerem zdjęć,
@@ -164,6 +169,13 @@ export async function GET(request: NextRequest) {
         revision_url: typedOrder.revision_token ? `${siteUrl}/poprawki/${typedOrder.revision_token}` : null,
         na_subdomenie: subdomenaDodana,
       })
+
+      // Strona przeszła kontrolę i klient dostał mail — z punktu widzenia
+      // zamówienia praca skończona (poprawki to osobny obieg, `api/revisions`).
+      // Bez maila do klienta: `sendStatusUpdateEmail` wysyła tylko zmiana ręczna.
+      const { error: bladStatusu } = await supabase
+        .from('orders').update({ status: 'completed' }).eq('id', typedOrder.id)
+      if (bladStatusu) console.error(`[provision-cron] status completed nie zapisany: ${bladStatusu.message}`)
 
       console.log(`[provision-cron] ✅ order ${typedOrder.id} — site "${slug}" provisioned`)
       results.push({ id: typedOrder.id, status: 'ok' })

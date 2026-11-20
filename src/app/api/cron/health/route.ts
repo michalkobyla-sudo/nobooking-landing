@@ -13,6 +13,7 @@ import { parsujConfig } from '@/lib/configMerge'
 import { WYMAGANE } from '@/lib/schematWymagany'
 import { regulaminMarkdown } from '@/lib/regulaminTresc'
 import { sprawdzTokenVercel } from '@/lib/vercelSubdomena'
+import { domenaGlowna } from '@/lib/adresSerwisu'
 
 export const runtime = 'nodejs'
 
@@ -422,6 +423,7 @@ export async function GET(request: NextRequest) {
     regulaminDostepny: regulaminMarkdown() !== null,
     stronyDoUsuniecia,
     tokenVercel: await sprawdzTokenVercel(),
+    stronyBezSubdomeny: await stronyBezSubdomeny((strony ?? []).map(s => s.slug as string)),
     webhookiNiedostarczone: await niedostarczoneZdarzeniaStripe(
       (strony ?? []).map(s => s.stripe_account_id as string | null).filter((k): k is string => Boolean(k)),
     ),
@@ -456,3 +458,25 @@ export async function GET(request: NextRequest) {
     ...(kontoProbneDoSkasowania() ? { kontoProbneDoSkasowania: kontoProbneDoSkasowania() } : {}),
   })
 }
+
+/**
+ * Aktywne strony, których subdomena nie odpowiada 200. Od 2026-11-20 maile do
+ * właścicieli i gości linkują pod `slug.nobooking.eu` — subdomena, której nie
+ * dodano w Vercelu, to martwy link w każdym mailu.
+ */
+async function stronyBezSubdomeny(slugi: string[]): Promise<string[]> {
+  const wyniki = await Promise.all(slugi.map(async slug => {
+    try {
+      const r = await fetch(`https://${slug}.${domenaGlowna()}/`, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(8000),
+        headers: { 'user-agent': 'nobooking-health' },
+      })
+      return r.status === 200 ? null : slug
+    } catch {
+      return slug
+    }
+  }))
+  return wyniki.filter((s): s is string => s !== null)
+}
+

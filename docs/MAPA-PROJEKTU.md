@@ -29,6 +29,8 @@ Supabase (REST, klucz serwisowy po stronie serwera), Stripe, Brevo (maile), Twil
    wiersz `sites`, konto Connect właściciela (Accounts v2), subdomena w Vercelu
    (`lib/vercelSubdomena.ts`), hasło do panelu → kontrola `lib/provisionCheck.ts` → **jeden**
    mail „strona gotowa” (`sendOwnerWelcomeEmail`: adres, panel, Stripe, poprawki).
+   Status zamówienia: `onboarding_sent` → `building` (cron bierze) → `completed` (mail wysłany);
+   strona wstrzymana do przeglądu zostaje `building` z `provisioning_error`.
 5. Poprawki: `/poprawki/[token]` → `api/revisions/[token]` (4 rundy).
 
 ## Przepływ 2 — rezerwacja gościa
@@ -92,6 +94,11 @@ Lokalny `.env.local` ma **testowy** klucz Stripe (`sk_test_`) i produkcyjną baz
 ## Pułapki, które już kosztowały czas
 
 - **Adresy zewnętrzne zawsze bez www.** Webhooki Stripe na `www` nie dochodziły przez tygodnie (308).
+- **Adres serwisu tylko przez `lib/adresSerwisu.ts`** (`adresSerwisu()`, `domenaGlowna()`) — produkcyjne
+  `NEXT_PUBLIC_SITE_URL` ma końcowy znak nowej linii. **Adres strony klienta** w mailach:
+  `adresStronyKlienta(slug)` z `lib/email.ts` → `slug.nobooking.eu` (strona, panel gościa, opinie, check-in);
+  panel właściciela i odnowienie zostają pod `nobooking.eu/sites/<slug>/admin`. Raport zdrowia sprawdza,
+  że subdomena każdej aktywnej strony odpowiada.
 - **Wysyłka po odpowiedzi tylko przez `after()`** z `next/server` — promise bez `await` Vercel ucina.
 - **Linki wewnętrzne jako `<Link>`**, nie `<a>` — źródło wejścia z reklamy żyje tylko w pamięci karty
   (`lib/zrodloWPamieci.ts`), przeładowanie je gubi.

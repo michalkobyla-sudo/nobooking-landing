@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { isConnectAccountReady } from '@/lib/stripe-connect'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 // GET /api/connect/callback?slug=casa-sol
 // Stripe redirects here after owner completes Connect Express onboarding.
 // Updates stripe_onboarded = true if account is ready, then redirects to admin.
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get('slug')
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
 
   if (!slug) {
     return NextResponse.redirect(siteUrl)

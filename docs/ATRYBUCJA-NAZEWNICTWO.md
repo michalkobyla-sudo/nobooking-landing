@@ -99,19 +99,19 @@ Facebooku nie ma czego tam wpisywać.
 Reklama płatna na Facebooku, przekaz o prowizjach, wariant z wideo:
 
 ```
-https://www.nobooking.eu/?utm_source=facebook&utm_medium=cpc&utm_campaign=bez-prowizji&utm_content=wideo-30s
+https://nobooking.eu/?utm_source=facebook&utm_medium=cpc&utm_campaign=bez-prowizji&utm_content=wideo-30s
 ```
 
 Post organiczny na Instagramie:
 
 ```
-https://www.nobooking.eu/?utm_source=instagram&utm_medium=social&utm_campaign=wlasna-strona&utm_content=karuzela-3
+https://nobooking.eu/?utm_source=instagram&utm_medium=social&utm_campaign=wlasna-strona&utm_content=karuzela-3
 ```
 
 Link w bio:
 
 ```
-https://www.nobooking.eu/?utm_source=instagram&utm_medium=profil&utm_campaign=bio
+https://nobooking.eu/?utm_source=instagram&utm_medium=profil&utm_campaign=bio
 ```
 
 ## Jak czytać wyniki

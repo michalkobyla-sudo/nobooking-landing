@@ -4,8 +4,9 @@ import { createServerClient } from '@supabase/ssr'
 import { czyPrzekroczono, type Wpis } from '@/lib/rateLimit'
 import { czyPrzekroczonoWBazie } from '@/lib/rateLimitDb'
 import { czyAdmin } from '@/lib/czyAdmin'
+import { domenaGlowna } from '@/lib/adresSerwisu'
 
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'nobooking.eu'
+const ROOT_DOMAIN = domenaGlowna()
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 // W pamięci instancji, „najlepszy wysiłek" — wystarczające przy obecnej skali.

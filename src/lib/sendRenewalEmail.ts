@@ -1,3 +1,4 @@
+import { adresSerwisu } from '@/lib/adresSerwisu'
 /**
  * sendRenewalEmail — wysyła emaile przypominające o odnowieniu subskrypcji.
  * 5 progów czasowych, każdy z innym tonem.
@@ -5,7 +6,7 @@
 
 const FROM_EMAIL = 'noreply@nobooking.eu'
 const FROM_NAME = 'Nobooking'
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+const SITE_URL = adresSerwisu()
 
 async function sendEmail(to: string, subject: string, html: string) {
   const apiKey = process.env.BREVO_API_KEY

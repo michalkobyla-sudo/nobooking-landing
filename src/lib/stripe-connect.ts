@@ -1,4 +1,5 @@
 import { createRequire } from 'module'
+import { adresSerwisu } from '@/lib/adresSerwisu'
 
 const _require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +102,7 @@ export async function createOnboardingLink(
   slug: string,
 ): Promise<string> {
   const stripe = getStripe()
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   const link = await stripe.accountLinks.create({
@@ -183,7 +184,7 @@ export async function createBookingCheckout(params: {
   description: string
 }): Promise<string> {
   const stripe = getStripe()
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
+  const siteUrl = adresSerwisu()
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   const session = await stripe.checkout.sessions.create(

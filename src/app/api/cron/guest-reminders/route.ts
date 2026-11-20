@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
-import { sendPreArrivalReminder, sendReviewRequest, type BookingEmailData } from '@/lib/email'
+import { sendPreArrivalReminder, sendReviewRequest, adresStronyKlienta, type BookingEmailData } from '@/lib/email'
 
 export const maxDuration = 120
 
@@ -46,8 +46,6 @@ export async function GET(request: NextRequest) {
   await odnotujPrzebieg(db, request.nextUrl.pathname)
   const wyniki = { przed_przyjazdem: 0, prosba_o_opinie: 0, bledy: [] as string[] }
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://nobooking.eu').trim().replace(/\/$/, '')
-
   /** Zaklepuje wysyłkę. `false` oznacza, że ktoś już ją wykonał. */
   async function zaklep(bookingId: string, rodzaj: Rodzaj): Promise<boolean> {
     const { error } = await db.from('guest_notifications').insert({ booking_id: bookingId, rodzaj })
@@ -89,7 +87,7 @@ export async function GET(request: NextRequest) {
     const nazwa = (strona.config as { name?: string } | null)?.name ?? (strona.slug as string)
     // Link do check-inu ma sens tylko tam, gdzie check-in w ogóle istnieje.
     const linkCheckin = strona.plan === 'pro'
-      ? `${siteUrl}/sites/${strona.slug as string}/guest/${b.id as string}/checkin`
+      ? `${adresStronyKlienta(strona.slug as string)}/guest/${b.id as string}/checkin`
       : null
 
     try {

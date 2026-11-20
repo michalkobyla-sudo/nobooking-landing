@@ -287,7 +287,7 @@ stripe.checkout.sessions.create(
 `POST /api/stripe/webhook` — nasłuchuje zdarzenia `checkout.session.completed`.
 
 **Konfiguracja w Stripe Dashboard — potrzebne DWA endpointy** pod tym samym adresem
-`https://www.nobooking.eu/api/stripe/webhook`:
+`https://nobooking.eu/api/stripe/webhook` (**bez www** — `www` przekierowuje 308, a Stripe nie podąża za przekierowaniami; do 2026-11-20 przez to żaden webhook nie dochodził):
 
 | Typ endpointu | Skąd zdarzenia | Czego dotyczą |
 |---|---|---|
@@ -331,7 +331,7 @@ Stripe mogło dokończyć pracę.
 | `OWNER_JWT_SECRET` | Tajny klucz do podpisywania tokenów sesji właściciela |
 | `BREVO_API_KEY` | Klucz Brevo — wysyłka emaili |
 | `EMAIL_FROM` | Adres nadawcy emaili |
-| `NEXT_PUBLIC_SITE_URL` | `https://www.nobooking.eu` — używany w redirect URL-ach |
+| `NEXT_PUBLIC_SITE_URL` | `https://nobooking.eu` (bez www) — czytany przez `lib/adresSerwisu.ts`, który obcina końcowe białe znaki |
 | `ANTHROPIC_API_KEY` | Klucz do generowania konfiguracji przez Claude |
 | `CRON_SECRET` | Autoryzacja cron jobów |
 
