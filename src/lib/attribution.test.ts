@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  czytajZrodlo, scal, maInformacje, zJson, zBody, opisZrodla,
+  czytajZrodlo, scal, maInformacje, zBody, opisZrodla,
   PUSTE_ZRODLO, MAX_DLUGOSC, type Zrodlo,
 } from './attribution'
 
@@ -118,18 +118,7 @@ describe('scal — pierwsze dotknięcie wygrywa', () => {
   })
 })
 
-describe('zJson i zBody — dane niezaufane', () => {
-  it('odczytuje zapisane źródło', () => {
-    const z = czytajZrodlo(`${START}?utm_source=ig&utm_campaign=x`, null)
-    expect(zJson(JSON.stringify(z))).toEqual(z)
-  })
-
-  it('zwraca null przy uszkodzonym wpisie', () => {
-    for (const t of ['', null, undefined, '{', 'null', '"tekst"', '[1,2]']) {
-      expect(zJson(t)).toBeNull()
-    }
-  })
-
+describe('zBody — dane niezaufane', () => {
   it('odrzuca pola spoza zestawu i typy inne niż tekst', () => {
     const z = zBody({ utm_source: 'fb', utm_campaign: 42, zlosliwe: 'drop table', click_id: { a: 1 } })
     expect(z).toEqual({ ...PUSTE_ZRODLO, utm_source: 'fb' })

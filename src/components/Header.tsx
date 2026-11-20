@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 
 export default function Header() {
@@ -103,7 +104,7 @@ export default function Header() {
           </div>
 
           {/* Demo link */}
-          <a href="/demo" className="header-demo-link" style={{
+          <Link href="/demo" className="header-demo-link" style={{
             border: '1.5px solid var(--color-border)',
             borderRadius: 'var(--radius-pill)',
             padding: '0.45rem 1rem', fontSize: '0.82rem', fontWeight: 600,
@@ -117,7 +118,7 @@ export default function Header() {
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             {lang === 'pl' ? 'Demo' : 'Demo'}
-          </a>
+          </Link>
 
           {/* CTA */}
           <button onClick={() => scrollTo('cennik')} style={{

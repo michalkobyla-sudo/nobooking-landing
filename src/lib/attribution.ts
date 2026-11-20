@@ -30,9 +30,6 @@ export const PUSTE_ZRODLO: Zrodlo = {
   referrer: null, landing_path: null,
 }
 
-/** Klucz w `localStorage`. */
-export const KLUCZ_ZRODLA = 'nobooking_zrodlo'
-
 /**
  * Górny limit długości pojedynczej wartości. Parametry UTM przychodzą z adresu,
  * czyli od kogokolwiek — bez limitu ktoś wkleiłby megabajt do każdego zamówienia.
@@ -137,26 +134,6 @@ export function scal(zapisane: Zrodlo | null, biezace: Zrodlo): Zrodlo {
   if (!zapisane) return biezace
   if (!maInformacje(zapisane) && maInformacje(biezace)) return biezace
   return zapisane
-}
-
-/**
- * Bezpieczne odczytanie zapisanego źródła. Zwraca `null` przy czymkolwiek
- * nieoczekiwanym — atrybucja nie może wywrócić formularza zamówienia.
- */
-export function zJson(tekst: string | null | undefined): Zrodlo | null {
-  if (!tekst) return null
-  try {
-    const d = JSON.parse(tekst) as Record<string, unknown>
-    // Tablica też przechodzi przez `typeof === 'object'`, a nie jest zapisem źródła.
-    if (typeof d !== 'object' || d === null || Array.isArray(d)) return null
-    const z = { ...PUSTE_ZRODLO }
-    for (const k of Object.keys(PUSTE_ZRODLO) as Array<keyof Zrodlo>) {
-      z[k] = oczysc(d[k] as string | undefined)
-    }
-    return z
-  } catch {
-    return null
-  }
 }
 
 /** Ta sama sanityzacja po stronie serwera — dane z `body` są niezaufane. */

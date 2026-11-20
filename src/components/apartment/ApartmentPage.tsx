@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ApartmentConfig, Lang } from '@/lib/apartmentTypes'
 import { sezonDla, opisMiesiecy } from '@/lib/bookingPricing'
 import { adresOdtwarzacza } from '@/lib/galeria'
@@ -185,7 +186,19 @@ function Overline({ children, color }: { children: string; color: string }) {
 
 function DemoBanner({ ui, showDemo, isMobile }: { ui: typeof UI.pl; showDemo: boolean; isMobile: boolean }) {
   const [visible, setVisible] = useState(true)
+  const router = useRouter()
   if (!showDemo || !visible) return null
+
+  // Na nobooking.eu przejście do cennika bez przeładowania: źródło wejścia żyje
+  // tylko w pamięci karty (`lib/zrodloWPamieci.ts`) i przeładowanie by je zgubiło.
+  // Z subdomeny demo.nobooking.eu to inna domena — tam zwykły link.
+  const doCennika = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const host = window.location.hostname
+    if (host === 'nobooking.eu' || host === 'www.nobooking.eu' || host === 'localhost') {
+      e.preventDefault()
+      router.push('/#cennik')
+    }
+  }
   return (
     <div style={{
       background: '#059669', color: 'white',
@@ -196,7 +209,7 @@ function DemoBanner({ ui, showDemo, isMobile }: { ui: typeof UI.pl; showDemo: bo
     }}>
       <span style={{ flex: 1 }}>{ui.demoBanner}</span>
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
-        <a href="https://nobooking.eu/#cennik" style={{ color: 'white', fontWeight: 800, textDecoration: 'underline', whiteSpace: 'nowrap' }}>{ui.demoOrder}</a>
+        <a href="https://nobooking.eu/#cennik" onClick={doCennika} style={{ color: 'white', fontWeight: 800, textDecoration: 'underline', whiteSpace: 'nowrap' }}>{ui.demoOrder}</a>
         <button onClick={() => setVisible(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}>×</button>
       </div>
     </div>

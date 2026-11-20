@@ -1,6 +1,6 @@
 # Polityka prywatności
 
-Obowiązuje od 19 listopada 2026 r.
+Obowiązuje od 20 listopada 2026 r.
 
 ## 1. Kto przetwarza Twoje dane
 
@@ -97,14 +97,12 @@ zabezpieczeń możesz otrzymać, pisząc na kontakt@nobooking.eu.
 **Na nobooking.eu nie używamy ciasteczek analitycznych ani reklamowych** i nie mamy na stronie
 narzędzi śledzących.
 
-Zapisujemy w przeglądarce dwie rzeczy:
+Zapisujemy w przeglądarce jedną rzecz: **ciasteczko sesji panelu** — po zalogowaniu właściciela,
+ważne 7 dni, niedostępne dla skryptów strony; bez niego panel nie działa.
 
-- **ciasteczko sesji panelu** — po zalogowaniu właściciela, ważne 7 dni, niedostępne dla skryptów
-  strony; bez niego panel nie działa;
-- **źródło wejścia w `localStorage`** — parametry kampanii, identyfikator kliknięcia reklamy, adres
-  strony odsyłającej i strony wejścia. Zapisujemy je przy pierwszym wejściu i dołączamy do zamówienia,
-  jeśli je złożysz. Nie trafiają do nas wcześniej. Możesz je usunąć, czyszcząc dane strony
-  w przeglądarce.
+**Źródło wejścia** — parametry kampanii, identyfikator kliknięcia reklamy, adres strony odsyłającej
+i strony wejścia — strona pamięta tylko do zamknięcia lub przeładowania karty, niczego nie zapisując
+w przeglądarce. Dołączamy je do zamówienia, jeśli je złożysz; wcześniej nie trafia do nas.
 
 **Strony apartamentów** zbudowane w Nobooking mogą zawierać mapę Google i filmy z YouTube. **Ładują
 się dopiero wtedy, gdy klikniesz „Pokaż mapę” albo film** — wcześniej Google nie otrzymuje od strony

@@ -1,9 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { normalizujNumerPodatkowy } from '@/lib/numerPodatkowy'
 import { PRICE_LABELS } from '@/lib/prices'
-import { zJson, PUSTE_ZRODLO, KLUCZ_ZRODLA } from '@/lib/attribution'
+import { PUSTE_ZRODLO } from '@/lib/attribution'
+import { zapamietaneZrodlo } from '@/lib/zrodloWPamieci'
 
 interface Props {
   plan: 'basic' | 'pro'
@@ -119,13 +121,8 @@ export default function OrderForm({ plan, currency }: Props) {
           notes: form.notes.trim() || null,
           akceptacja_regulaminu: akceptacja,
           wczesny_start: wczesnyStart,
-          // Źródło zapisane przy pierwszej wizycie (`ZapiszZrodlo`). Odczyt
-          // w try/catch, bo tryb prywatny rzuca — brak atrybucji nie może
-          // zablokować zamówienia.
-          zrodlo: (() => {
-            try { return zJson(window.localStorage.getItem(KLUCZ_ZRODLA)) ?? PUSTE_ZRODLO }
-            catch { return PUSTE_ZRODLO }
-          })(),
+          // Źródło zapamiętane przy wejściu (`ZapiszZrodlo`), tylko w pamięci karty.
+          zrodlo: zapamietaneZrodlo() ?? PUSTE_ZRODLO,
         }),
       })
 
@@ -146,9 +143,9 @@ export default function OrderForm({ plan, currency }: Props) {
     <div style={{ minHeight: '100vh', background: '#F9FAFB', padding: '3rem 1rem' }}>
       <div style={{ maxWidth: '640px', margin: '0 auto' }}>
         {/* Back link */}
-        <a href="/#cennik" style={{ fontSize: '0.875rem', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2rem' }}>
+        <Link href="/#cennik" style={{ fontSize: '0.875rem', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2rem' }}>
           ← Zmień plan
-        </a>
+        </Link>
 
         {/* Plan badge */}
         <div style={{ background: 'white', border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

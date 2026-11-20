@@ -467,7 +467,8 @@ Ruszamy, gdy wszystkie poniższe są prawdziwe:
       bo `upsert` nie zmienia daty utworzenia — świeżość czyta się z `updated_at`;
 - [x] atrybucja wiąże zamówienie z kampanią (Etap 4a) — sprawdzone na
       produkcji 2026-10-04, cały łańcuch: wejście z `?utm_source=…` zapisuje
-      osiem pól w `localStorage`; **powtórne wejście z inną kampanią ich nie
+      osiem pól w `localStorage` (od 2026-11-20 w pamięci karty — patrz
+      `TECHNICZNA-DOKUMENTACJA.md`, Atrybucja); **powtórne wejście z inną kampanią ich nie
       nadpisuje** (pierwsze dotknięcie wygrywa, zgodnie z `ATRYBUCJA-NAZEWNICTWO.md`);
       formularz zamówienia wysyła `zrodlo` z kampanią z **pierwszego** wejścia,
       a `/api/orders` wstawia je przez `zBody` do kolumn `orders`. Sprawdzone bez

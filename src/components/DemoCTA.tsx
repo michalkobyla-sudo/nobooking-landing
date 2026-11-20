@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 import { PRICE_LABELS } from '@/lib/prices'
@@ -74,7 +75,7 @@ export default function DemoCTA() {
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
-          <a href={demoUrl} style={{
+          <Link href={demoUrl} style={{
             border: '1.5px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.75)',
             borderRadius: 'var(--radius-pill)', padding: '0.875rem 1.75rem',
             fontSize: '0.95rem', fontWeight: 600, textDecoration: 'none',
@@ -87,7 +88,7 @@ export default function DemoCTA() {
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             {t.demoCta}
-          </a>
+          </Link>
         </div>
       </div>
     </section>

@@ -9,10 +9,16 @@ powstały.
 
 ## Co w ogóle zapisujemy
 
-`ZapiszZrodlo` zapisuje **pierwsze dotknięcie** przy wejściu na stronę
-i trzyma je w `localStorage` do momentu złożenia zamówienia. Pierwsze, nie
-ostatnie: klient, który przyszedł z reklamy, przemyślał tydzień i wrócił
-wpisując adres z pamięci, nadal liczy się jako przyprowadzony przez reklamę.
+`ZapiszZrodlo` zapamiętuje **pierwsze dotknięcie** przy wejściu na stronę
+i trzyma je **w pamięci karty** do złożenia zamówienia — przejście do demo,
+cennika i formularza go nie gubi. Pierwsze, nie ostatnie: klient z reklamy,
+który pochodził po stronie, nadal liczy się jako przyprowadzony przez reklamę.
+
+**Od 2026-11-20 nic nie zapisujemy w przeglądarce** — zapis w `localStorage`
+wymagałby zgody (art. 399 Prawa komunikacji elektronicznej). Cena: klient, który
+zamknie kartę i wróci następnego dnia, wpisując adres z pamięci, liczy się jako
+wejście bezpośrednie. Takie powroty zobaczysz w panelu Meta (konwersje po
+obejrzeniu i po kliknięciu), nie w `orders`.
 
 Do `orders` trafia osiem pól: `utm_source`, `utm_medium`, `utm_campaign`,
 `utm_content`, `utm_term`, `click_id` (`fbclid` albo `gclid`), `referrer`

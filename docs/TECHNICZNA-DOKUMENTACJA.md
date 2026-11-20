@@ -784,15 +784,25 @@ Plan sprawdzany po stronie serwera, w `powiadomORezerwacji` i w trasie ustawień
 
 ### Atrybucja — skąd przyszedł klient
 
-`src/lib/attribution.ts` (czyste), `src/components/ZapiszZrodlo.tsx` (zapis),
-migracja `docs/supabase/2026-09-29-atrybucja.sql`.
+`src/lib/attribution.ts` (czyste), `src/lib/zrodloWPamieci.ts` (pamięć karty),
+`src/components/ZapiszZrodlo.tsx` (odczyt przy wejściu), migracja `docs/supabase/2026-09-29-atrybucja.sql`.
 
 **Pierwsze dotknięcie wygrywa.** Parametry kampanii lądują na stronie wejścia,
 a formularz zamówienia jest kilka kliknięć dalej — przy ostatnim dotknięciu
 każde zamówienie miałoby źródło „wejście bezpośrednie". `ZapiszZrodlo` siedzi
-w `layout.tsx`, zapisuje źródło do `localStorage` przy pierwszej wizycie
-i nie nadpisuje go przy kolejnych. Wyjątek: zapisane „wejście bezpośrednie"
-ustępuje późniejszemu źródłu z informacją.
+w `layout.tsx` i zapamiętuje źródło przy załadowaniu strony; kolejne go nie
+nadpisują. Wyjątek: zapamiętane „wejście bezpośrednie" ustępuje późniejszemu
+źródłu z informacją.
+
+**Tylko w pamięci karty, bez zapisu w przeglądarce** (od 2026-11-20). Do tego dnia
+źródło leżało w `localStorage`, a art. 399 Prawa komunikacji elektronicznej obejmuje
+każdy zapis w urządzeniu, nie tylko ciasteczka — zapis na potrzeby oceny reklam
+wymagałby zgody, czyli banera. Teraz źródło żyje w zmiennej modułu i przeżywa
+nawigację wewnątrz serwisu, ale nie przeładowanie strony. Dlatego wszystkie linki
+między stroną główną, demo i formularzem to `<Link>` z Next, a baner w demo
+przechodzi do cennika przez `router.push`, gdy stoi na nobooking.eu.
+**Nowy link wewnętrzny jako zwykłe `<a>` po cichu zgubi atrybucję.**
+`ZapiszZrodlo` usuwa przy okazji stary wpis `nobooking_zrodlo` z `localStorage`.
 
 Rozpoznawanie, w kolejności pierwszeństwa:
 
@@ -805,8 +815,7 @@ Rozpoznawanie, w kolejności pierwszeństwa:
 
 Wartości przechodzą przez `zBody` po stronie serwera: przycięcie do 200 znaków,
 usunięcie znaków sterujących, odrzucenie pól spoza zestawu. Pochodzą z adresu
-URL, więc są niezaufane. Dostęp do `localStorage` jest w `try/catch` — tryb
-prywatny rzuca, a brak atrybucji nie może zablokować zamówienia.
+URL, więc są niezaufane.
 
 Źródło trafia też jedną linią do maila z powiadomieniem o zamówieniu
 (`opisZrodla`).

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 
@@ -68,11 +69,11 @@ const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
                         onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
                         {link.label}
                       </button>
-                    : <a href={link.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
+                    : <Link href={link.href!} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
                         onMouseEnter={e => (e.currentTarget.style.color = 'white')}
                         onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
                         {link.label}
-                      </a>
+                      </Link>
                   }
                 </div>
               ))}

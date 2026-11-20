@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 
@@ -126,7 +127,7 @@ export default function HowItWorks() {
 
         {/* Demo links */}
         <div style={{ display: 'flex', gap: '0.875rem', justifyContent: 'center', marginTop: '3.5rem', flexWrap: 'wrap' }}>
-          <a href="/demo" style={{
+          <Link href="/demo" style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
             border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
             padding: '0.7rem 1.375rem', fontSize: '0.875rem', fontWeight: 600,
@@ -141,7 +142,7 @@ export default function HowItWorks() {
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
             {lang === 'pl' ? 'Demo strony apartamentu' : 'Apartment site demo'}
-          </a>
+          </Link>
           <a href="/demo-panelu/zamowienia" style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
             border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',

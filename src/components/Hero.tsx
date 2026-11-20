@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 
@@ -96,12 +97,12 @@ export default function Hero() {
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
-            <a href={demoUrl} className="btn-outline">
+            <Link href={demoUrl} className="btn-outline">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               {t.heroSecondary}
-            </a>
+            </Link>
           </div>
 
           {/*

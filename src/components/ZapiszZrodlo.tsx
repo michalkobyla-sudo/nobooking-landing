@@ -1,28 +1,30 @@
 'use client'
 
 import { useEffect } from 'react'
-import { czytajZrodlo, scal, zJson, KLUCZ_ZRODLA } from '@/lib/attribution'
+import { czytajZrodlo } from '@/lib/attribution'
+import { zapamietajZrodlo } from '@/lib/zrodloWPamieci'
+
+/** Klucz, pod którym do 2026-11-20 zapisywaliśmy źródło w `localStorage`. */
+const STARY_KLUCZ = 'nobooking_zrodlo'
 
 /**
- * Zapisuje źródło wejścia przy pierwszej wizycie. Nic nie renderuje.
+ * Zapamiętuje źródło wejścia przy pierwszym załadowaniu strony. Nic nie renderuje
+ * i niczego nie zapisuje w przeglądarce — patrz `lib/zrodloWPamieci.ts`.
  *
  * Musi siedzieć w layoucie, a nie w formularzu zamówienia: parametry kampanii
  * lądują na stronie, na którą klient wszedł, a zamówienie składa kilka kliknięć
- * później — do tego czasu adres dawno ich nie zawiera.
+ * później — do tego czasu adres dawno ich nie zawiera. Layout nie odmontowuje się
+ * przy nawigacji wewnątrz serwisu, więc efekt biegnie raz na załadowanie.
  */
 export default function ZapiszZrodlo() {
   useEffect(() => {
+    zapamietajZrodlo(czytajZrodlo(window.location.href, document.referrer))
     try {
-      const zapisane = zJson(window.localStorage.getItem(KLUCZ_ZRODLA))
-      const biezace = czytajZrodlo(window.location.href, document.referrer)
-      const wynik = scal(zapisane, biezace)
-      if (wynik !== zapisane) {
-        window.localStorage.setItem(KLUCZ_ZRODLA, JSON.stringify(wynik))
-      }
+      // Sprzątanie po wcześniejszej wersji: usunięcie zapisu nie wymaga zgody,
+      // a zostawiony leżałby w przeglądarkach odwiedzających bez końca.
+      window.localStorage.removeItem(STARY_KLUCZ)
     } catch {
-      // Tryb prywatny i zablokowane dane witryny rzucają przy dostępie do
-      // localStorage. Atrybucja jest miłym dodatkiem — nigdy nie może
-      // przeszkodzić w złożeniu zamówienia.
+      // Tryb prywatny i zablokowane dane witryny rzucają przy dostępie.
     }
   }, [])
 
