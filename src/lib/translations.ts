@@ -130,7 +130,7 @@ export const TR: Record<Lang, {
     howStep3Desc: 'Własny adres nazwa.nobooking.eu, panel właściciela, strona gotowa do przyjmowania rezerwacji.',
     featuresTitle: 'Co dostajesz?',
     features: [
-      { icon: '📅', title: 'Kalendarz dostępności', desc: 'Goście widzą wolne terminy w czasie rzeczywistym' },
+      { icon: '📅', title: 'Kalendarz z Booking.com i Airbnb', desc: 'Terminy z portali blokują się same, rezerwacje ze strony trafiają do portali' },
       { icon: '💳', title: 'Płatności Stripe', desc: 'Metody zależne od Twojego konta Stripe — pieniądze prosto do Ciebie' },
       { icon: '🖥️', title: 'Panel właściciela', desc: 'Rezerwacje, kalendarz, cennik, galeria, opinie — wszystko w jednym miejscu' },
       { icon: '👤', title: 'Portal gościa', desc: 'Szczegóły pobytu, check-in online, adres z mapą i kontakt do Ciebie' },
@@ -170,6 +170,7 @@ export const TR: Record<Lang, {
     basicFeatures: [
       'Hosting i adres nazwa.nobooking.eu na 2 lata',
       'Kalendarz i rezerwacje online',
+      'Synchronizacja kalendarza z Booking.com i Airbnb',
       'Płatności Stripe (karta, BLIK, Przelewy24 i inne)',
       'Panel admina',
       'Portal gościa',
@@ -267,7 +268,7 @@ export const TR: Record<Lang, {
     howStep3Desc: 'Your own address name.nobooking.eu, owner panel, site ready to accept bookings.',
     featuresTitle: 'What do you get?',
     features: [
-      { icon: '📅', title: 'Availability calendar', desc: 'Guests see free dates in real time' },
+      { icon: '📅', title: 'Calendar synced with Booking.com and Airbnb', desc: 'Portal bookings block your dates, site bookings reach the portals' },
       { icon: '💳', title: 'Stripe payments', desc: 'Methods depend on your own Stripe account — money straight to you' },
       { icon: '🖥️', title: 'Owner panel', desc: 'Bookings, calendar, pricing, gallery, reviews — all in one place' },
       { icon: '👤', title: 'Guest portal', desc: 'Stay details, online check-in, address with map and your contact details' },
@@ -307,6 +308,7 @@ export const TR: Record<Lang, {
     basicFeatures: [
       'Hosting and a name.nobooking.eu address for 2 years',
       'Online calendar and reservations',
+      'Calendar sync with Booking.com and Airbnb',
       'Stripe payments (card, BLIK, Przelewy24 and more)',
       'Admin panel',
       'Guest portal',
