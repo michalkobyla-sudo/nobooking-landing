@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
-import { odswiezStatusConnect } from '@/lib/stripe-connect'
+import { odswiezStatusConnect, MINUT_DO_ANULOWANIA_REZERWACJI } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
 
 // GET /api/cron/cleanup-pending-bookings
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   await odnotujPrzebieg(supabase, request.nextUrl.pathname)
 
   // Find pending bookings older than 2 hours
-  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  const cutoff = new Date(Date.now() - MINUT_DO_ANULOWANIA_REZERWACJI * 60 * 1000).toISOString()
 
   const { data: stale, error: fetchError } = await supabase
     .from('bookings')

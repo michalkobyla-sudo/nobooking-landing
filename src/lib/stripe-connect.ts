@@ -146,6 +146,35 @@ export async function isConnectAccountReady(accountId: string): Promise<boolean>
  * powodowała błąd tworzenia sesji dla kont, które nie mają blik/p24 (czyli
  * praktycznie każdego właściciela spoza Polski).
  */
+/**
+ * Po ilu minutach cron `cleanup-pending-bookings` anuluje niezapłaconą rezerwację
+ * i zwalnia jej terminy.
+ */
+export const MINUT_DO_ANULOWANIA_REZERWACJI = 120
+
+/**
+ * Ważność sesji płatności rezerwacji. **Musi być krótsza niż
+ * `MINUT_DO_ANULOWANIA_REZERWACJI`** (pilnuje tego test). Do 2026-11-20 sesja
+ * żyła domyślne 24 godziny, a rezerwacja znikała po dwóch — gość mógł zapłacić
+ * za rezerwację już anulowaną, której terminy zdążył zająć ktoś inny.
+ * Stripe przyjmuje od 30 minut do 24 godzin.
+ */
+export const MINUT_WAZNOSCI_SESJI_REZERWACJI = 60
+
+/**
+ * Metody z opóźnionym potwierdzeniem (sesja kończy się jako `unpaid`, wynik
+ * przychodzi po godzinach lub dniach). Rezerwacja potrzebuje potwierdzenia od
+ * razu: inaczej cron anuluje ją po dwóch godzinach, a gość płaci za pobyt,
+ * którego już nie ma. Metody wybiera konto właściciela, więc wykluczamy je jawnie
+ * (`excluded_payment_method_types`, nie `payment_method_types` — reszta metod
+ * nadal zależy od ustawień konta).
+ */
+export const METODY_Z_OPOZNIENIEM = [
+  'acss_debit', 'au_becs_debit', 'bacs_debit', 'boleto', 'customer_balance', 'konbini',
+  'multibanco', 'nz_bank_account', 'oxxo', 'pay_by_bank', 'payto', 'sepa_debit', 'sofort',
+  'us_bank_account',
+] as const
+
 export async function createBookingCheckout(params: {
   accountId: string
   amountCents: number
@@ -174,6 +203,8 @@ export async function createBookingCheckout(params: {
       success_url: `${siteUrl}/sites/${params.siteSlug}/guest/${params.bookingId}?paid=1`,
       cancel_url:  `${siteUrl}/sites/${params.siteSlug}?cancelled=1`,
       metadata: { booking_id: params.bookingId, site_slug: params.siteSlug },
+      expires_at: Math.floor(Date.now() / 1000) + MINUT_WAZNOSCI_SESJI_REZERWACJI * 60,
+      excluded_payment_method_types: [...METODY_Z_OPOZNIENIEM],
     },
     { stripeAccount: params.accountId },
   )

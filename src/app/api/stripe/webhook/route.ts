@@ -84,7 +84,11 @@ export async function POST(request: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const connectedAccountId = (event.account as string | undefined) ?? null
 
-  if (eventType !== 'checkout.session.completed') {
+  // `async_payment_succeeded` — metody z opóźnionym potwierdzeniem: sesja kończy
+  // się jako `unpaid` (pomijana niżej), a zapłata przychodzi osobnym zdarzeniem.
+  // Przy rezerwacjach takie metody są wykluczone (`METODY_Z_OPOZNIENIEM`), ale
+  // zakup pakietu i odnowienie idą przez metody konta platformy.
+  if (eventType !== 'checkout.session.completed' && eventType !== 'checkout.session.async_payment_succeeded') {
     return NextResponse.json({ received: true })
   }
 
@@ -288,7 +292,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true, flagged: 'amount_mismatch' })
       }
 
-      await supabase
+      const { error: bladPotwierdzenia } = await supabase
         .from('bookings')
         .update({
           stripe_paid: true,
@@ -298,6 +302,17 @@ export async function POST(request: NextRequest) {
           status: 'confirmed',
         })
         .eq('id', bookingId)
+
+      // Wynik zapisu był dotąd ignorowany. Gdy rezerwację zdążył anulować cron,
+      // a terminy zajął ktoś inny, constraint `bookings_no_overlap` odrzuca
+      // potwierdzenie — a gość i tak dostawał maila „potwierdzona”.
+      if (bladPotwierdzenia) {
+        console.error(
+          `[webhook] PŁATNOŚĆ BEZ REZERWACJI: ${bookingId} (strona ${bookingSite?.slug as string}) — ` +
+          `zapłacono, ale nie udało się potwierdzić: ${bladPotwierdzenia.message}. Wymaga zwrotu lub kontaktu z gościem.`
+        )
+        return NextResponse.json({ received: true, flagged: 'confirm_failed' })
+      }
 
       // Zliczenie użycia kodu rabatowego.
       //

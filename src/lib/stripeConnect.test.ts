@@ -44,3 +44,21 @@ describe('cialoKontaV2', () => {
     expect(cialoKontaV2('wlasciciel@example.com').contact_email).toBe('wlasciciel@example.com')
   })
 })
+
+describe('sesja płatności rezerwacji', () => {
+  it('wygasa, zanim cron anuluje rezerwację', async () => {
+    const { MINUT_WAZNOSCI_SESJI_REZERWACJI, MINUT_DO_ANULOWANIA_REZERWACJI } = await import('./stripe-connect')
+    expect(MINUT_WAZNOSCI_SESJI_REZERWACJI).toBeGreaterThanOrEqual(30) // minimum Stripe
+    expect(MINUT_WAZNOSCI_SESJI_REZERWACJI).toBeLessThan(MINUT_DO_ANULOWANIA_REZERWACJI)
+  })
+
+  it('wyklucza metody z opóźnionym potwierdzeniem, ale nie kartę ani BLIK', async () => {
+    const { METODY_Z_OPOZNIENIEM } = await import('./stripe-connect')
+    const lista = METODY_Z_OPOZNIENIEM as readonly string[]
+    expect(lista).toContain('sepa_debit')
+    expect(lista).toContain('customer_balance')
+    for (const natychmiastowa of ['card', 'blik', 'klarna', 'bancontact', 'ideal', 'mb_way']) {
+      expect(lista).not.toContain(natychmiastowa)
+    }
+  })
+})
