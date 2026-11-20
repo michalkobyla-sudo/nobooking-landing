@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { sendOnboardingSubmittedNotification } from '@/lib/email'
 import type { Order } from '@/lib/types'
@@ -111,10 +111,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
   }
 
-  // Notify Michał (fast, non-blocking)
-  sendOnboardingSubmittedNotification(order as Order).catch(err =>
+  // Powiadomienie po wysłaniu odpowiedzi — przez `after`, nie „rzucone” bez
+  // await: Vercel zamraża funkcję po odpowiedzi i zrywał połączenie z Brevo
+  // w połowie (ECONNRESET przy zakupie testowym 2026-11-20).
+  after(() => sendOnboardingSubmittedNotification(order as Order).catch(err =>
     console.error('[onboarding] notification error:', err)
-  )
+  ))
 
   // Site generation + provisioning is handled by /api/cron/provision-sites (runs every minute)
 

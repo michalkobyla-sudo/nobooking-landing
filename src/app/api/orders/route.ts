@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { sendNewOrderNotification } from '@/lib/email'
 import { zBody, opisZrodla } from '@/lib/attribution'
@@ -129,10 +129,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'stripe_error' }, { status: 500 })
   }
 
-  // Send notification email to Michał (non-blocking)
-  sendNewOrderNotification(order as Order).catch(err =>
+  // Po odpowiedzi, przez `after` — patrz `api/onboarding/[token]/route.ts`.
+  after(() => sendNewOrderNotification(order as Order).catch(err =>
     console.error('[orders] notification email error:', err)
-  )
+  ))
 
   return NextResponse.json({ order_id: order.id, stripe_url: wynikSesji.url })
 }
