@@ -1,4 +1,5 @@
 @AGENTS.md
+@docs/MAPA-PROJEKTU.md
 # CLAUDE.md
 
 # Premium UI / Frontend / Art Direction Skill System
