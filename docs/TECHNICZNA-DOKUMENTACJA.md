@@ -855,11 +855,45 @@ niemieckiego niż nie dostać jej wcale.
 | `provision-sites` | co minutę | generuje strony z gotowych zamówień | klient nie dostaje strony — zgłasza agent zdrowia |
 | `cleanup-pending-bookings` | co 30 min | anuluje `pending` starsze niż 2 h | terminy zostają zablokowane |
 | `review-requests` | 10:00 | prośba o opinię 3 dni po uruchomieniu strony | brak opinii |
-| `backup-bookings` | 02:00 | kopia do `app-data/backups` | brak kopii — zgłasza agent zdrowia |
+| `backup-bookings` | 02:00 | pełna kopia do `app-data/backups` (niżej) | brak kopii — zgłasza agent zdrowia |
 | `renewal-reminders` | 09:00 | przypomnienia D-90/30/14/7/1 i wyłączenie po 14 dniach karencji | klient nie wie o wygaśnięciu |
 | `health` | 06:00 | raport stanu systemu | — |
 
 Wszystkie wymagają `CRON_SECRET` (`src/lib/cronAuth.ts`) i zawodzą „na zamknięto".
+
+### Kopia zapasowa i jej odtworzenie
+
+**Zakres.** Od 2026-11-20 kopia obejmuje w całości wszystkie tabele z `KOPIOWANE`
+(`src/lib/kopiaZapasowa.ts`), stronicowane po 1000 wierszy — bez tego PostgREST
+po cichu ucina wynik. Wcześniej ze `sites` szły tylko `id, slug`, a z `orders`
+sześć kolumn z 61: rezerwacje dałoby się odtworzyć, strony klientów już nie.
+Poza kopią, z powodem zapisanym przy każdej: `checkin_forms` (numery dokumentów
+usuwamy po 7 dniach, kopia trzymałaby je dłużej), `external_blocked_dates`
+(odbudowuje ją synchronizacja), tabele ulotne. `kopiaZapasowa.test.ts` wywraca
+CI, gdy nowa tabela nie ma decyzji.
+
+Plik w wersji 2: `{ wersja: 2, exported_at, bookings_count, liczby, tabele }`,
+tabele w kolejności kluczy obcych.
+
+**Odtworzenie:**
+
+```bash
+node scripts/odtworz-kopie.mjs nobooking_backup_RRRR-MM-DD.json > odtworzenie.sql
+psql "$ADRES_BAZY" -f odtworzenie.sql
+```
+
+Baza docelowa musi mieć schemat (migracje z `docs/supabase`). Jedna transakcja,
+`on conflict do nothing`, typy rozstrzyga `jsonb_populate_recordset`.
+
+**Sprawdzone 2026-11-20:** pełna kopia produkcji odtworzona do lokalnego
+Postgresa 17 ze schematem z definicji PostgREST (typy, NOT NULL, klucze główne
+i obce). 14 tabel, 200 pól zgodnych z produkcją. Drugie uruchomienie przeszło
+bez błędów i niczego nie zdublowało. Produkcja miała wtedy mało danych (0
+rezerwacji), więc warto powtórzyć po pierwszych klientach.
+
+**Słabość, której kod nie usuwa:** kopie leżą w magazynie tego samego projektu
+Supabase. Chronią przed błędem w danych i przypadkowym skasowaniem, ale nie
+przed utratą całego projektu. Dzienne pliki nie są dziś usuwane.
 
 ## 17. Odnowienia subskrypcji
 

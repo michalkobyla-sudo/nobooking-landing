@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
+import { KOPIOWANE, KLUCZ_GLOWNY, PORCJA, zbudujPlikKopii, type TabelaKopii } from '@/lib/kopiaZapasowa'
 
 export const runtime = 'nodejs'
 
@@ -9,10 +10,31 @@ const BUCKET = 'app-data'
 const LATEST = 'backups/nobooking_backup_latest.json'
 
 interface BackupFile {
-  exported_at: string
-  bookings_count: number
-  bookings: unknown[]
+  bookings_count?: number
   [k: string]: unknown
+}
+
+/**
+ * Cała tabela, porcjami. Bez stronicowania PostgREST ucina wynik na `max-rows`
+ * (1000) — bez błędu, więc kopia byłaby po cichu niepełna, gdy tylko
+ * zablokowanych dat przybędzie.
+ */
+async function calaTabela(
+  db: ReturnType<typeof createServiceClient>,
+  tabela: TabelaKopii,
+): Promise<{ wiersze: unknown[]; blad: string | null }> {
+  const klucz = KLUCZ_GLOWNY[tabela] ?? 'id'
+  const wiersze: unknown[] = []
+  for (let od = 0; ; od += PORCJA) {
+    const { data, error } = await db
+      .from(tabela)
+      .select('*')
+      .order(klucz, { ascending: true })
+      .range(od, od + PORCJA - 1)
+    if (error) return { wiersze, blad: error.message }
+    wiersze.push(...(data ?? []))
+    if (!data || data.length < PORCJA) return { wiersze, blad: null }
+  }
 }
 
 /**
@@ -44,32 +66,19 @@ export async function GET(request: NextRequest) {
   await odnotujPrzebieg(db, request.nextUrl.pathname)
   const today = new Date().toISOString().slice(0, 10)
 
-  const [sitesRes, bookingsRes, blockedRes, ordersRes] = await Promise.all([
-    db.from('sites').select('id, slug').order('created_at', { ascending: true }),
-    db.from('bookings').select('*').order('check_in', { ascending: true }),
-    db.from('blocked_dates').select('*').order('date', { ascending: true }),
-    // Kolumny zgodne ze schematem. Wcześniej było tu customer_email
-    // i customer_name — takie kolumny nie istnieją, więc zapytanie zawodziło,
-    // a backup po cichu zapisywał zero zamówień.
-    db.from('orders').select('id, first_name, last_name, email, status, created_at'),
-  ])
+  const odczyty = await Promise.all(KOPIOWANE.map(async t => [t, await calaTabela(db, t)] as const))
 
   // Kopia niekompletna jest gorsza niż jej brak, bo daje fałszywe poczucie
   // zabezpieczenia. Każdy błąd odczytu przerywa całość PRZED zapisem.
-  const bledy = [
-    ['sites', sitesRes.error],
-    ['bookings', bookingsRes.error],
-    ['blocked_dates', blockedRes.error],
-    ['orders', ordersRes.error],
-  ].filter(([, e]) => e) as Array<[string, { message: string }]>
-
+  const bledy = odczyty.filter(([, w]) => w.blad).map(([t, w]) => `${t}: ${w.blad}`)
   if (bledy.length > 0) {
-    const opis = bledy.map(([t, e]) => `${t}: ${e.message}`).join('; ')
+    const opis = bledy.join('; ')
     console.error('[backup-bookings] PRZERWANE — błąd odczytu:', opis)
     return NextResponse.json({ error: 'read_failed', details: opis }, { status: 500 })
   }
 
-  const bookings = bookingsRes.data ?? []
+  const tabele = Object.fromEntries(odczyty.map(([t, w]) => [t, w.wiersze])) as Record<TabelaKopii, unknown[]>
+  const bookings = tabele.bookings
 
   // Zabezpieczenie przed skasowaniem dobrej kopii. Gdyby odczyt zwrócił pusto
   // albo drastycznie mniej niż poprzednio — nie nadpisujemy niczego.
@@ -120,19 +129,11 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const backup = {
-    exported_at: new Date().toISOString(),
-    ...(spadek && przebazowanie
-      ? { przebazowanie: true, poprzednia_liczba_rezerwacji: poprzednio }
-      : {}),
-    sites: sitesRes.data ?? [],
-    bookings_count: bookings.length,
-    bookings,
-    blocked_dates_count: blockedRes.data?.length ?? 0,
-    blocked_dates: blockedRes.data ?? [],
-    orders_count: ordersRes.data?.length ?? 0,
-    orders: ordersRes.data ?? [],
-  }
+  const backup = zbudujPlikKopii(
+    tabele,
+    new Date(),
+    spadek && przebazowanie ? { przebazowanie: true, poprzednia_liczba_rezerwacji: poprzednio } : {},
+  )
 
   const json = JSON.stringify(backup, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
@@ -158,17 +159,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: bladLatest.message }, { status: 500 })
   }
 
-  console.log(
-    `[backup-bookings] zapisano ${backup.bookings_count} rezerwacji, ` +
-    `${backup.orders_count} zamówień, ${sitesRes.data?.length ?? 0} stron → ${filename}`
-  )
+  console.log(`[backup-bookings] zapisano → ${filename}:`, JSON.stringify(backup.liczby))
 
-  return NextResponse.json({
-    ok: true,
-    file: filename,
-    sites: sitesRes.data?.length ?? 0,
-    bookings: backup.bookings_count,
-    orders: backup.orders_count,
-    date: today,
-  })
+  return NextResponse.json({ ok: true, file: filename, date: today, liczby: backup.liczby })
 }
