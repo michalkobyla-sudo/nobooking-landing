@@ -38,6 +38,24 @@ export interface DaneSesji {
   /** Adres, na który Stripe odeśle gościa. Bierzemy go z **bieżącego żądania**,
    *  nie z konfiguracji — adres zwrotny ma prowadzić tam, skąd przyszedł klient. */
   adresPowrotu: string
+  /** E-mail kupującego — tylko do rozpoznania zakupu testowego. */
+  email?: string
+}
+
+/**
+ * TYMCZASOWE — zakup testowy na żywym Stripe bez płacenia pełnej ceny.
+ *
+ * Działa wyłącznie, gdy w Vercelu ustawione są OBIE zmienne:
+ * `ZAKUP_TESTOWY_EMAIL` (dokładny adres) i `ZAKUP_TESTOWY_GROSZE`. Bez nich —
+ * zwykła cena. Minimum Stripe dla PLN to 200 groszy. Po teście: usunąć zmienne
+ * i ten kod (2026-11-20, zakup testowy pełnej ścieżki).
+ */
+export function cenaTestowa(email: string | undefined, env: Record<string, string | undefined> = process.env): number | null {
+  const testowy = (env.ZAKUP_TESTOWY_EMAIL ?? '').trim().toLowerCase()
+  const grosze = Number((env.ZAKUP_TESTOWY_GROSZE ?? '').trim())
+  if (!testowy || !email || email.trim().toLowerCase() !== testowy) return null
+  if (!Number.isInteger(grosze) || grosze < 200) return null
+  return grosze
 }
 
 export type WynikSesji =
@@ -72,8 +90,8 @@ export async function utworzSesjeZamowienia(dane: DaneSesji): Promise<WynikSesji
       line_items: [{
         price_data: {
           currency,
-          unit_amount: PRICES[plan][currency],
-          product_data: { name: PLAN_NAMES[plan] },
+          unit_amount: cenaTestowa(dane.email) ?? PRICES[plan][currency],
+          product_data: { name: cenaTestowa(dane.email) ? `${PLAN_NAMES[plan]} — ZAKUP TESTOWY` : PLAN_NAMES[plan] },
         },
         quantity: 1,
       }],
