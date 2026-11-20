@@ -7,6 +7,7 @@ import { sendBookingConfirmation, sendOwnerBookingNotification, sendOnboardingEm
 import { wczesnyStartZMetadanych } from '@/lib/checkoutZamowienia'
 import { powiadomORezerwacji } from '@/lib/smsSend'
 import type { Order } from '@/lib/types'
+import { krajRozliczeniowyZSesji, pobierzKrajKarty } from '@/lib/krajNabywcy'
 
 const _require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,6 +150,20 @@ export async function POST(request: NextRequest) {
       if (error) {
         console.error('[webhook] Supabase update error:', error)
       } else {
+        // Dowody kraju nabywcy (`lib/krajNabywcy.ts`). Osobny zapis, błąd tylko
+        // do logu — płatność jest potwierdzona i nic jej nie może cofnąć.
+        try {
+          const kraje = {
+            kraj_rozliczeniowy: krajRozliczeniowyZSesji(session),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            kraj_karty: await pobierzKrajKarty(session.payment_intent),
+          }
+          const { error: bladKraju } = await supabase.from('orders').update(kraje).eq('id', orderId)
+          if (bladKraju) console.error('[webhook] zapis kraju nabywcy nie powiódł się:', bladKraju.message)
+        } catch (err) {
+          console.error('[webhook] kraj nabywcy:', err)
+        }
+
         // Automatically send onboarding email so the client
         // can fill in their apartment details without any manual admin step.
         try {

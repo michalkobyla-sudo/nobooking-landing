@@ -46,6 +46,10 @@ export const WYMAGANE: WymaganaKolumna[] = [
   ['orders', 'review_request_sent_at'],
   ['orders', 'utm_source'],
   ['orders', 'click_id'],
+  // Kraj nabywcy — dowody do VAT/OSS (`lib/krajNabywcy.ts`). Zapis jest dodatkowy,
+  // więc bez migracji nic nie pada — i właśnie dlatego musi tu być.
+  ['orders', 'kraj_ip'],
+  ['orders', 'kraj_karty'],
 
   // Płatności
   ['stripe_webhook_events', 'event_id'],

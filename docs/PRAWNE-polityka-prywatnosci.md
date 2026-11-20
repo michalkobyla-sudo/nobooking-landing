@@ -29,6 +29,7 @@ podstawie umowy powierzenia (pkt 13 [regulaminu](/regulamin)).
 |---|---|---|
 | imię, nazwisko, e-mail, telefon | zawarcie i wykonanie umowy, kontakt w sprawie zamówienia | wykonanie umowy (art. 6 ust. 1 lit. b RODO) |
 | nazwa firmy, adres, NIP | wystawienie faktury | obowiązek prawny (art. 6 ust. 1 lit. c RODO) |
+| kraj: ustalony z adresu IP przy zamówieniu, z adresu rozliczeniowego i z karty płatniczej (sam kraj — adresu IP ani numeru karty nie zapisujemy) | ustalenie, w którym kraju rozliczyć VAT | obowiązek prawny (art. 6 ust. 1 lit. c RODO) |
 | opis apartamentu, adres, zdjęcia, ceny | wygenerowanie i prowadzenie strony | wykonanie umowy |
 | numer telefonu do SMS-ów | powiadomienia o rezerwacjach, pakiet Pro | wykonanie umowy |
 | hasło do panelu | dostęp do panelu | wykonanie umowy |
@@ -116,7 +117,7 @@ prywatności YouTube.
 |---|---|
 | numery dokumentów z check-inu | 7 dni od wyjazdu, usuwane automatycznie |
 | dane zamówienia i umowy | przez czas trwania umowy, a potem do przedawnienia roszczeń |
-| faktury i dane rozliczeniowe | 5 lat od końca roku kalendarzowego, w którym upłynął termin płatności podatku |
+| faktury i dane rozliczeniowe, w tym kraj nabywcy | 5 lat od końca roku kalendarzowego, w którym upłynął termin płatności podatku |
 | źródło wejścia | razem z zamówieniem, którego dotyczy |
 | rezerwacje i opinie | przez czas działania strony właściciela |
 | dane strony po wygaśnięciu | 12 miesięcy od wygaśnięcia, żeby odnowienie przywróciło stronę w całości; potem je usuwamy, a na żądanie właściciela — wcześniej |

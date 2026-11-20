@@ -218,8 +218,8 @@ Wynikają z niezmienników projektu, nie z widzimisię:
 - raport zdrowia: *opłacone bez faktury*
 
 **Etap 2 — przy pierwszej sprzedaży zagranicznej** *(pół dnia)*
-- rozpoznanie kraju nabywcy — dziś `orders` go **nie zapisuje**; dodać pole
-  i pobierać ze Stripe (`customer_details.address.country` z sesji)
+- ✅ rozpoznanie kraju nabywcy — od 2026-11-20 `orders.kraj_ip`, `kraj_rozliczeniowy`,
+  `kraj_karty` (`lib/krajNabywcy.ts`, migracja `docs/supabase/2026-11-20-kraj-nabywcy.sql`)
 - walidacja NIP-u UE przez VIES, gdy podany
 - licznik sprzedaży B2C do UE narastająco + ostrzeżenie w raporcie zdrowia
   przy 80% progu 10 000 EUR
@@ -233,9 +233,9 @@ Wynikają z niezmienników projektu, nie z widzimisię:
 
 Znalezione przy pisaniu tego planu, warte odnotowania niezależnie od fakturowania:
 
-- **`orders` nie zapisuje kraju nabywcy.** Bez niego nie da się rozstrzygnąć
-  reżimu VAT ani liczyć progu OSS. Stripe go zna — `customer_details.address`
-  w sesji Checkout. Do dodania w etapie 1, nie 2.
+- ✅ **Kraj nabywcy zapisywany od 2026-11-20** — trzy dowody: kraj IP przy
+  zamówieniu, kraj rozliczeniowy z Checkout, kraj wydawcy karty. Powyżej progu
+  OSS potrzebne są dwa niesprzeczne (art. 24f rozp. 282/2011).
 - **Pole NIP przyjmuje wyłącznie polski format** — `OrderForm.tsx:87` wymaga
   dokładnie dziesięciu cyfr. Hiszpańska firma nie wpisze tam `ESB12345678`,
   bo formularz odrzuci wartość z komunikatem „NIP musi zawierać 10 cyfr".

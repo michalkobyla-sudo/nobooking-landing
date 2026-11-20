@@ -6,6 +6,7 @@ import type { Order } from '@/lib/types'
 import { utworzSesjeZamowienia } from '@/lib/checkoutZamowienia'
 import { WERSJA_REGULAMINU } from '@/lib/dokumentyPrawne'
 import { normalizujNumerPodatkowy } from '@/lib/numerPodatkowy'
+import { krajZIp } from '@/lib/krajNabywcy'
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -93,6 +94,16 @@ export async function POST(request: NextRequest) {
   if (error || !order) {
     console.error('[orders] Supabase insert error:', error)
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
+  }
+
+  // Kraj z adresu IP — pierwszy z dowodów kraju nabywcy (`lib/krajNabywcy.ts`).
+  // Osobny zapis, poza insertem: przed migracją kolumny nie ma, a zamówienie
+  // nie może przez to przepaść.
+  const krajIp = krajZIp(request.headers)
+  if (krajIp) {
+    const { error: bladKraju } = await supabase
+      .from('orders').update({ kraj_ip: krajIp }).eq('id', order.id)
+    if (bladKraju) console.error('[orders] zapis kraju IP nie powiódł się:', bladKraju.message)
   }
 
   // Sesja platnosci — wywolanie bezposrednie, bez wychodzenia na siec.
