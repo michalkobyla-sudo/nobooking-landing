@@ -61,8 +61,8 @@ export default function HomePage() {
         <ComparisonTable />
         <PricingCards />
         <Testimonials />
-        <DemoCTA />
         <FAQ />
+        <DemoCTA />
       </main>
       <Footer />
     </>

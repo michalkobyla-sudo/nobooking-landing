@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
+import Kafelek from '@/components/ui/Kafelek'
+import { HouseLine } from '@/components/ui/ikony'
+import { przewinDo } from '@/components/Header'
 
 export default function Footer() {
   const { lang } = useLang()
@@ -34,88 +37,47 @@ export default function Footer() {
  */
 const ADRES_KONTAKTOWY = 'kontakt@nobooking.eu'
 
-  function scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
-    <footer style={{ background: 'var(--color-dark)', padding: '3rem 1.5rem 2rem' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        {/* Top row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
-          {/* Brand */}
-          <div style={{ maxWidth: '240px' }}>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.03em', color: 'white', marginBottom: '0.5rem' }}>
-              No<span style={{ color: 'var(--color-accent)' }}>booking</span>
-            </div>
-            <p style={{ fontSize: '0.82rem', color: '#6B7280', lineHeight: 1.65 }}>
+    <footer className="l-footer">
+      <div className="l-wrap">
+        <div className="l-footer__top">
+          <div className="l-footer__brand">
+            <Link href="/" className="l-logo" style={{ fontSize: 16 }}>
+              <Kafelek ikona={HouseLine} kolor="emerald" rozmiar="xs" />
+              Nobooking
+            </Link>
+            <p>
               {lang === 'pl'
-                ? 'Profesjonalne strony rezerwacji dla właścicieli apartamentów wakacyjnych.'
-                : 'Professional booking sites for vacation apartment owners.'}
+                ? 'Własne strony rezerwacyjne dla właścicieli apartamentów wakacyjnych.'
+                : 'Booking sites of their own for holiday apartment owners.'}
             </p>
           </div>
-
-          {/* Links */}
-          <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+          <div className="l-footer__cols">
             <div>
-              <h4 style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B7280', marginBottom: '0.875rem' }}>
-                {lang === 'pl' ? 'Produkt' : 'Product'}
-              </h4>
-              {productLinks.map(link => (
-                <div key={link.label} style={{ marginBottom: '0.5rem' }}>
-                  {'id' in link
-                    ? <button onClick={() => scrollTo(link.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', color: '#6B7280', padding: 0, textAlign: 'left' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                        onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                        {link.label}
-                      </button>
-                    : <Link href={link.href!} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                        onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                        {link.label}
-                      </Link>
-                  }
-                </div>
-              ))}
+              <h4>{lang === 'pl' ? 'Produkt' : 'Product'}</h4>
+              {productLinks.map(link =>
+                'id' in link && link.id
+                  ? <button key={link.label} type="button" onClick={() => przewinDo(link.id)}>{link.label}</button>
+                  : <Link key={link.label} href={link.href ?? '/'}>{link.label}</Link>,
+              )}
             </div>
             <div>
-              <h4 style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B7280', marginBottom: '0.875rem' }}>
-                {lang === 'pl' ? 'Firma' : 'Company'}
-              </h4>
-              {/* Były tu cztery etykiety z `href="#"` — „O nas", „Kontakt",
-                  „Regulamin", „Polityka prywatności" — prowadzące donikąd.
-                  Zostaje to, co istnieje naprawdę. Regulamin i polityka
-                  prywatności wróciły tu 2026-10-16, gdy powstały te strony —
-                  i prowadzą do dokumentów, a nie do `#`. */}
+              <h4>{lang === 'pl' ? 'Firma' : 'Company'}</h4>
+              {/* `<Link>`, nie `<a>`: przeładowanie gubi źródło wejścia (`lib/zrodloWPamieci.ts`). */}
               {[
                 { label: ADRES_KONTAKTOWY, href: `mailto:${ADRES_KONTAKTOWY}` },
                 { label: lang === 'pl' ? 'Regulamin' : 'Terms', href: '/regulamin' },
                 { label: lang === 'pl' ? 'Polityka prywatności' : 'Privacy Policy', href: '/polityka-prywatnosci' },
-              ].map(poz => (
-                <div key={poz.href} style={{ marginBottom: '0.5rem' }}>
-                  {/* `<Link>`, nie `<a>`: przeładowanie gubi źródło wejścia (`lib/zrodloWPamieci.ts`). */}
-                  <Link href={poz.href} style={{ fontSize: '0.82rem', color: '#6B7280', textDecoration: 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-                    {poz.label}
-                  </Link>
-                </div>
-              ))}
+              ].map(poz => <Link key={poz.href} href={poz.href}>{poz.label}</Link>)}
             </div>
           </div>
         </div>
-
-        {/* Bottom bar */}
-        <div style={{ borderTop: '1px solid #1F2937', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <p style={{ fontSize: '0.78rem', color: '#4B5563' }}>{t.footerCopyright}. Wszelkie prawa zastrzeżone.</p>
-          <p style={{ fontSize: '0.78rem', color: '#4B5563' }}>
+        <div className="l-footer__bottom">
+          <span>{t.footerCopyright}</span>
+          <span>
             {lang === 'pl' ? 'Stworzył: ' : 'Created by '}
-            <a href="https://michalkobylinski.pl" style={{ color: '#6B7280', textDecoration: 'underline' }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}>
-              Michał Kobyliński
-            </a>
-          </p>
+            <a href="https://michalkobylinski.pl" target="_blank" rel="noopener">Michał Kobyliński</a>
+          </span>
         </div>
       </div>
     </footer>

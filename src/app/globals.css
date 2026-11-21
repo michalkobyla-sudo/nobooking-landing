@@ -5,29 +5,47 @@
 }
 
 :root {
+  /* Styl B iOS (2026-11-21). Stare nazwy zmiennych zostają — wskazują nowe wartości. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Segoe UI", Roboto, sans-serif;
+  --ink: #1D1D1F;
+  --muted: #6E6E73;
+  --line: rgba(60,60,67,0.14);
+  --group: #F2F4F3;
+  --emerald: #059669;
+  --emerald-2: #10B981;
+  --emerald-dark: #047857;
+  --ios-blue: #007AFF;
+  --ios-orange: #FF9500;
+  --ios-yellow: #FFCC00;
+  --ios-indigo: #5856D6;
+  --ios-graphite: #8E8E93;
+  --ios-red: #FF3B30;
+  --ios-teal: #30B0C7;
+
   --color-accent: #059669;
   --color-accent-hover: #047857;
   --color-accent-light: #ECFDF5;
   --color-accent-border: #D1FAE5;
-  --color-text: #0F0F0F;
-  --color-text-muted: #6B7280;
-  --color-text-faint: #9CA3AF;
-  --color-pain: #DC2626;
+  --color-text: #1D1D1F;
+  --color-text-muted: #6E6E73;
+  --color-text-faint: #8E8E93;
+  --color-pain: #FF3B30;
   --color-bg: #ffffff;
-  --color-bg-alt: #FAFAFA;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
-  --color-dark: #0F0F0F;
-  --color-dark-2: #1F2937;
+  --color-bg-alt: #F2F4F3;
+  --color-border: #E3E6E5;
+  --color-border-light: #EEF0EF;
+  --color-dark: #1D1D1F;
+  --color-dark-2: #2C2C2E;
   --radius-sm: 8px;
-  --radius-md: 10px;
+  --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-pill: 100px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
   --shadow-lg: 0 20px 60px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-accent: 0 8px 32px rgba(5,150,105,0.18);
+  --shadow-accent: 0 8px 20px rgba(5,150,105,0.28);
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -90,7 +108,9 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: var(--font-jakarta), 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.47;
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
@@ -104,16 +124,16 @@ body {
   background: var(--color-accent);
   color: white;
   border: none;
-  border-radius: var(--radius-pill);
-  padding: 0.875rem 2rem;
+  border-radius: 14px;
+  padding: 0.95rem 1.4rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   text-decoration: none;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   line-height: 1;
-  box-shadow: 0 2px 8px rgba(5,150,105,0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 20px rgba(5,150,105,0.28);
 }
 .btn-primary:hover {
   background: var(--color-accent-hover);
@@ -126,11 +146,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: transparent;
-  color: #374151;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: 0.825rem 1.875rem;
+  background: var(--group);
+  color: var(--ink);
+  border: none;
+  border-radius: 14px;
+  padding: 0.95rem 1.4rem;
   font-size: 1rem;
   font-weight: 600;
   font-family: inherit;
@@ -140,9 +160,8 @@ body {
   line-height: 1;
 }
 .btn-outline:hover {
-  border-color: var(--color-text);
-  color: var(--color-text);
-  background: var(--color-bg-alt);
+  color: var(--ink);
+  background: #E6EAE8;
 }
 
 .btn-dark {
@@ -152,10 +171,10 @@ body {
   background: var(--color-dark);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
-  padding: 0.875rem 2rem;
+  border-radius: 14px;
+  padding: 0.95rem 1.4rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   text-decoration: none;
@@ -253,10 +272,10 @@ body {
 input[type="number"] {
   font-family: inherit;
   padding: 0.6rem 0.875rem;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   text-align: right;
@@ -277,8 +296,8 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
 
 /* ── Focus ring ── */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 3px solid rgba(5,150,105,0.45);
+  outline-offset: 3px;
 }
 
 /* ── Utility ── */

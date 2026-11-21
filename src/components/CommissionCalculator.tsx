@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 import { PRICES } from '@/lib/prices'
+import Kafelek from '@/components/ui/Kafelek'
+import { Calculator, HouseLine } from '@/components/ui/ikony'
 
 /**
  * Kalkulator prowizji.
@@ -73,85 +75,73 @@ export default function CommissionCalculator() {
     `${String(STRIPE_PROCENT).replace('.', lang === 'pl' ? ',' : '.')}% + ${String(stalaStripe).replace('.', lang === 'pl' ? ',' : '.')} ${waluta}`,
   )
 
+  const pl = lang === 'pl'
+  const kwota = (n: number) => `${n.toLocaleString('pl-PL')} ${waluta}`
+  const pola = [
+    { id: 'kalk-cena', label: t.calcRateLabel, value: rate, setter: setRate, suffix: waluta, min: 50, max: 5000 },
+    { id: 'kalk-noce', label: t.calcNightsLabel, value: nights, setter: setNights, suffix: '', min: 1, max: 31 },
+    { id: 'kalk-prowizja', label: t.calcCommissionLabel, value: commission, setter: setCommission, suffix: '%', min: 1, max: 30 },
+    { id: 'kalk-udzial', label: t.calcDirectLabel, value: direct, setter: setDirect, suffix: '%', min: 0, max: 100 },
+  ]
+
   return (
-    <section id="kalkulator" className="section-wrap" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
-      <div className="container">
-        <div className="section-label">Kalkulator strat</div>
-        <h2 className="section-title">{t.calcTitle}</h2>
-        <p className="section-sub">{t.calcSubtitle}</p>
-
-        <div style={{
-          background: '#F9FAFB', border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-xl)', padding: '2.5rem',
-          maxWidth: '640px', margin: '0 auto',
-        }}>
-          {/* Inputs */}
-          {[
-            { label: t.calcRateLabel, value: rate, setter: setRate, suffix: lang === 'pl' ? 'zł' : '€', min: 50, max: 5000 },
-            { label: t.calcNightsLabel, value: nights, setter: setNights, suffix: '', min: 1, max: 31 },
-            { label: t.calcCommissionLabel, value: commission, setter: setCommission, suffix: '%', min: 1, max: 30 },
-            { label: t.calcDirectLabel, value: direct, setter: setDirect, suffix: '%', min: 0, max: 100 },
-          ].map(({ label, value, setter, suffix, min, max }) => (
-            <div key={label} style={{
-              display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1.25rem',
-            }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, flex: 1, color: '#374151', lineHeight: 1.4 }}>
-                {label}
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0, width: '148px' }}>
-                <input
-                  type="number"
-                  value={value}
-                  min={min}
-                  max={max}
-                  onChange={e => setter(Number(e.target.value))}
-                  style={{ width: '110px', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', width: '1.5rem', flexShrink: 0 }}>{suffix}</span>
-              </div>
-            </div>
-          ))}
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '1.5rem 0' }}/>
-
-          {/* Loss result */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            background: '#FEF2F2', border: '1px solid #FECACA',
-            borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '0.875rem',
-          }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-pain)' }}>
-              {t.calcLossLabel}
-            </span>
-            <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--color-pain)' }}>
-              {annualLoss.toLocaleString('pl-PL')} {waluta}
-            </span>
-          </div>
-
-          {/* Saving result */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)',
-            borderRadius: '12px', padding: '1.25rem 1.5rem',
-          }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-accent)' }}>
-              {t.calcSavingLabel}
-            </span>
-            <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--color-accent)' }}>
-              +{annualSaving.toLocaleString('pl-PL')} {waluta}
-            </span>
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-faint)', marginTop: '1.125rem', lineHeight: 1.65 }}>
-            {przypis}
-          </p>
-
-          {roiNote && (
-            <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--color-text-faint)', marginTop: '0.75rem', fontWeight: 600 }}>
-              {roiNote}
-            </p>
-          )}
+    <section id="kalkulator" className="l-section l-alt">
+      <div className="l-wrap">
+        <div className="l-head">
+          <h2>{pl ? 'Portale biorą część każdej rezerwacji. My nie.' : 'Portals take a cut of every booking. We don’t.'}</h2>
+          <p>{pl ? 'Płacisz raz za dwa lata. Ile zarobisz na rezerwacji, tyle zostaje u Ciebie.' : 'You pay once for two years. What you earn on a booking stays with you.'}</p>
         </div>
+
+        <div className="l-widgets">
+          <div className="l-widget">
+            <div className="l-widget__head"><span className="n-dot" style={{ background: '#003B95' }} />Booking.com</div>
+            <div className="l-widget__big">~15%</div>
+            <p>{pl ? 'prowizji od każdej rezerwacji, co roku.' : 'commission on every booking, every year.'}</p>
+          </div>
+          <div className="l-widget">
+            <div className="l-widget__head"><span className="n-dot" style={{ background: '#FF5A5F' }} />Airbnb</div>
+            <div className="l-widget__big">3–17%</div>
+            <p>{pl ? 'opłat zależnie od modelu rozliczeń.' : 'in fees, depending on the fee model.'}</p>
+          </div>
+          <div className="l-widget l-widget--dark">
+            <div className="l-widget__head"><Kafelek ikona={HouseLine} kolor="emerald" rozmiar="xs" />Nobooking</div>
+            <div className="l-widget__big">0%</div>
+            <p>{pl ? `prowizji. Od ${kwota(cena)} za 2 lata, jednorazowo.` : `commission. From ${kwota(cena)} for 2 years, one-time.`}</p>
+          </div>
+        </div>
+
+        <div className="l-calc">
+          <div>
+            <p className="n-group-label">
+              <Kafelek ikona={Calculator} kolor="orange" rozmiar="xs" />
+              {t.calcTitle}
+            </p>
+            <div className="n-list l-calc__inputs">
+              {pola.map(({ id, label, value, setter, suffix, min, max }) => (
+                <div key={id} className="n-row">
+                  <label htmlFor={id}>{label}</label>
+                  <span className="l-num">
+                    <input id={id} type="number" inputMode="numeric" value={value} min={min} max={max}
+                      onChange={e => setter(Number(e.target.value))} />
+                    <span className="l-calc__unit">{suffix}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="l-calc__result" aria-live="polite">
+            <div className="l-calc__line l-calc__line--loss">
+              <span>{t.calcLossLabel}</span>
+              <b>{kwota(annualLoss)}</b>
+            </div>
+            <div className="l-calc__line l-calc__line--gain">
+              <span>{t.calcSavingLabel}</span>
+              <b>+{kwota(annualSaving)}</b>
+            </div>
+            {roiNote && <p className="l-calc__roi">{roiNote}</p>}
+          </div>
+        </div>
+        <p className="l-calc__note">{przypis}</p>
       </div>
     </section>
   )

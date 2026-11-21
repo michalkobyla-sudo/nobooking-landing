@@ -1,29 +1,13 @@
 import { Lang } from '@/context/LangContext'
 
 export const TR: Record<Lang, {
-  // Header
-  demo: string
-  buyNow: string
   // Hero
   heroH1: string
   heroSub: string
-  heroPrimary: string
-  heroSecondary: string
   heroTrust: string[]
   // Calculator
   calcTitle: string
-  calcSubtitle: string
   calcRateLabel: string
-  calcBookingsLabel: string
-  calcNightsNote: string
-  calcResultPrefix: string
-  calcResultSuffix: string
-  calcPain1Title: string
-  calcPain1Desc: string
-  calcPain2Title: string
-  calcPain2Desc: string
-  calcPain3Title: string
-  calcPain3Desc: string
   calcNightsLabel: string
   calcCommissionLabel: string
   calcLossLabel: string
@@ -32,40 +16,20 @@ export const TR: Record<Lang, {
   calcDirectLabel: string
   calcAssumptions: string
   // HowItWorks
-  howTitle: string
   howStep1Title: string
   howStep1Desc: string
   howStep2Title: string
   howStep2Desc: string
   howStep3Title: string
   howStep3Desc: string
-  // Features
-  featuresTitle: string
-  features: { icon: string; title: string; desc: string }[]
   // Comparison
-  compTitle: string
   compFeature: string
-  compBasic: string
-  compPro: string
   compBooking: string
   compAirbnb: string
-  compCommission: string
   compDomain: string
-  compPayments: string
-  compAdmin: string
-  compPortal: string
-  compEmail: string
-  compMultilang: string
-  compSms: string
-  compCheckin: string
-  compCodes: string
-  compAnalytics: string
   compPrice: string
-  compNote: string
   // Pricing
-  pricingTitle: string
   pricingPeriod: string
-  pricingIncludes: string
   pricingRenewal: string
   pricingRecommended: string
   pricingCtaBasic: string
@@ -79,41 +43,20 @@ export const TR: Record<Lang, {
   demoText: string
   demoCta: string
   // FAQ
-  faqTitle: string
   faqs: { q: string; a: string }[]
   // Footer
-  footerPrivacy: string
   footerCopyright: string
-  // Success
-  successTitle: string
-  successText: string
-  successCta: string
 }> = {
   pl: {
-    demo: 'Demo',
-    buyNow: 'Kup teraz',
     heroH1: 'Twoja strona.\nTwoje pieniądze.\nZero prowizji.',
-    heroSub: 'Własna profesjonalna strona rezerwacji gotowa w 24 godziny. Jednorazowa opłata — zero prowizji na zawsze.',
-    heroPrimary: 'Zamów stronę — od 799 zł →',
-    heroSecondary: 'Zobacz demo działającej strony',
+    heroSub: 'Własna strona rezerwacyjna dla Twojego apartamentu. Płacisz raz za 2 lata, a każda rezerwacja jest w całości Twoja.',
     heroTrust: [
       'Zero prowizji od rezerwacji',
       'Płatność gościa trafia wprost na Twoje konto Stripe',
       'Ceny, kalendarz i galerię zmieniasz sam w panelu',
     ],
     calcTitle: 'Ile tracisz na prowizjach?',
-    calcSubtitle: 'Wpisz swoje dane i sprawdź ile Booking.com pobiera od Ciebie rocznie.',
     calcRateLabel: 'Średnia cena za noc (PLN)',
-    calcBookingsLabel: 'Liczba rezerwacji rocznie',
-    calcNightsNote: 'Zakładamy średnio 7 nocy na rezerwację',
-    calcResultPrefix: 'Booking.com pobiera od Ciebie rocznie:',
-    calcResultSuffix: 'Nobooking kosztuje jednorazowo 799 zł. Zwrot z inwestycji już po pierwszej rezerwacji.',
-    calcPain1Title: '15–20% prowizji',
-    calcPain1Desc: 'Od każdej rezerwacji, co roku',
-    calcPain2Title: 'Brak kontaktu z gościem',
-    calcPain2Desc: 'Dane gości należą do platformy, nie do Ciebie',
-    calcPain3Title: 'Zero kontroli',
-    calcPain3Desc: 'Ceny, zasady, widoczność — decyduje platforma',
     calcNightsLabel: 'Liczba nocy w miesiącu',
     calcCommissionLabel: 'Prowizja Booking.com (%)',
     calcLossLabel: 'Prowizja Booking.com rocznie:',
@@ -121,48 +64,18 @@ export const TR: Record<Lang, {
     calcRoiNote: 'Nobooking Basic kosztuje 799 zł jednorazowo. Zwrot inwestycji w ~{days} dni.',
     calcDirectLabel: 'Ile rezerwacji przejmiesz bezpośrednio (%)',
     calcAssumptions: 'Liczymy tylko te rezerwacje, które przejdą na Twoją stronę — resztę nadal przyprowadza Booking.com i pobiera za nie prowizję. Od przejętych odejmujemy opłaty Stripe ({fee}, stawka standardowa dla kart europejskich; zależy od Twojego konta i kraju karty gościa) i zakładamy średnio 7 nocy na rezerwację.',
-    howTitle: 'Jak to działa?',
     howStep1Title: 'Wybierz plan i zapłać',
     howStep1Desc: 'Płatność kartą, BLIK lub Apple Pay. Bezpiecznie przez Stripe.',
     howStep2Title: 'Wypełnij formularz',
     howStep2Desc: 'Zbieramy dane o apartamencie: zdjęcia, opisy, ceny, zasady. Ty nic nie musisz konfigurować.',
     howStep3Title: 'Gotowa strona w 24 godziny',
     howStep3Desc: 'Własny adres nazwa.nobooking.eu, panel właściciela, strona gotowa do przyjmowania rezerwacji.',
-    featuresTitle: 'Co dostajesz?',
-    features: [
-      { icon: '📅', title: 'Kalendarz z Booking.com i Airbnb', desc: 'Terminy z portali blokują się same, rezerwacje ze strony trafiają do portali' },
-      { icon: '💳', title: 'Płatności Stripe', desc: 'Metody zależne od Twojego konta Stripe — pieniądze prosto do Ciebie' },
-      { icon: '🖥️', title: 'Panel właściciela', desc: 'Rezerwacje, kalendarz, cennik, galeria, opinie — wszystko w jednym miejscu' },
-      { icon: '👤', title: 'Portal gościa', desc: 'Szczegóły pobytu, check-in online, adres z mapą i kontakt do Ciebie' },
-      { icon: '⭐', title: 'System opinii', desc: 'Email → formularz → moderacja → karuzela na stronie głównej' },
-      { icon: '📧', title: 'Powiadomienia email', desc: 'Potwierdzenie, anulowanie, przypomnienie przed przyjazdem' },
-      { icon: '🌍', title: '4 języki', desc: 'Polski, angielski, hiszpański, niemiecki — automatycznie' },
-      { icon: '💰', title: 'Kalkulator ceny', desc: 'Sezony, minimalna liczba nocy, automatyczna wycena' },
-      { icon: '🖼️', title: 'Galeria zdjęć i wideo', desc: 'Profesjonalna prezentacja apartamentu' },
-      { icon: '🗺️', title: 'Mapa i okolica', desc: 'Google Maps i opis atrakcji w pobliżu' },
-    ],
-    compTitle: 'Nobooking vs platformy rezerwacyjne',
     compFeature: 'Funkcja',
-    compBasic: 'Nobooking Basic',
-    compPro: 'Nobooking Pro',
     compBooking: 'Booking.com',
     compAirbnb: 'Airbnb',
-    compCommission: 'Prowizja',
     compDomain: 'Własny adres strony',
-    compPayments: 'Płatności bezpośrednie',
-    compAdmin: 'Panel admina',
-    compPortal: 'Portal gościa',
-    compEmail: 'Powiadomienia email',
-    compMultilang: '4 języki',
-    compSms: 'Powiadomienia SMS',
-    compCheckin: 'Online check-in',
-    compCodes: 'Kody rabatowe',
-    compAnalytics: 'Analityka',
     compPrice: 'Cena',
-    compNote: '*bezpłatne, ale pobierają prowizję od każdej rezerwacji',
-    pricingTitle: 'Wybierz plan',
     pricingPeriod: 'na 2 lata',
-    pricingIncludes: 'W cenie:',
     pricingRenewal: 'Po 2 latach — odnowienie od 299 zł / 99 € za kolejne 2 lata',
     pricingRecommended: 'Polecany',
     pricingCtaBasic: 'Kup Basic',
@@ -192,9 +105,8 @@ export const TR: Record<Lang, {
     // Wczesniej staly tu trzy wymyslone opinie z nazwiskami, miejscowosciami
     // i konkretnymi kwotami oszczednosci — przy zerowej liczbie klientow.
     testimonials: [],
-    demoText: 'Nie jesteś pewien? Przetestuj wszystko sam — bez rejestracji.',
-    demoCta: 'Otwórz demo →',
-    faqTitle: 'Często zadawane pytania',
+    demoText: 'Działająca strona apartamentu, taka jak Twoja. Bez rejestracji.',
+    demoCta: 'Otwórz demo',
     faqs: [
       {
         q: 'Czy potrzebuję konta Stripe?',
@@ -221,37 +133,18 @@ export const TR: Record<Lang, {
         a: 'Karta kredytowa/debetowa, BLIK, Przelewy24 i inne metody dostępne w Twoim kraju — o tym, co zobaczy gość, decydują ustawienia Twojego konta Stripe. Pieniądze trafiają na nie zazwyczaj w ciągu 2 dni roboczych.',
       },
     ],
-    footerPrivacy: 'Polityka prywatności',
     footerCopyright: '© 2026 Nobooking',
-    successTitle: 'Dziękujemy za zakup!',
-    successText: 'Sprawdź email — formularz onboardingowy już do Ciebie wysłaliśmy. Wypełnij go, a Twoja strona będzie gotowa zwykle w ciągu 24 godzin.',
-    successCta: 'Przetestuj demo →',
   },
   en: {
-    demo: 'Demo',
-    buyNow: 'Buy now',
     heroH1: 'Your site.\nYour money.\nZero commission.',
-    heroSub: 'Your own professional booking site ready in 24 hours. One-time fee — zero commissions forever.',
-    heroPrimary: 'Order your site — from €199 →',
-    heroSecondary: 'See a live demo',
+    heroSub: 'Your own booking site for your apartment. Pay once for 2 years and every booking is entirely yours.',
     heroTrust: [
       'No commission on bookings',
       'Guest payments go straight to your own Stripe account',
       'You change prices, calendar and gallery yourself',
     ],
     calcTitle: 'How much are you losing to commissions?',
-    calcSubtitle: 'Enter your numbers and see how much Booking.com takes from you annually.',
     calcRateLabel: 'Average nightly rate (PLN)',
-    calcBookingsLabel: 'Bookings per year',
-    calcNightsNote: 'Assuming average 7 nights per booking',
-    calcResultPrefix: 'Booking.com takes from you annually:',
-    calcResultSuffix: 'Nobooking costs a one-time 799 PLN. ROI after just one booking.',
-    calcPain1Title: '15–20% commission',
-    calcPain1Desc: 'From every booking, every year',
-    calcPain2Title: 'No guest contact',
-    calcPain2Desc: 'Guest data belongs to the platform, not you',
-    calcPain3Title: 'Zero control',
-    calcPain3Desc: 'Prices, rules, visibility — the platform decides',
     calcNightsLabel: 'Nights per month',
     calcCommissionLabel: 'Booking.com commission (%)',
     calcLossLabel: 'Booking.com commission per year:',
@@ -259,48 +152,18 @@ export const TR: Record<Lang, {
     calcRoiNote: 'Nobooking Basic costs €199 one-time. ROI in ~{days} days.',
     calcDirectLabel: 'Share of bookings you take direct (%)',
     calcAssumptions: 'We only count bookings that move to your own site — the rest still come through Booking.com and still pay its commission. From the ones you take direct we subtract Stripe fees ({fee}, standard rate for European cards; it depends on your account and the card country) and assume 7 nights per booking on average.',
-    howTitle: 'How does it work?',
     howStep1Title: 'Choose plan and pay',
     howStep1Desc: 'Payment by card, BLIK or Apple Pay. Securely via Stripe.',
     howStep2Title: 'Fill in the form',
     howStep2Desc: 'We collect apartment details: photos, descriptions, prices, rules. You configure nothing.',
     howStep3Title: 'Live site in 24 hours',
     howStep3Desc: 'Your own address name.nobooking.eu, owner panel, site ready to accept bookings.',
-    featuresTitle: 'What do you get?',
-    features: [
-      { icon: '📅', title: 'Calendar synced with Booking.com and Airbnb', desc: 'Portal bookings block your dates, site bookings reach the portals' },
-      { icon: '💳', title: 'Stripe payments', desc: 'Methods depend on your own Stripe account — money straight to you' },
-      { icon: '🖥️', title: 'Owner panel', desc: 'Bookings, calendar, pricing, gallery, reviews — all in one place' },
-      { icon: '👤', title: 'Guest portal', desc: 'Stay details, online check-in, address with map and your contact details' },
-      { icon: '⭐', title: 'Review system', desc: 'Email → form → moderation → carousel on homepage' },
-      { icon: '📧', title: 'Email notifications', desc: 'Confirmation, cancellation, pre-arrival reminder' },
-      { icon: '🌍', title: '4 languages', desc: 'Polish, English, Spanish, German — automatically' },
-      { icon: '💰', title: 'Price calculator', desc: 'Seasons, minimum nights, automatic quoting' },
-      { icon: '🖼️', title: 'Photo & video gallery', desc: 'Professional apartment presentation' },
-      { icon: '🗺️', title: 'Map & neighbourhood', desc: 'Google Maps and local attractions guide' },
-    ],
-    compTitle: 'Nobooking vs booking platforms',
     compFeature: 'Feature',
-    compBasic: 'Nobooking Basic',
-    compPro: 'Nobooking Pro',
     compBooking: 'Booking.com',
     compAirbnb: 'Airbnb',
-    compCommission: 'Commission',
     compDomain: 'Your own web address',
-    compPayments: 'Direct payments',
-    compAdmin: 'Admin panel',
-    compPortal: 'Guest portal',
-    compEmail: 'Email notifications',
-    compMultilang: '4 languages',
-    compSms: 'SMS notifications',
-    compCheckin: 'Online check-in',
-    compCodes: 'Discount codes',
-    compAnalytics: 'Analytics',
     compPrice: 'Price',
-    compNote: '*free but takes commission from every booking',
-    pricingTitle: 'Choose your plan',
     pricingPeriod: 'for 2 years',
-    pricingIncludes: 'Included:',
     pricingRenewal: 'After 2 years — renewal from €99 / 299 PLN for another 2 years',
     pricingRecommended: 'Recommended',
     pricingCtaBasic: 'Buy Basic',
@@ -330,9 +193,8 @@ export const TR: Record<Lang, {
     // Wczesniej staly tu trzy wymyslone opinie z nazwiskami, miejscowosciami
     // i konkretnymi kwotami oszczednosci — przy zerowej liczbie klientow.
     testimonials: [],
-    demoText: 'Not sure? Try everything yourself — no registration needed.',
-    demoCta: 'Open demo →',
-    faqTitle: 'Frequently asked questions',
+    demoText: 'A working apartment site, just like yours will be. No sign-up.',
+    demoCta: 'Open demo',
     faqs: [
       {
         q: 'Do I need a Stripe account?',
@@ -359,10 +221,6 @@ export const TR: Record<Lang, {
         a: 'Credit/debit card, BLIK, Przelewy24 and other methods available in your country — what the guest sees depends on your Stripe account settings. Funds reach your account typically within 2 business days.',
       },
     ],
-    footerPrivacy: 'Privacy policy',
     footerCopyright: '© 2026 Nobooking',
-    successTitle: 'Thank you for your purchase!',
-    successText: "Check your email — we've already sent you the onboarding form. Fill it in and your site will usually be ready within 24 hours.",
-    successCta: 'Try the demo →',
   },
 }

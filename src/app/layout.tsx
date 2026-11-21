@@ -1,14 +1,20 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
+import './ios.css'
 import { LangProvider } from '@/context/LangContext'
 import ZapiszZrodlo from '@/components/ZapiszZrodlo'
 
-const jakarta = Plus_Jakarta_Sans({
+/**
+ * Krój: systemowy (SF Pro na urządzeniach Apple). Inter jest tylko zapasem dla
+ * Windowsa i Androida — bez wstępnego ładowania, więc na Macu i iPhonie nie
+ * pobiera się w ogóle (przeglądarka ściąga font dopiero, gdy go używa).
+ */
+const inter = Inter({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  variable: '--font-inter',
   display: 'swap',
+  preload: false,
 })
 
 export const metadata: Metadata = {
@@ -28,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pl" className={jakarta.variable}>
+    <html lang="pl" className={inter.variable}>
       <body>
         <ZapiszZrodlo />
         <LangProvider>
