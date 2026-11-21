@@ -15,7 +15,7 @@ const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.5rem', marginBottom: '1rem' }}>
+    <div style={{ background: 'white', borderRadius: '20px', padding: '1.5rem', marginBottom: '1rem' }}>
       <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
         {title}
       </h3>
@@ -29,7 +29,7 @@ function Row({ label, value }: { label: string; value?: string | null }) {
   return (
     <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.625rem', alignItems: 'flex-start' }}>
       <span style={{ fontSize: '0.8rem', color: '#9CA3AF', minWidth: '140px', flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: '0.875rem', color: '#111827', fontWeight: 500 }}>{value}</span>
+      <span style={{ fontSize: '0.875rem', color: '#1D1D1F', fontWeight: 500 }}>{value}</span>
     </div>
   )
 }
@@ -122,7 +122,7 @@ export default function OrderDetailPage() {
           ← Zamówienia
         </button>
         <span style={{ color: '#D1D5DB' }}>·</span>
-        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>
+        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1D1D1F' }}>
           {order.first_name} {order.last_name}
         </span>
       </div>
@@ -131,7 +131,7 @@ export default function OrderDetailPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', marginBottom: '0.25rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '0.25rem' }}>
               {order.first_name} {order.last_name}
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
@@ -266,7 +266,7 @@ export default function OrderDetailPage() {
                   <span style={{ fontSize: '0.8rem', color: '#9CA3AF', minWidth: '140px' }}>Kolor</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: order.ob_color, border: '1px solid #E5E7EB' }} />
-                    <span style={{ fontSize: '0.875rem', color: '#111827', fontWeight: 500 }}>{order.ob_color}</span>
+                    <span style={{ fontSize: '0.875rem', color: '#1D1D1F', fontWeight: 500 }}>{order.ob_color}</span>
                   </div>
                 </div>
               )}

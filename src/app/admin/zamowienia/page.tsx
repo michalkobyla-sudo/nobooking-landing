@@ -97,7 +97,7 @@ export default function AdminZamowieniaPage() {
 
       <div style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827' }}>Zamówienia</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1D1D1F' }}>Zamówienia</h1>
           <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>{orders.length} łącznie</span>
         </div>
 
@@ -111,8 +111,8 @@ export default function AdminZamowieniaPage() {
                 padding: '0.4rem 1rem', borderRadius: '20px',
                 border: '1px solid', fontFamily: 'inherit',
                 fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                borderColor: filter === opt.value ? '#111827' : '#D1D5DB',
-                background: filter === opt.value ? '#111827' : 'white',
+                borderColor: filter === opt.value ? '#1D1D1F' : '#D1D5DB',
+                background: filter === opt.value ? '#1D1D1F' : 'white',
                 color: filter === opt.value ? 'white' : '#374151',
               }}
             >
@@ -126,7 +126,7 @@ export default function AdminZamowieniaPage() {
         ) : filtered.length === 0 ? (
           <p style={{ color: '#6B7280', textAlign: 'center', padding: '3rem' }}>Brak zamówień</p>
         ) : (
-          <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
@@ -150,7 +150,7 @@ export default function AdminZamowieniaPage() {
                       {new Date(order.created_at).toLocaleDateString('pl-PL')}
                     </td>
                     <td style={{ padding: '0.875rem 1rem' }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1D1D1F' }}>
                         {order.first_name} {order.last_name}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>{order.email}</div>
@@ -158,7 +158,7 @@ export default function AdminZamowieniaPage() {
                     <td style={{ padding: '0.875rem 1rem' }}>
                       <span style={{
                         fontSize: '0.78rem', fontWeight: 700, padding: '0.25rem 0.625rem', borderRadius: '20px',
-                        background: order.plan === 'pro' ? '#111827' : '#F3F4F6',
+                        background: order.plan === 'pro' ? '#1D1D1F' : '#F3F4F6',
                         color: order.plan === 'pro' ? 'white' : '#374151',
                       }}>
                         {order.plan === 'pro' ? 'Pro' : 'Basic'} · {PRICE_LABELS[order.plan][order.currency]}

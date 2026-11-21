@@ -77,7 +77,7 @@ export default function OpiniaForm({ slug, bookingId, primary }: {
     return (
       <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
         <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🙏</div>
-        <p style={{ fontSize: '1rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem' }}>Dziękujemy!</p>
+        <p style={{ fontSize: '1rem', fontWeight: 700, color: '#1D1D1F', margin: '0 0 0.5rem' }}>Dziękujemy!</p>
         <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0, lineHeight: 1.6 }}>
           Opinia pojawi się na stronie po zatwierdzeniu przez gospodarza.
         </p>
@@ -113,13 +113,13 @@ export default function OpiniaForm({ slug, bookingId, primary }: {
         </div>
         <textarea value={tekst} onChange={e => setTekst(e.target.value)}
           placeholder="Co się podobało, co warto wiedzieć przed przyjazdem…"
-          style={{ width: '100%', boxSizing: 'border-box', minHeight: 140, resize: 'vertical', border: '1px solid #E5E7EB', borderRadius: 10, padding: '0.75rem', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none', lineHeight: 1.6 }} />
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: 140, resize: 'vertical', border: '1px solid #E3E6E5', borderRadius: 12, padding: '12px 14px', fontSize: 16, fontFamily: 'inherit', outline: 'none', lineHeight: 1.6 }} />
       </div>
 
       {blad && <div style={{ fontSize: '0.85rem', color: '#B91C1C' }}>{blad}</div>}
 
       <button type="submit" disabled={zapisuje || ocena === 0}
-        style={{ background: primary, color: 'white', border: 'none', borderRadius: 10, padding: '0.8rem 1.5rem', fontSize: '0.92rem', fontWeight: 700, cursor: ocena === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: zapisuje || ocena === 0 ? 0.6 : 1 }}>
+        style={{ background: primary, color: 'white', border: 'none', borderRadius: 14, padding: '14px 22px', fontSize: 16, fontWeight: 600, cursor: ocena === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: zapisuje || ocena === 0 ? 0.6 : 1 }}>
         {zapisuje ? 'Wysyłanie…' : 'Wyślij opinię'}
       </button>
     </form>

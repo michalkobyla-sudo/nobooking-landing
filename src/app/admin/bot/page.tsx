@@ -132,15 +132,15 @@ export default function AdminBotPage() {
         </div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <a href="/admin/zamowienia" style={{ fontSize: '0.875rem', color: '#6B7280', textDecoration: 'none' }}>Zamówienia</a>
-          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>Bot FB</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1D1D1F' }}>Bot FB</span>
         </div>
       </div>
 
       <div style={{ padding: '2rem', maxWidth: '900px' }}>
 
         {/* Ustawienia */}
-        <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Ustawienia bota</h2>
+        <div style={{ background: 'white', borderRadius: '20px', padding: '1.5rem', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#1D1D1F' }}>Ustawienia bota</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <span style={{ fontSize: '0.875rem', color: '#374151' }}>Status:</span>
             <button
@@ -164,7 +164,7 @@ export default function AdminBotPage() {
             />
             <button
               onClick={handleSavePurchaseUrl}
-              style={{ padding: '0.4rem 1rem', borderRadius: '8px', border: 'none', background: '#111827', color: 'white', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+              style={{ padding: '0.4rem 1rem', borderRadius: '8px', border: 'none', background: '#1D1D1F', color: 'white', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
             >
               Zapisz
             </button>
@@ -174,10 +174,10 @@ export default function AdminBotPage() {
         {/* Baza wiedzy */}
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827' }}>Baza wiedzy</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1D1D1F' }}>Baza wiedzy</h2>
             <button
               onClick={openAdd}
-              style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#111827', color: 'white', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#1D1D1F', color: 'white', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               + Dodaj wpis
             </button>
@@ -188,9 +188,9 @@ export default function AdminBotPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {knowledge.map((entry) => (
-                <div key={entry.id} style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                <div key={entry.id} style={{ background: 'white', borderRadius: '20px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' }}>{entry.title}</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1D1D1F', marginBottom: '0.25rem' }}>{entry.title}</div>
                     <div style={{ fontSize: '0.8rem', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.content}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
@@ -205,7 +205,7 @@ export default function AdminBotPage() {
 
         {/* Leady */}
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '1rem' }}>
             Leady z bota{' '}
             <span style={{ fontSize: '0.875rem', fontWeight: 400, color: '#6B7280' }}>({leads.length})</span>
           </h2>
@@ -213,7 +213,7 @@ export default function AdminBotPage() {
           {leads.length === 0 ? (
             <p style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>Brak leadów. Bot zbiera je automatycznie gdy ktoś podaje dane kontaktowe.</p>
           ) : (
-            <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+            <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' }}>
@@ -225,7 +225,7 @@ export default function AdminBotPage() {
                 <tbody>
                   {leads.map((lead, i) => (
                     <tr key={lead.id} style={{ borderBottom: i < leads.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
-                      <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{lead.name ?? '—'}</td>
+                      <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', fontWeight: 600, color: '#1D1D1F' }}>{lead.name ?? '—'}</td>
                       <td style={{ padding: '0.875rem 1rem', fontSize: '0.875rem', color: '#374151' }}>{lead.phone ?? '—'}</td>
                       <td style={{ padding: '0.875rem 1rem', fontSize: '0.8rem', color: '#6B7280' }}>{new Date(lead.created_at).toLocaleDateString('pl-PL')}</td>
                       <td style={{ padding: '0.875rem 1rem' }}>
@@ -249,7 +249,7 @@ export default function AdminBotPage() {
       {(modal?.type === 'add' || modal?.type === 'edit') && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '560px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', color: '#111827' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', color: '#1D1D1F' }}>
               {modal.type === 'add' ? 'Nowy wpis' : 'Edytuj wpis'}
             </h3>
             <div style={{ marginBottom: '1rem' }}>
@@ -273,7 +273,7 @@ export default function AdminBotPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button onClick={() => setModal(null)} style={{ padding: '0.5rem 1.25rem', border: '1px solid #D1D5DB', borderRadius: '8px', background: 'white', fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit' }}>Anuluj</button>
-              <button onClick={handleSaveEntry} disabled={saving} style={{ padding: '0.5rem 1.25rem', border: 'none', borderRadius: '8px', background: '#111827', color: 'white', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={handleSaveEntry} disabled={saving} style={{ padding: '0.5rem 1.25rem', border: 'none', borderRadius: '8px', background: '#1D1D1F', color: 'white', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {saving ? 'Zapisywanie...' : 'Zapisz'}
               </button>
             </div>
@@ -286,7 +286,7 @@ export default function AdminBotPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1D1D1F' }}>
                 Rozmowa — {modal.lead.name ?? 'Anonim'}
               </h3>
               <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#6B7280' }}>✕</button>
@@ -296,8 +296,8 @@ export default function AdminBotPage() {
                 <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-start' : 'flex-end' }}>
                   <div style={{
                     padding: '0.5rem 0.875rem', borderRadius: '12px', maxWidth: '80%',
-                    background: msg.role === 'user' ? '#F3F4F6' : '#111827',
-                    color: msg.role === 'user' ? '#111827' : 'white',
+                    background: msg.role === 'user' ? '#F3F4F6' : '#1D1D1F',
+                    color: msg.role === 'user' ? '#1D1D1F' : 'white',
                     fontSize: '0.8rem', lineHeight: '1.4',
                   }}>
                     {msg.content}

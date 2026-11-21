@@ -86,12 +86,11 @@ export default function CheckinForm({ slug, bookingId, primary }: {
   }
 
   const pole: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box', border: '1px solid #E5E7EB', borderRadius: 8,
-    padding: '0.6rem 0.75rem', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none',
+    width: '100%', boxSizing: 'border-box', border: '1px solid #E3E6E5', borderRadius: 12,
+    padding: '12px 14px', fontSize: 16, fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#1D1D1F',
   }
   const etykieta: React.CSSProperties = {
-    display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#6B7280',
-    textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem',
+    display: 'block', fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 6,
   }
 
   if (blad && !stan) {
@@ -118,9 +117,9 @@ export default function CheckinForm({ slug, bookingId, primary }: {
       </p>
 
       {osoby.map((o, i) => (
-        <div key={i} style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: '1rem' }}>
+        <div key={i} style={{ background: '#fff', borderRadius: 20, padding: '1.1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#111827' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1D1D1F' }}>
               {i === 0 ? 'Osoba rezerwująca' : `Osoba ${i + 1}`}
             </span>
             {i > 0 && (
@@ -153,7 +152,7 @@ export default function CheckinForm({ slug, bookingId, primary }: {
 
       {mozeDodac && (
         <button type="button" onClick={() => { setOsoby(o => [...o, pusta()]); setZapisano(false) }}
-          style={{ background: 'none', border: '1px dashed #D1D5DB', borderRadius: 10, padding: '0.65rem', fontSize: '0.85rem', fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ border: 'none', background: '#E6EAE8', borderRadius: 12, padding: '12px', fontSize: 15, fontWeight: 600, color: '#1D1D1F', cursor: 'pointer', fontFamily: 'inherit' }}>
           + Dodaj osobę ({osoby.length} z {stan.guests_count})
         </button>
       )}
@@ -177,11 +176,11 @@ export default function CheckinForm({ slug, bookingId, primary }: {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button type="submit" disabled={zapisuje}
-          style={{ background: primary, color: 'white', border: 'none', borderRadius: 10, padding: '0.75rem 1.5rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: zapisuje ? 0.7 : 1 }}>
+          style={{ background: primary, color: 'white', border: 'none', borderRadius: 14, padding: '14px 22px', fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: zapisuje ? 0.7 : 1 }}>
           {zapisuje ? 'Zapisywanie…' : zapisano ? 'Zapisz zmiany' : 'Wyślij'}
         </button>
         {zapisano && !zapisuje && (
-          <span style={{ fontSize: '0.85rem', color: '#15803D', fontWeight: 600 }}>✓ Zapisane — możesz jeszcze poprawić</span>
+          <span style={{ fontSize: '0.85rem', color: '#15803D', fontWeight: 600 }}>Zapisane — możesz jeszcze poprawić</span>
         )}
       </div>
     </form>
