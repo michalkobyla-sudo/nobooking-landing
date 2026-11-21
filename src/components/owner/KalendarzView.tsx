@@ -104,8 +104,8 @@ function MonthCalendar({ year, month, dayMap, onToggle, loadingDates }: {
   }
 
   return (
-    <div style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1.25rem' }}>
-      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.75rem' }}>
+    <div style={{ background: 'white', borderRadius: 20, padding: '1.25rem' }}>
+      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1D1D1F', marginBottom: '0.75rem' }}>
         {MONTH_NAMES[month]} {year}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '4px' }}>
@@ -205,7 +205,7 @@ export function KalendarzView({ slug, bookings, blocked, setBlocked }: Props) {
     <div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', margin: 0 }}>Kalendarz</h1>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', margin: 0 }}>Kalendarz</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={prevMonth} style={{ padding: '0.4rem 0.875rem', border: '1.5px solid #E5E7EB', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.875rem' }}>
             ← Wcześniej
@@ -329,16 +329,16 @@ function SynchronizacjaPortali({ slug, feeds, odswiez }: {
     if (res.ok) await odswiez()
   }
 
-  const karta: React.CSSProperties = { background: 'white', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1.25rem' }
+  const karta: React.CSSProperties = { background: 'white', borderRadius: 20, padding: '1.25rem' }
   const pole: React.CSSProperties = { padding: '0.55rem 0.75rem', border: '1.5px solid #E5E7EB', borderRadius: '8px', fontFamily: 'inherit', fontSize: '0.875rem', minWidth: 0 }
-  const przycisk: React.CSSProperties = { padding: '0.55rem 1rem', border: 'none', borderRadius: '8px', background: '#111827', color: 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.875rem' }
+  const przycisk: React.CSSProperties = { padding: '0.55rem 1rem', border: 'none', borderRadius: '8px', background: '#1D1D1F', color: 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.875rem' }
 
   return (
     <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', margin: 0 }}>Synchronizacja z Booking.com i Airbnb</h2>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1D1D1F', margin: 0 }}>Synchronizacja z Booking.com i Airbnb</h2>
 
       <div style={karta}>
-        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.35rem' }}>1. Twój kalendarz dla portali</div>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1D1D1F', marginBottom: '0.35rem' }}>1. Twój kalendarz dla portali</div>
         <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0 0 0.75rem' }}>
           Wklej ten link w Booking.com (Ceny i dostępność → Synchronizacja kalendarzy → Importuj kalendarz)
           i w Airbnb (Kalendarz → Dostępność → Połącz kalendarze → Importuj kalendarz).
@@ -351,7 +351,7 @@ function SynchronizacjaPortali({ slug, feeds, odswiez }: {
       </div>
 
       <div style={karta}>
-        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '0.35rem' }}>2. Kalendarze z portali</div>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1D1D1F', marginBottom: '0.35rem' }}>2. Kalendarze z portali</div>
         <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0 0 0.75rem' }}>
           Skopiuj z portalu link „eksportuj kalendarz” (w Booking.com: Synchronizacja kalendarzy → Eksportuj;
           w Airbnb: Połącz kalendarze → Eksportuj) i wklej go tutaj. Sprawdzamy go co 15 minut.
@@ -362,7 +362,7 @@ function SynchronizacjaPortali({ slug, feeds, odswiez }: {
             {feeds.map(f => (
               <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #F3F4F6', borderRadius: '10px', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: '1 1 220px' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{NAZWA_ZRODLA[f.source]}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#1D1D1F' }}>{NAZWA_ZRODLA[f.source]}</div>
                   <div style={{ fontSize: '0.75rem', color: f.last_error ? '#B91C1C' : '#6B7280' }}>
                     {f.last_error
                       ? opisBledu(f.last_error)

@@ -5,13 +5,21 @@ import type { Booking, Review, BlockedDate } from '@/lib/types'
 import { KalendarzView } from './KalendarzView'
 import { GaleriaView } from './GaleriaView'
 import { opisMiesiecy } from '@/lib/bookingPricing'
+import type { Icon } from '@phosphor-icons/react'
+import Kafelek, { type KolorKafelka } from '@/components/ui/Kafelek'
+import {
+  CalendarBlank, CalendarCheck, CaretLeft, CaretRight, ChartLineUp, CreditCard, Gear, GlobeHemisphereWest,
+  ChatCircleText, EnvelopeSimple, HouseLine, Images, Key, List, Money, SignOut, SquaresFour, Star, Tag, Users,
+} from '@/components/ui/ikony'
 
 // ─── Design tokens ────────────────────────────────────────────────
-const PRIMARY = '#1A5276'
-const GOLD    = '#D97706'
-const SIDEBAR = '#111827'
-const CARD_BD = '#E5E7EB'
-const PAGE_BG = '#F3F4F6'
+// Styl iOS (2026-11-21): szare tło grup, białe karty bez ramek, akcent szmaragdowy,
+// pomarańcz dla pieniędzy i zachęt do Pro. Płytki ikon: components/ui/Kafelek.tsx.
+const PRIMARY = '#059669'
+const GOLD    = '#FF9500'
+const SIDEBAR = '#F7F8F8'
+const CARD_BD = '#E3E6E5'  // obwódki pól i linie tabel (karty są bez ramek)
+const PAGE_BG = '#F2F4F3'
 
 // ─── Mobile hook ─────────────────────────────────────────────────
 function useIsMobile(breakpoint = 768) {
@@ -38,10 +46,10 @@ interface CheckinDane {
 type Tab = 'dashboard' | 'bookings' | 'guests' | 'cennik' | 'kalendarz' | 'galeria' | 'opinie' | 'analityka' | 'ustawienia' | 'subskrypcja'
 
 const STATUS_CFG: Record<BookingStatus, { label: string; bg: string; color: string }> = {
-  pending:   { label: 'Nowe zapytanie', bg: '#EFF6FF', color: '#1D4ED8' },
-  confirmed: { label: 'Potwierdzona',   bg: '#F0FDF4', color: '#15803D' },
-  cancelled: { label: 'Anulowana',      bg: '#FEF2F2', color: '#DC2626' },
-  completed: { label: 'Zakończona',     bg: '#F3F4F6', color: '#374151' },
+  pending:   { label: 'Nowe zapytanie', bg: '#EAF4FF', color: '#0059C7' },
+  confirmed: { label: 'Potwierdzona',   bg: '#E8F8F1', color: '#047857' },
+  cancelled: { label: 'Anulowana',      bg: '#FFF1F0', color: '#C9271E' },
+  completed: { label: 'Zakończona',     bg: '#F2F4F3', color: '#6E6E73' },
 }
 
 const CURRENCIES: Array<{ value: string; label: string }> = [
@@ -98,7 +106,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 
 function ProBadge() {
   return (
-    <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: 20, background: GOLD, color: 'white', letterSpacing: '0.04em', marginLeft: '0.4rem' }}>
+    <span className="n-badge-pro" style={{ marginLeft: '0.4rem' }}>
       PRO
     </span>
   )
@@ -106,28 +114,28 @@ function ProBadge() {
 
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 14, padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', ...style }}>
+    <div style={{ background: 'white', borderRadius: 20, padding: '1.25rem 1.5rem', ...style }}>
       {children}
     </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', marginBottom: '1rem', marginTop: 0 }}>{children}</h2>
+  return <h2 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: '#1D1D1F', marginBottom: '1rem', marginTop: 0 }}>{children}</h2>
 }
 
-// ─── Sidebar nav SVG icons ────────────────────────────────────────
-const NAV_ICONS: Record<Tab, React.ReactNode> = {
-  dashboard: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>,
-  bookings:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-  guests:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-  cennik:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-  kalendarz: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" strokeWidth="3"/><line x1="12" y1="14" x2="12" y2="14" strokeWidth="3"/><line x1="16" y1="14" x2="16" y2="14" strokeWidth="3"/></svg>,
-  galeria:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
-  opinie:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-  analityka: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  ustawienia:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
-  subskrypcja: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
+// ─── Ikony nawigacji: płytki jak w Ustawieniach iOS ───────────────
+const NAV_ICONS: Record<Tab, { ikona: Icon; kolor: KolorKafelka }> = {
+  dashboard:   { ikona: SquaresFour, kolor: 'graphite' },
+  bookings:    { ikona: CalendarCheck, kolor: 'emerald' },
+  guests:      { ikona: Users, kolor: 'emerald' },
+  cennik:      { ikona: Tag, kolor: 'orange' },
+  kalendarz:   { ikona: CalendarBlank, kolor: 'blue' },
+  galeria:     { ikona: Images, kolor: 'teal' },
+  opinie:      { ikona: Star, kolor: 'yellow' },
+  analityka:   { ikona: ChartLineUp, kolor: 'ink' },
+  ustawienia:  { ikona: Gear, kolor: 'graphite' },
+  subskrypcja: { ikona: CreditCard, kolor: 'orange' },
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────
@@ -155,46 +163,49 @@ function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEm
 }) {
   return (
     <div style={{
-      width: collapsed ? 60 : 230,
+      width: collapsed ? 64 : 240,
       minHeight: '100%',
+      height: '100%',
       background: SIDEBAR,
+      borderRight: '1px solid rgba(60,60,67,0.12)',
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
       transition: 'width 0.2s',
       overflow: 'hidden',
     }}>
-      <div style={{ padding: collapsed ? '1rem 0' : '1.25rem', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderBottom: '1px solid #1F2937' }}>
+      <div style={{ padding: collapsed ? '1rem 0' : '1.1rem 1rem', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', gap: 8 }}>
         {!collapsed && (
-          <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'white', letterSpacing: '-0.01em' }}>{siteName}</div>
-            <div style={{ fontSize: '0.65rem', color: '#6B7280', marginTop: 1 }}>Panel właściciela</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <Kafelek ikona={HouseLine} kolor="emerald" rozmiar="sm" />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{siteName}</div>
+              <div style={{ fontSize: 12, color: '#6E6E73' }}>Panel właściciela</div>
+            </div>
           </div>
         )}
-        <button onClick={() => setCollapsed(!collapsed)} style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', lineHeight: 1 }}>
-          {collapsed ? '→' : '←'}
+        <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Rozwiń menu' : 'Zwiń menu'} style={{ background: 'none', border: 'none', color: '#8E8E93', cursor: 'pointer', fontSize: 18, padding: 4, lineHeight: 1, display: 'flex' }}>
+          {collapsed ? <CaretRight weight="bold" /> : <CaretLeft weight="bold" />}
         </button>
       </div>
-
-      <nav style={{ flex: 1, padding: '0.5rem 0' }}>
+      <nav style={{ flex: 1, padding: '0.25rem 0.6rem', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_ITEMS.map(item => {
           const active = activeTab === item.id
+          const { ikona, kolor } = NAV_ICONS[item.id]
           return (
-            <button key={item.id} onClick={() => setTab(item.id)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-              padding: collapsed ? '0.7rem 0' : '0.625rem 1.25rem',
+            <button key={item.id} onClick={() => setTab(item.id)} title={collapsed ? item.label : undefined} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              padding: collapsed ? '6px 0' : '6px 8px',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              background: active ? '#1F2937' : 'none',
-              border: 'none', borderLeft: active ? `3px solid ${GOLD}` : '3px solid transparent',
+              background: active ? PRIMARY : 'none',
+              border: 'none', borderRadius: 10,
               cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
-              color: active ? 'white' : '#6B7280',
+              fontFamily: 'inherit',
             }}>
-              <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {NAV_ICONS[item.id]}
-              </span>
+              <Kafelek ikona={ikona} kolor={kolor} rozmiar="sm" />
               {!collapsed && (
                 <>
-                  <span style={{ fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: active ? 'white' : '#9CA3AF', flex: 1 }}>{item.label}</span>
+                  <span style={{ fontSize: 15, fontWeight: active ? 600 : 500, color: active ? 'white' : '#1D1D1F', flex: 1 }}>{item.label}</span>
                   {item.pro && <ProBadge />}
                 </>
               )}
@@ -202,17 +213,16 @@ function Sidebar({ activeTab, setTab, collapsed, setCollapsed, siteName, ownerEm
           )
         })}
       </nav>
-
       {!collapsed && (
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #1F2937' }}>
-          <div style={{ fontSize: '0.7rem', color: '#4B5563', marginBottom: '0.3rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ownerEmail}</div>
+        <div style={{ padding: '1rem 1.1rem', borderTop: '1px solid rgba(60,60,67,0.12)' }}>
+          <div style={{ fontSize: 12, color: '#6E6E73', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ownerEmail}</div>
           <form action={`/api/sites/${slug}/owner/logout`} method="POST">
-            <button type="submit" style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', fontSize: '0.72rem', padding: 0, fontFamily: 'inherit', textDecoration: 'underline' }}>
-              Wyloguj
+            <button type="submit" style={{ background: 'none', border: 'none', color: PRIMARY, cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0, fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <SignOut weight="bold" aria-hidden />Wyloguj
             </button>
           </form>
-          <div style={{ fontSize: '0.65rem', color: '#374151', marginTop: '0.3rem' }}>
-            Powered by <span style={{ color: GOLD, fontWeight: 700 }}>Nobooking</span>
+          <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 8 }}>
+            Działa na <span style={{ color: '#1D1D1F', fontWeight: 600 }}>Nobooking</span>
           </div>
         </div>
       )}
@@ -239,63 +249,29 @@ function DashboardView({
   // Currency: prefer config currency (always up to date), fall back to stats currency
   const displayCurrency = settings?.currency ?? stats?.revenue_currency ?? 'EUR'
 
-  const statCards = [
-    {
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      ),
-      iconBg: '#EEF2FF', iconColor: '#6366F1',
-      label: `Rezerwacje (${monthName})`,
-      value: stats ? String(stats.bookings_this_month) : '…',
-    },
-    {
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
-      ),
-      iconBg: '#F0FDF4', iconColor: '#16A34A',
-      label: `Przychód (${monthName})`,
-      value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${displayCurrency}` : '…',
-    },
-    {
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-      ),
-      iconBg: '#FFF7ED', iconColor: '#EA580C',
-      label: 'Nadchodzące rezerwacje',
-      value: stats ? String(stats.upcoming_count) : '…',
-    },
-    {
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" strokeWidth="1">
-          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-        </svg>
-      ),
-      iconBg: '#FEFCE8', iconColor: '#CA8A04',
-      label: 'Średnia ocena',
-      value: stats?.avg_rating != null ? `${stats.avg_rating} / 5` : '—',
-    },
+  const statCards: { ikona: Icon; kolor: KolorKafelka; label: string; value: string }[] = [
+    { ikona: CalendarCheck, kolor: 'emerald', label: `Rezerwacje (${monthName})`, value: stats ? String(stats.bookings_this_month) : '…' },
+    { ikona: Money, kolor: 'orange', label: `Przychód (${monthName})`, value: stats ? `${stats.revenue_this_month.toLocaleString('pl-PL')} ${displayCurrency}` : '…' },
+    { ikona: CalendarBlank, kolor: 'blue', label: 'Nadchodzące rezerwacje', value: stats ? String(stats.upcoming_count) : '…' },
+    { ikona: Star, kolor: 'yellow', label: 'Średnia ocena', value: stats?.avg_rating != null ? `${stats.avg_rating} / 5` : '—' },
+  ]
+
+  const akcje: { ikona: Icon; kolor: KolorKafelka; label: string; tab: Tab }[] = [
+    { ikona: CalendarBlank, kolor: 'blue', label: 'Zarządzaj kalendarzem', tab: 'kalendarz' },
+    { ikona: CalendarCheck, kolor: 'emerald', label: 'Lista rezerwacji', tab: 'bookings' },
+    { ikona: Users, kolor: 'emerald', label: 'Baza gości', tab: 'guests' },
+    { ikona: Star, kolor: 'yellow', label: 'Moderuj opinie', tab: 'opinie' },
   ]
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>Dashboard</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, color: '#1D1D1F', marginBottom: '1.5rem', letterSpacing: '-0.03em' }}>Dashboard</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {statCards.map(s => (
-          <Card key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: s.iconBg, color: s.iconColor,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '0.875rem', flexShrink: 0,
-            }}>{s.icon}</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.04em', lineHeight: 1.1 }}>{s.value}</div>
-            <div style={{ fontSize: '0.73rem', color: '#9CA3AF', marginTop: '0.35rem', lineHeight: 1.3 }}>{s.label}</div>
+          <Card key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Kafelek ikona={s.ikona} kolor={s.kolor} rozmiar="sm" />
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.04em', lineHeight: 1.1, marginTop: 14 }}>{s.value}</div>
+            <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 4, lineHeight: 1.3 }}>{s.label}</div>
           </Card>
         ))}
       </div>
@@ -303,62 +279,30 @@ function DashboardView({
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
         <Card>
           <SectionTitle>Nadchodzące pobyty</SectionTitle>
-          {upcoming.length === 0 && <p style={{ color: '#9CA3AF', fontSize: '0.85rem', margin: 0 }}>Brak nadchodzących pobytów.</p>}
-          {upcoming.slice(0, 5).map(b => (
-            <div key={b.id} onClick={() => { setBookingId(b.id); setTab('bookings') }}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: `1px solid #F3F4F6`, cursor: 'pointer', gap: '0.5rem' }}>
+          {upcoming.length === 0 && <p style={{ color: '#6E6E73', fontSize: 15, margin: 0 }}>Brak nadchodzących pobytów.</p>}
+          {upcoming.slice(0, 5).map((b, i) => (
+            <button key={b.id} type="button" onClick={() => { setBookingId(b.id); setTab('bookings') }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0', borderTop: i > 0 ? '1px solid rgba(60,60,67,0.12)' : 'none', borderLeft: 0, borderRight: 0, borderBottom: 0, background: 'none', cursor: 'pointer', gap: '0.5rem', fontFamily: 'inherit', textAlign: 'left' }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</div>
-                <div style={{ fontSize: '0.73rem', color: '#9CA3AF' }}>{b.check_in} → {b.check_out}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</div>
+                <div style={{ fontSize: 13, color: '#6E6E73' }}>{b.check_in} → {b.check_out}</div>
               </div>
               <StatusBadge status={b.status as BookingStatus} />
-            </div>
+            </button>
           ))}
         </Card>
 
-        <Card>
-          <SectionTitle>Szybkie akcje</SectionTitle>
-          {[
-            {
-              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-              iconBg: '#EEF2FF', iconColor: '#6366F1',
-              label: 'Zarządzaj kalendarzem', tab: 'cennik' as Tab,
-            },
-            {
-              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
-              iconBg: '#F0F9FF', iconColor: '#0284C7',
-              label: 'Lista rezerwacji', tab: 'bookings' as Tab,
-            },
-            {
-              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-              iconBg: '#FDF4FF', iconColor: '#9333EA',
-              label: 'Baza gości', tab: 'guests' as Tab,
-            },
-            {
-              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>,
-              iconBg: '#FEFCE8', iconColor: '#CA8A04',
-              label: 'Moderuj opinie', tab: 'opinie' as Tab,
-            },
-          ].map(a => (
-            <button key={a.label} onClick={() => setTab(a.tab)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-              background: 'white', border: `1px solid ${CARD_BD}`, borderRadius: 10,
-              padding: '0.7rem 0.875rem', marginBottom: '0.5rem', cursor: 'pointer',
-              fontFamily: 'inherit', textAlign: 'left',
-              transition: 'border-color 0.15s, box-shadow 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = CARD_BD; e.currentTarget.style.boxShadow = 'none'; }}>
-              <span style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: a.iconBg, color: a.iconColor,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>{a.icon}</span>
-              <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#374151', flex: 1 }}>{a.label}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
+        <Card style={{ padding: '1.25rem 0.5rem' }}>
+          <div style={{ padding: '0 1rem' }}><SectionTitle>Szybkie akcje</SectionTitle></div>
+          {akcje.map((a, i) => (
+            <button key={a.label} type="button" onClick={() => setTab(a.tab)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              background: 'none', border: 0, borderTop: i > 0 ? '1px solid rgba(60,60,67,0.12)' : 'none',
+              padding: '10px 1rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+            }}>
+              <Kafelek ikona={a.ikona} kolor={a.kolor} rozmiar="sm" />
+              <span style={{ fontSize: 15, fontWeight: 500, color: '#1D1D1F', flex: 1 }}>{a.label}</span>
+              <CaretRight weight="bold" color="#C7C7CC" aria-hidden />
             </button>
           ))}
         </Card>
@@ -392,7 +336,7 @@ function BookingListView({ bookings, onSelect }: { bookings: Booking[]; onSelect
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', margin: 0 }}>Rezerwacje i zapytania</h1>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', margin: 0 }}>Rezerwacje i zapytania</h1>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Szukaj gościa, email…" style={{
           border: `1px solid ${CARD_BD}`, borderRadius: 10, padding: '0.45rem 0.9rem',
           fontSize: '0.84rem', fontFamily: 'inherit', outline: 'none',
@@ -434,7 +378,7 @@ function BookingListView({ bookings, onSelect }: { bookings: Booking[]; onSelect
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white' }}
                 >
                   <td style={{ padding: '0.85rem 1rem', maxWidth: 160 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</div>
                     <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>{b.guest_email}</div>
                   </td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.83rem', color: '#374151', whiteSpace: 'nowrap' }}>
@@ -445,7 +389,7 @@ function BookingListView({ bookings, onSelect }: { bookings: Booking[]; onSelect
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.83rem', color: '#374151', textAlign: 'center' }}>
                     {b.nights}
                   </td>
-                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.88rem', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.88rem', fontWeight: 700, color: '#1D1D1F', whiteSpace: 'nowrap' }}>
                     {b.total_price} {b.currency}
                   </td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.83rem', color: b.stripe_paid ? '#15803D' : '#9CA3AF', whiteSpace: 'nowrap' }}>
@@ -530,7 +474,7 @@ function BookingDetailView({
           ← Wróć
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</h1>
+          <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1D1D1F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.guest_name}</h1>
           <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: 2 }}>
             Rezerwacja #{b.id.slice(0, 8)} · {new Date(b.created_at).toLocaleDateString('pl-PL')}
           </div>
@@ -552,7 +496,7 @@ function BookingDetailView({
           ] as [string, string][]).map(([label, val]) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.83rem', marginBottom: '0.4rem', gap: '0.5rem' }}>
               <span style={{ color: '#9CA3AF', flexShrink: 0 }}>{label}</span>
-              <span style={{ fontWeight: 600, color: '#111827', textAlign: 'right' }}>{val}</span>
+              <span style={{ fontWeight: 600, color: '#1D1D1F', textAlign: 'right' }}>{val}</span>
             </div>
           ))}
           {b.notes && (
@@ -571,7 +515,7 @@ function BookingDetailView({
           ] as [string, string][]).map(([label, val]) => (
             <div key={label} style={{ marginBottom: '0.6rem' }}>
               <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{label}</div>
-              <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111827', wordBreak: 'break-all' }}>{val}</div>
+              <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#1D1D1F', wordBreak: 'break-all' }}>{val}</div>
             </div>
           ))}
           {b.guest_phone && (
@@ -579,7 +523,7 @@ function BookingDetailView({
               href={`sms:${b.guest_phone}`}
               style={{ display: 'block', marginTop: '0.5rem', width: '100%', background: PRIMARY, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}
             >
-              📱 Wyślij SMS
+              Wyślij SMS
             </a>
           )}
           <a
@@ -621,8 +565,8 @@ function BookingDetailView({
               {(checkin.guests_data ?? []).map((g, i) => (
                 <div key={i} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.83rem', color: '#374151' }}>
                   <span style={{ fontWeight: 700, minWidth: 150 }}>{g.imie || `Osoba ${i + 1}`}</span>
-                  {g.dokument && <span style={{ color: '#6B7280' }}>dok. {g.dokument}</span>}
-                  {g.obywatelstwo && <span style={{ color: '#6B7280' }}>{g.obywatelstwo}</span>}
+                  {g.dokument && <span style={{ color: '#6E6E73' }}>dok. {g.dokument}</span>}
+                  {g.obywatelstwo && <span style={{ color: '#6E6E73' }}>{g.obywatelstwo}</span>}
                 </div>
               ))}
             </div>
@@ -673,7 +617,7 @@ function BookingDetailView({
         </Card>
 
         <Card>
-          <SectionTitle>📧 Kontakt</SectionTitle>
+          <SectionTitle>Kontakt</SectionTitle>
           <div style={{ fontSize: '0.83rem', color: '#374151' }}>
             <div style={{ marginBottom: '0.5rem' }}>
               <span style={{ color: '#9CA3AF' }}>Email: </span>
@@ -708,7 +652,7 @@ function GuestsView({ bookings }: { bookings: Booking[] }) {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Goście</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '1.5rem' }}>Goście</h1>
       <Card style={{ padding: 0 }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
@@ -729,7 +673,7 @@ function GuestsView({ bookings }: { bookings: Booking[] }) {
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F9FAFB' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'white' }}
                 >
-                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: '#111827', whiteSpace: 'nowrap' }}>{g.guest_name}</td>
+                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: '#1D1D1F', whiteSpace: 'nowrap' }}>{g.guest_name}</td>
                   <td style={{ padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#374151' }}>
                     <a href={`mailto:${g.guest_email}`} style={{ color: PRIMARY }}>{g.guest_email}</a>
                   </td>
@@ -876,7 +820,7 @@ function KodyRabatowe({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) {
       {plan !== 'pro' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(2px)' }}>
           <ProBadge />
-          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '0.5rem', textAlign: 'center' }}>Kody rabatowe dostępne w planie PRO</div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1D1D1F', marginTop: '0.5rem', textAlign: 'center' }}>Kody rabatowe dostępne w planie PRO</div>
           <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.75rem', background: GOLD, color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
             Przejdź na PRO →
           </a>
@@ -976,7 +920,7 @@ function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Cennik i dostępność</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '1.5rem' }}>Cennik i dostępność</h1>
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <Card>
@@ -994,7 +938,7 @@ function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
               {TIER_ROWS.map(row => (
                 <div key={row.key} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 0', borderBottom: `1px solid #F3F4F6` }}>
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827' }}>{row.label}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1D1D1F' }}>{row.label}</div>
                     {row.months && <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>{row.months}</div>}
                   </div>
                   {numInput(row.state.price, v => row.set(s => ({ ...s, price: v })), currency)}
@@ -1042,7 +986,7 @@ function CennikView({ settings, slug, plan, setTab, onPricingUpdated }: {
 function OpinieView({ reviews, slug, onToggle }: { reviews: Review[]; slug: string; onToggle: (id: string) => void }) {
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '0.5rem' }}>Opinie gości</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '0.5rem' }}>Opinie gości</h1>
       <p style={{ fontSize: '0.83rem', color: '#9CA3AF', marginBottom: '1.5rem' }}>Po wyjeździe gość otrzymuje automatyczny email z prośbą o opinię.</p>
 
       {reviews.length === 0 && (
@@ -1126,11 +1070,11 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
   if (plan !== 'pro') {
     return (
       <div>
-        <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Analityka</h1>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '1.5rem' }}>Analityka</h1>
         <Card style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><Kafelek ikona={ChartLineUp} kolor="ink" rozmiar="lg" /></div>
           <ProBadge />
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', marginTop: '0.75rem', marginBottom: '0.5rem' }}>Analityka dostępna w planie PRO</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#1D1D1F', marginTop: '0.75rem', marginBottom: '0.5rem' }}>Analityka dostępna w planie PRO</h3>
           <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '1.25rem', maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
             Obłożenie miesiąc po miesiącu, przychód roczny, średnia długość pobytu i to, z jakim wyprzedzeniem rezerwują goście.
           </p>
@@ -1161,11 +1105,11 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Analityka</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '1.5rem' }}>Analityka</h1>
 
       {brakDanych && (
         <Card style={{ marginBottom: '1.5rem' }}>
-          <p style={{ margin: 0, fontSize: '0.88rem', color: '#6B7280', lineHeight: 1.6 }}>
+          <p style={{ margin: 0, fontSize: '0.88rem', color: '#6E6E73', lineHeight: 1.6 }}>
             Nie ma jeszcze potwierdzonych rezerwacji, więc nie ma czego liczyć.
             Liczby pojawią się same, gdy zaczną spływać.
           </p>
@@ -1175,7 +1119,7 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
         {kafelki.map(([wartosc, etykieta]) => (
           <Card key={etykieta}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827' }}>{wartosc}</div>
+            <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F' }}>{wartosc}</div>
             <div style={{ fontSize: '0.76rem', color: '#9CA3AF', marginTop: '0.15rem' }}>{etykieta}</div>
           </Card>
         ))}
@@ -1186,7 +1130,7 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', height: 120, marginTop: '0.5rem' }}>
           {dane.miesiace.map(m => (
             <div key={m.miesiac} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', height: '100%', justifyContent: 'flex-end' }}>
-              <div style={{ fontSize: '0.68rem', color: '#6B7280', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '0.68rem', color: '#6E6E73', fontVariantNumeric: 'tabular-nums' }}>
                 {m.oblozenie > 0 ? `${m.oblozenie}%` : ''}
               </div>
               <div
@@ -1206,8 +1150,8 @@ function AnalitykaView({ slug, plan }: { slug: string; plan: 'basic' | 'pro' }) 
             <div style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>Brak przychodu w tym okresie.</div>
           ) : dane.miesiace.filter(m => m.przychod > 0).map(m => (
             <div key={m.miesiac} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
-              <span style={{ width: 70, color: '#6B7280' }}>{etykietaMiesiaca(m.miesiac)} {m.miesiac.slice(2, 4)}</span>
-              <span style={{ fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ width: 70, color: '#6E6E73' }}>{etykietaMiesiaca(m.miesiac)} {m.miesiac.slice(2, 4)}</span>
+              <span style={{ fontWeight: 700, color: '#1D1D1F', fontVariantNumeric: 'tabular-nums' }}>
                 {m.przychod.toLocaleString('pl-PL')} {dane.waluta}
               </span>
               <span style={{ marginLeft: 'auto', color: '#9CA3AF', fontSize: '0.78rem' }}>
@@ -1278,7 +1222,7 @@ function PasswordCard({ slug }: { slug: string }) {
 
   return (
     <Card style={{ marginTop: '1.5rem' }}>
-      <SectionTitle>🔐 Zmiana hasła</SectionTitle>
+      <SectionTitle>Zmiana hasła</SectionTitle>
       <form onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
         {[
           { label: 'Obecne hasło',       value: current,  set: setCurrent },
@@ -1339,7 +1283,7 @@ function StripeConnectCard({ slug, settings }: { slug: string; settings: SiteSet
   return (
     <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '0.75rem', marginTop: '0.75rem' }}>
       <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#C2410C', marginBottom: '0.25rem' }}>
-        {hasAccount ? '⚠️ Stripe — konfiguracja niekompletna' : '💳 Integracja z Stripe'}
+        {hasAccount ? 'Stripe — dokończ konfigurację' : 'Podłącz płatności Stripe'}
       </div>
       <div style={{ fontSize: '0.73rem', color: '#374151', marginBottom: '0.5rem' }}>
         {hasAccount
@@ -1404,11 +1348,11 @@ function SubskrypcjaView({ slug }: { slug: string }) {
     : daysLeft !== null && daysLeft <= 30 ? `⏳ ${daysLeft} dni do odnowienia`
     : `✅ Aktywna — ${daysLeft ?? '?'} dni`
 
-  const card: React.CSSProperties = { background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1rem' }
+  const card: React.CSSProperties = { background: 'white', borderRadius: 20, padding: '1.25rem 1.5rem', marginBottom: '1rem' }
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', marginBottom: '1.25rem' }}>Subskrypcja</h2>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '1.25rem' }}>Subskrypcja</h2>
 
       <div style={{ ...card, background: statusBg, borderColor: statusColor + '55' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
@@ -1418,7 +1362,7 @@ function SubskrypcjaView({ slug }: { slug: string }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ margin: 0, fontSize: '0.7rem', color: '#9CA3AF', marginBottom: 2 }}>Wygasa</p>
-            <p style={{ margin: 0, fontWeight: 700, color: '#111827' }}>{expiryLabel}</p>
+            <p style={{ margin: 0, fontWeight: 700, color: '#1D1D1F' }}>{expiryLabel}</p>
           </div>
         </div>
       </div>
@@ -1427,7 +1371,7 @@ function SubskrypcjaView({ slug }: { slug: string }) {
         <p style={{ margin: '0 0 0.875rem', fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Twój plan</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111827' }}>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#1D1D1F' }}>
               Nobooking {info.plan === 'pro' ? 'Pro' : 'Basic'} · 2 lata
             </p>
           </div>
@@ -1447,10 +1391,10 @@ function SubskrypcjaView({ slug }: { slug: string }) {
 
       {daysLeft !== null && daysLeft <= 90 && (
         <div style={card}>
-          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, fontSize: '0.95rem', color: '#1D1D1F' }}>
             {isExpired ? 'Przywróć dostęp' : 'Odnów teraz'}
           </p>
-          <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.6 }}>
+          <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: '#6E6E73', lineHeight: 1.6 }}>
             {isExpired
               ? 'Strona jest wyłączona. Opłać odnowienie — dostęp zostanie przywrócony natychmiast.'
               : `Przedłuż o 2 lata za ${price}. Bezproblemowa ciągłość — bez przerwy w działaniu.`}
@@ -1467,7 +1411,7 @@ function SubskrypcjaView({ slug }: { slug: string }) {
 
       {daysLeft !== null && daysLeft > 90 && (
         <div style={{ ...card, background: '#F9FAFB' }}>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.65 }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6E6E73', lineHeight: 1.65 }}>
             Otrzymasz email na <strong>90, 30, 14, 7 i 1 dzień</strong> przed wygaśnięciem.
             Cena odnowienia jest zablokowana i nie zmieni się.
           </p>
@@ -1516,7 +1460,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', marginBottom: '1.5rem' }}>Ustawienia</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#1D1D1F', marginBottom: '1.5rem' }}>Ustawienia</h1>
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
         <Card>
@@ -1528,7 +1472,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
             ].map(f => (
               <div key={f.label} style={{ marginBottom: '0.9rem' }}>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#9CA3AF', marginBottom: '0.3rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{f.label}</label>
-                <input type={f.type} defaultValue={f.value} readOnly={f.readOnly} style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: f.readOnly ? '#F9FAFB' : 'white', color: f.readOnly ? '#9CA3AF' : '#111827' }} />
+                <input type={f.type} defaultValue={f.value} readOnly={f.readOnly} style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: f.readOnly ? '#F9FAFB' : 'white', color: f.readOnly ? '#9CA3AF' : '#1D1D1F' }} />
               </div>
             ))}
             <div style={{ marginBottom: '0.9rem' }}>
@@ -1544,7 +1488,7 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
               <select
                 value={currency}
                 onChange={e => setCurrency(e.target.value)}
-                style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: 'white', color: '#111827' }}
+                style={{ width: '100%', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.45rem 0.7rem', fontSize: '0.83rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: 'white', color: '#1D1D1F' }}
               >
                 {CURRENCIES.map(c => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -1563,31 +1507,28 @@ function UstawieniaView({ settings, slug, onSaved }: { settings: SiteSettings | 
         <Card>
           <SectionTitle>Powiadomienia i integracje</SectionTitle>
 
-          <div style={{ padding: '0.75rem 0', borderBottom: `1px solid #F3F4F6` }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827', marginBottom: '0.2rem' }}>📧 Powiadomienia email</div>
-            <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Nowa rezerwacja, zmiana statusu — aktywne domyślnie.</div>
-          </div>
-
-          <div style={{ padding: '0.75rem 0', borderBottom: `1px solid #F3F4F6` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Opisy sprawdzone w kodzie: SMS idzie do właściciela (`lib/smsSend.ts`
+              powiadomORezerwacji), portal gościa pokazuje pobyt, adres z mapą i kontakt. */}
+          {([
+            { ikona: EnvelopeSimple, kolor: 'red', tytul: 'Powiadomienia e-mail', opis: 'Nowa rezerwacja i zmiana statusu — włączone zawsze.', pro: false },
+            { ikona: ChatCircleText, kolor: 'ink', tytul: 'SMS o rezerwacjach', opis: 'Przy każdej nowej rezerwacji, na Twój numer.', pro: true },
+            { ikona: Key, kolor: 'emerald', tytul: 'Portal gościa', opis: 'Każdy gość dostaje link ze szczegółami pobytu, adresem z mapą i kontaktem do Ciebie.', pro: false },
+          ] as { ikona: Icon; kolor: KolorKafelka; tytul: string; opis: string; pro: boolean }[]).map((w, i) => (
+            <div key={w.tytul} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '0.75rem 0', borderTop: i > 0 ? '1px solid rgba(60,60,67,0.12)' : 'none' }}>
+              <Kafelek ikona={w.ikona} kolor={w.kolor} rozmiar="sm" />
               <div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>📱 SMS do gości <ProBadge /></div>
-                <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Potwierdzenie, kod dostępu, przypomnienie</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', display: 'flex', alignItems: 'center' }}>{w.tytul}{w.pro && <ProBadge />}</div>
+                <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 2 }}>{w.opis}</div>
               </div>
             </div>
-          </div>
-
-          <div style={{ padding: '0.75rem 0', borderBottom: `1px solid #F3F4F6` }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' }}>🔐 Portal gościa</div>
-            <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginBottom: '0.5rem' }}>Goście otrzymują indywidualny link z informacjami o pobycie, kodem Wi-Fi i przewodnikiem lokalu.</div>
-          </div>
+          ))}
 
           <StripeConnectCard slug={slug} settings={settings} />
 
           <div style={{ marginTop: '1rem', borderTop: `1px solid #F3F4F6`, paddingTop: '1rem' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '0.3rem' }}>Plan: <span style={{ color: PRIMARY }}>{settings?.plan === 'pro' ? 'PRO' : 'Basic'}</span></div>
             <a href="https://nobooking.eu/#cennik" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: GOLD, fontWeight: 700 }}>
-              {settings?.plan !== 'pro' ? 'Przejdź na PRO →' : 'Zarządzaj subskrypcją →'}
+              {settings?.plan !== 'pro' ? 'Przejdź na Pro' : 'Zarządzaj subskrypcją'}
             </a>
           </div>
         </Card>
@@ -1725,13 +1666,13 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   if (loading) {
     const pulse: React.CSSProperties = { animation: 'skeletonPulse 1.4s ease-in-out infinite' }
     return (
-      <div style={{ minHeight: '100vh', background: PAGE_BG, display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: PAGE_BG, display: 'flex', fontFamily: 'var(--font-sans)' }}>
         {/* Skeleton sidebar */}
-        <div style={{ width: 230, background: SIDEBAR, flexShrink: 0, padding: '1.5rem 1.25rem' }}>
-          <div style={{ height: 20, borderRadius: 6, background: '#1F2937', marginBottom: '0.5rem', width: '70%', ...pulse }}/>
-          <div style={{ height: 12, borderRadius: 4, background: '#1F2937', marginBottom: '2rem', width: '50%', ...pulse }}/>
+        <div style={{ width: 240, background: SIDEBAR, borderRight: '1px solid rgba(60,60,67,0.12)', flexShrink: 0, padding: '1.5rem 1.25rem' }}>
+          <div style={{ height: 20, borderRadius: 6, background: '#E3E6E5', marginBottom: '0.5rem', width: '70%', ...pulse }}/>
+          <div style={{ height: 12, borderRadius: 4, background: '#E3E6E5', marginBottom: '2rem', width: '50%', ...pulse }}/>
           {[80, 90, 75, 85, 80, 70, 90, 80].map((w, i) => (
-            <div key={i} style={{ height: 16, borderRadius: 6, background: '#1F2937', marginBottom: '0.75rem', width: `${w}%`, opacity: 0.6, ...pulse, animationDelay: `${i * 0.08}s` }}/>
+            <div key={i} style={{ height: 16, borderRadius: 6, background: '#E3E6E5', marginBottom: '0.75rem', width: `${w}%`, opacity: 0.6, ...pulse, animationDelay: `${i * 0.08}s` }}/>
           ))}
         </div>
         {/* Skeleton content */}
@@ -1758,7 +1699,7 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: 'var(--font-sans)' }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
 
         {/* Sidebar — desktop */}
@@ -1798,28 +1739,22 @@ export function OwnerAdminApp({ slug, initialSiteName, initialPlan }: Props) {
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           {/* Top bar */}
           <div style={{
-            background: 'white', borderBottom: `1px solid ${CARD_BD}`,
-            padding: '0 1rem', height: 52,
+            background: 'rgba(255,255,255,0.78)', backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+            borderBottom: '1px solid rgba(60,60,67,0.12)',
+            padding: '0 1rem', height: 56,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
             position: 'sticky', top: 0, zIndex: 50,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
               {isMobile && (
-                <button onClick={() => setMobileMenuOpen(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#374151', padding: 0, flexShrink: 0 }}>☰</button>
+                <button onClick={() => setMobileMenuOpen(v => !v)} aria-label="Menu" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#1D1D1F', padding: 0, flexShrink: 0, display: 'flex' }}><List weight="bold" /></button>
               )}
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏠 {siteName}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{siteName}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
-              <a href={`/sites/${slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 700, textDecoration: 'none', border: '1px solid #BBF7D0', background: '#F0FDF4', borderRadius: 8, padding: '0.28rem 0.6rem', whiteSpace: 'nowrap' }}>
-                🌐 {isMobile ? 'Strona' : 'Moja strona ↗'}
+              <a href={`/sites/${slug}`} target="_blank" rel="noopener noreferrer" className="n-btn n-btn--ghost n-btn--sm">
+                <GlobeHemisphereWest weight="fill" color={PRIMARY} aria-hidden />{isMobile ? 'Strona' : 'Moja strona'}
               </a>
-              {!isMobile && (
-                <form action={`/api/sites/${slug}/owner/logout`} method="POST" style={{ display: 'inline' }}>
-                  <button type="submit" style={{ background: 'none', border: `1px solid ${CARD_BD}`, borderRadius: 8, padding: '0.28rem 0.6rem', fontSize: '0.76rem', color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    Wyloguj
-                  </button>
-                </form>
-              )}
             </div>
           </div>
 
