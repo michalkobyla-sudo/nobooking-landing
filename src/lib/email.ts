@@ -4,6 +4,7 @@ import { PRICE_LABELS } from './prices'
 import { htmlPotwierdzenia } from './potwierdzenieUmowy'
 import { regulaminMarkdown } from './regulaminTresc'
 import { adresSerwisu, domenaGlowna } from '@/lib/adresSerwisu'
+import { akapit, ciemnaKarta, cytat, dane, grupa, link, podpisMichal, przycisk, szkielet } from './mailUi'
 
 const FROM_EMAIL = 'noreply@nobooking.eu'
 const FROM_NAME = 'Nobooking'
@@ -29,7 +30,14 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;')
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+/**
+ * Odpowiedzi na maile do klientów trafiają na kontakt@ — nadawca to noreply@,
+ * a w treści piszemy „odpowiedz na tego maila”. Maile do gości mają adres
+ * gospodarza, gdy go znamy (inaczej odpowiedź gościa trafiłaby do nas).
+ */
+const ODPOWIEDZI_NA = 'kontakt@nobooking.eu'
+
+async function sendEmail(to: string, subject: string, html: string, replyTo: string | null = ODPOWIEDZI_NA) {
   const apiKey = process.env.BREVO_API_KEY
   if (!apiKey) throw new Error('BREVO_API_KEY is not set')
 
@@ -42,6 +50,7 @@ async function sendEmail(to: string, subject: string, html: string) {
     body: JSON.stringify({
       sender: { name: FROM_NAME, email: FROM_EMAIL },
       to: [{ email: to }],
+      ...(replyTo ? { replyTo: { email: replyTo } } : {}),
       subject,
       htmlContent: html,
     }),
@@ -53,114 +62,45 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-function renderHeader(subtitle?: string) {
-  return `
-    <div style="background: #059669; padding: 1.75rem 2rem; text-align: center; border-radius: 12px 12px 0 0;">
-      <div style="font-family: -apple-system, sans-serif; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.04em; color: white;">
-        <span style="color: rgba(255,255,255,0.6);">No</span>booking
-      </div>
-      ${subtitle ? `<p style="color: rgba(255,255,255,0.8); margin: 0.5rem 0 0; font-size: 0.9rem; font-family: -apple-system, sans-serif;">${subtitle}</p>` : ''}
-    </div>
-  `
-}
-
-function renderFooter() {
-  return `
-    <div style="background: #f3f4f6; padding: 1.25rem 1rem; text-align: center; font-size: 0.75rem; color: #9ca3af; font-family: -apple-system, sans-serif; border-radius: 0 0 12px 12px;">
-      <strong style="color: #6b7280;">Nobooking</strong> · Strony dla apartamentów wakacyjnych<br/>
-      <a href="mailto:kontakt@nobooking.eu" style="color: #9ca3af; text-decoration: none;">kontakt@nobooking.eu</a>
-      &nbsp;·&nbsp;
-      <a href="https://nobooking.eu" style="color: #9ca3af; text-decoration: none;">nobooking.eu</a>
-    </div>
-  `
-}
-
-function wrapEmail(html: string) {
-  return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      ${html}
-    </div>
-  `
-}
+const planNazwa = (plan: 'basic' | 'pro') => (plan === 'pro' ? 'Pro' : 'Basic')
 
 /** Email 1: Notify Michał of new order */
 export async function sendNewOrderNotification(order: Order) {
-  const planLabel = order.plan === 'pro' ? 'Pro' : 'Basic'
+  const planLabel = planNazwa(order.plan)
   const priceLabel = PRICE_LABELS[order.plan][order.currency]
+
+  const klient: [string, string][] = [
+    ['Imię i nazwisko', `${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)}`],
+    ['Email', link(`mailto:${escapeHtml(order.email)}`, escapeHtml(order.email))],
+    ['Telefon', link(`tel:${escapeHtml(order.phone)}`, escapeHtml(order.phone))],
+  ]
+  if (order.invoice_company) {
+    klient.push(['Firma / NIP', `${escapeHtml(order.invoice_company)}${order.invoice_nip ? ` · NIP: ${escapeHtml(order.invoice_nip)}` : ''}`])
+  }
+  if (order.invoice_address) klient.push(['Adres', escapeHtml(order.invoice_address)])
+
+  const apartament: [string, string][] = [
+    ['Nazwa', escapeHtml(order.apartment_name)],
+    ['Lokalizacja', escapeHtml(order.apartment_location)],
+  ]
+  if (order.notes) apartament.push(['Notatki', escapeHtml(order.notes)])
 
   await sendEmail(
     ADMIN_EMAIL(),
-    `🆕 Nowe zamówienie — ${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)} (${planLabel})`,
-    wrapEmail(`
-      ${renderHeader('Nowe zamówienie')}
-
-      <div style="padding: 2rem;">
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 1.25rem; font-weight: 800; color: #059669;">${planLabel} · ${priceLabel}</div>
-          <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">
-            ${new Date(order.created_at).toLocaleString('pl-PL')}
-          </div>
-        </div>
-
-        <h3 style="font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem;">Klient</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem; width: 40%;">Imię i nazwisko</td>
-            <td style="padding: 0.4rem 0; font-weight: 600; font-size: 0.875rem;">${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem;">Email</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;"><a href="mailto:${escapeHtml(order.email)}" style="color: #059669;">${escapeHtml(order.email)}</a></td>
-          </tr>
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem;">Telefon</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;"><a href="tel:${escapeHtml(order.phone)}" style="color: #059669;">${escapeHtml(order.phone)}</a></td>
-          </tr>
-          ${order.invoice_company ? `
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem;">Firma / NIP</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;">${escapeHtml(order.invoice_company)}${order.invoice_nip ? ` · NIP: ${escapeHtml(order.invoice_nip)}` : ''}</td>
-          </tr>
-          ` : ''}
-          ${order.invoice_address ? `
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem;">Adres</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;">${escapeHtml(order.invoice_address)}</td>
-          </tr>
-          ` : ''}
-        </table>
-
-        <div style="border-left: 2px solid #e5e7eb; padding: 0 0 0 0.875rem; margin: 0 0 1.5rem; font-size: 0.8125rem; color: #6b7280;">
-          ${escapeHtml(opisZrodla(order))}
-        </div>
-
-        <h3 style="font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem;">Apartament</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem; width: 40%;">Nazwa</td>
-            <td style="padding: 0.4rem 0; font-weight: 600; font-size: 0.875rem;">${escapeHtml(order.apartment_name)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem;">Lokalizacja</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;">${escapeHtml(order.apartment_location)}</td>
-          </tr>
-          ${order.notes ? `
-          <tr>
-            <td style="padding: 0.4rem 0; color: #6b7280; font-size: 0.875rem; vertical-align: top;">Notatki</td>
-            <td style="padding: 0.4rem 0; font-size: 0.875rem;">${escapeHtml(order.notes)}</td>
-          </tr>
-          ` : ''}
-        </table>
-
-        <div style="text-align: center; margin-top: 2rem;">
-          <a href="${SITE_URL}/admin/zamowienia/${order.id}" style="display: inline-block; background: #059669; color: white; padding: 0.875rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.95rem;">
-            Zobacz w panelu →
-          </a>
-        </div>
-      </div>
-
-      ${renderFooter()}
-    `)
+    `Nowe zamówienie — ${order.first_name} ${order.last_name} (${planLabel})`,
+    szkielet({
+      tytul: `Nowe zamówienie · ${planLabel}`,
+      ikonaTytulu: 'zamowienie',
+      podglad: `${planLabel} · ${priceLabel} · ${escapeHtml(order.apartment_name)}`,
+      tresc: `
+        ${akapit(`<strong>${priceLabel}</strong> · ${new Date(order.created_at).toLocaleString('pl-PL')}`)}
+        ${dane(klient, 'Klient')}
+        ${akapit(escapeHtml(opisZrodla(order)), { maly: true, wyciszony: true })}
+        ${dane(apartament, 'Apartament')}
+        ${przycisk(`${SITE_URL}/admin/zamowienia/${order.id}`, 'Zobacz w panelu')}
+      `,
+    }),
+    null,
   )
 }
 
@@ -179,43 +119,21 @@ export async function sendOnboardingEmail(order: Order, zawarcie: Date, wczesnyS
   await sendEmail(
     order.email,
     `Potwierdzenie zamówienia — wypełnij formularz swojej strony`,
-    wrapEmail(`
-      ${renderHeader('Jeden krok do Twojej strony')}
-
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>! 👋</p>
-        <p style="color: #374151; margin: 0 0 1rem;">
-          Dziękujemy za zakup. Twoja płatność została potwierdzona.
-        </p>
-        <p style="color: #374151; margin: 0 0 1.5rem;">
-          Aby zbudować stronę Twojego apartamentu, potrzebujemy kilku informacji — opis, zdjęcia, cennik, zasady rezerwacji.
-          Wypełnienie formularza zajmie ok. <strong>5 minut</strong>.
-        </p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.75rem;">
-            🏠 <strong>${escapeHtml(order.apartment_name)}</strong> · Plan ${order.plan === 'pro' ? 'Pro' : 'Basic'}
-          </div>
-          <div style="font-size: 0.8rem; color: #6b7280;">
-            Po wypełnieniu formularza skontaktujemy się z Tobą, by omówić szczegóły i ustalić datę uruchomienia strony.
-          </div>
-        </div>
-
-        <div style="text-align: center; margin: 2rem 0;">
-          <a href="${onboardingUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
-            Wypełnij formularz →
-          </a>
-        </div>
-
-        <p style="font-size: 0.8rem; color: #9ca3af; text-align: center;">
-          Jeśli przycisk nie działa, skopiuj ten link:<br/>
-          <a href="${onboardingUrl}" style="color: #059669; word-break: break-all;">${onboardingUrl}</a>
-        </p>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0 0 2rem;">W razie pytań odpowiedz na tego emaila.<br/>
-        <strong>Michał · Nobooking</strong></p>
-
+    szkielet({
+      tytul: 'Jeden krok do Twojej strony',
+      ikonaTytulu: 'formularz',
+      podglad: 'Płatność potwierdzona. Wypełnij formularz, a zbudujemy Twoją stronę.',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(order.first_name)}</strong>! Dziękujemy za zakup — płatność jest potwierdzona.`)}
+        ${akapit('Do zbudowania strony potrzebujemy opisu, zdjęć, cennika i zasad pobytu. Formularz zajmie kilka minut.')}
+        ${grupa([
+          { ikona: 'dom', tytul: escapeHtml(order.apartment_name), opis: `Plan ${planNazwa(order.plan)} · 2 lata` },
+          { ikona: 'zegar', tytul: 'Strona gotowa zwykle w 24 godziny', opis: 'Liczymy od wysłania formularza. Gdy będzie gotowa, dostaniesz maila z adresem i panelem.' },
+        ])}
+        ${przycisk(onboardingUrl, 'Wypełnij formularz')}
+        ${akapit(`Jeśli przycisk nie działa, skopiuj ten link:<br>${link(onboardingUrl)}`, { maly: true, wyciszony: true })}
+        ${podpisMichal()}
+        <div style="margin-top:28px;">
         ${htmlPotwierdzenia({
           plan: order.plan,
           currency: order.currency,
@@ -224,33 +142,32 @@ export async function sendOnboardingEmail(order: Order, zawarcie: Date, wczesnyS
           regulaminMd: regulaminMarkdown(),
           wczesnyStart,
         })}
-      </div>
-
-      ${renderFooter()}
-    `)
+        </div>
+      `,
+    }),
   )
 }
 
 /** Email 3b: Notify client of status change */
 export async function sendStatusUpdateEmail(order: Order, status: string) {
-  const messages: Record<string, { subject: string; emoji: string; title: string; body: string }> = {
+  const messages: Record<string, { subject: string; ikona: 'koperta' | 'zegar' | 'dom'; title: string; body: string }> = {
     contacted: {
-      subject: `Nobooking — jesteśmy w kontakcie!`,
-      emoji: '👋',
+      subject: `Nobooking — jesteśmy w kontakcie`,
+      ikona: 'koperta',
       title: 'Jesteśmy w kontakcie',
       body: 'Otrzymaliśmy Twoje zamówienie i wkrótce się z Tobą skontaktujemy, aby omówić szczegóły realizacji.',
     },
     building: {
-      subject: `Nobooking — budujemy Twoją stronę!`,
-      emoji: '🔨',
+      subject: `Nobooking — budujemy Twoją stronę`,
+      ikona: 'zegar',
       title: 'Budujemy Twoją stronę',
-      body: 'Świetna wiadomość — zaczęliśmy pracę nad Twoją stroną apartamentu. Damy znać gdy będzie gotowa do podglądu.',
+      body: 'Zaczęliśmy pracę nad stroną Twojego apartamentu. Damy znać, gdy będzie gotowa.',
     },
     completed: {
-      subject: `Nobooking — Twoja strona jest gotowa! 🎉`,
-      emoji: '🎉',
-      title: 'Twoja strona jest gotowa!',
-      body: 'Twoja strona apartamentu jest gotowa. Skontaktujemy się z Tobą, aby przekazać dostępy i omówić uruchomienie.',
+      subject: `Nobooking — Twoja strona jest gotowa`,
+      ikona: 'dom',
+      title: 'Twoja strona jest gotowa',
+      body: 'Strona Twojego apartamentu jest gotowa. Dostępy do panelu i dalsze kroki przyszły w osobnym mailu.',
     },
   }
 
@@ -260,27 +177,16 @@ export async function sendStatusUpdateEmail(order: Order, status: string) {
   await sendEmail(
     order.email,
     msg.subject,
-    wrapEmail(`
-      ${renderHeader(msg.title)}
-
-      <div style="padding: 2rem;">
-        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">${msg.emoji}</p>
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">${msg.body}</p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; color: #374151;">
-            🏠 <strong>${escapeHtml(order.apartment_name)}</strong> · Plan ${order.plan === 'pro' ? 'Pro' : 'Basic'}
-          </div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0;">W razie pytań odpowiedz na tego emaila.<br/>
-        <strong>Michał · Nobooking</strong></p>
-      </div>
-
-      ${renderFooter()}
-    `)
+    szkielet({
+      tytul: msg.title,
+      ikonaTytulu: msg.ikona,
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(order.first_name)}</strong>!`)}
+        ${akapit(msg.body)}
+        ${grupa([{ ikona: 'dom', tytul: escapeHtml(order.apartment_name), opis: `Plan ${planNazwa(order.plan)}` }])}
+        ${podpisMichal()}
+      `,
+    }),
   )
 }
 
@@ -295,66 +201,38 @@ export async function sendSiteReadyEmail(
   const revisionUrl = `${SITE_URL}/poprawki/${order.revision_token}`
   const isFirstVersion = revisionsDone === 0
   const roundLabel = revisionsDone + 1
+  const rund = revisionsLeft === 1 ? 'runda' : revisionsLeft < 5 ? 'rundy' : 'rund'
 
   const subject = isFirstVersion
-    ? `Nobooking — Twoja strona jest gotowa do podglądu! 🎉`
-    : `Nobooking — poprawki wdrożone! Wersja ${roundLabel} gotowa 🔄`
+    ? `Nobooking — Twoja strona jest gotowa do podglądu`
+    : `Nobooking — poprawki wdrożone, wersja ${roundLabel} gotowa`
 
   const intro = isFirstVersion
-    ? `Przygotowaliśmy pierwszą wersję strony Twojego apartamentu. Możesz już ją obejrzeć — to wstępny podgląd, który dopracujemy razem.`
-    : `Wdrożyliśmy Twoje poprawki. Sprawdź nową wersję strony i powiedz nam co jeszcze zmienić.`
+    ? `Przygotowaliśmy pierwszą wersję strony Twojego apartamentu. Obejrzyj ją i daj znać, co dopracować.`
+    : `Wdrożyliśmy Twoje poprawki. Sprawdź nową wersję strony.`
 
   await sendEmail(
     order.email,
     subject,
-    wrapEmail(`
-      ${renderHeader(isFirstVersion ? 'Twoja strona jest gotowa!' : `Wersja ${roundLabel} gotowa`)}
-
-      <div style="padding: 2rem;">
-        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">${isFirstVersion ? '🎉' : '🔄'}</p>
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">${intro}</p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem;">
-            🏠 <strong>${escapeHtml(order.apartment_name)}</strong> · Plan ${order.plan === 'pro' ? 'Pro' : 'Basic'}
-          </div>
-          <div style="font-size: 0.8rem; color: #6b7280;">
-            <a href="${siteUrl}" style="color: #059669; font-weight: 600; word-break: break-all;">${siteUrl}</a>
-          </div>
-        </div>
-
-        <div style="text-align: center; margin: 1.5rem 0;">
-          <a href="${siteUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
-            Zobacz swoją stronę →
-          </a>
-        </div>
-
-        ${revisionsLeft > 0 ? `
-        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1.5rem;">
-          <div style="font-size: 0.875rem; font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">
-            ✏️ Masz uwagi? Zostało Ci jeszcze ${revisionsLeft} ${revisionsLeft === 1 ? 'runda' : revisionsLeft < 5 ? 'rundy' : 'rund'} poprawek
-          </div>
-          <div style="font-size: 0.8rem; color: #78350f; margin-bottom: 1rem; line-height: 1.6;">
-            Przejrzyj stronę i powiedz nam co zmienić — tekst, kolory, ceny, układ, cokolwiek.
-          </div>
-          <a href="${revisionUrl}" style="display: inline-block; background: #d97706; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
-            Wyślij poprawki →
-          </a>
-        </div>
-        ` : `
-        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7; margin-top: 1.5rem;">
-          To była ostatnia runda poprawek. Jeśli potrzebujesz dalszych zmian, napisz do nas na kontakt@nobooking.eu.
-        </p>
-        `}
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0;">W razie pytań odpowiedz na tego emaila.<br/>
-        <strong>Michał · Nobooking</strong></p>
-      </div>
-
-      ${renderFooter()}
-    `)
+    szkielet({
+      tytul: isFirstVersion ? 'Twoja strona jest gotowa' : `Wersja ${roundLabel} gotowa`,
+      ikonaTytulu: isFirstVersion ? 'dom' : 'poprawki',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(order.first_name)}</strong>!`)}
+        ${akapit(intro)}
+        ${grupa([{ ikona: 'dom', tytul: escapeHtml(order.apartment_name), opis: link(siteUrl) }])}
+        ${przycisk(siteUrl, 'Zobacz swoją stronę')}
+        ${revisionsLeft > 0
+          ? grupa([{
+              ikona: 'poprawki',
+              tytul: `Masz uwagi? Zostały ${revisionsLeft} ${rund} poprawek`,
+              opis: 'Napisz, co zmienić: tekst, kolory, ceny, układ.',
+              tresc: przycisk(revisionUrl, 'Wyślij poprawki', 'ciemny'),
+            }])
+          : akapit('To była ostatnia runda poprawek. Jeśli potrzebujesz dalszych zmian, napisz na kontakt@nobooking.eu.', { maly: true })}
+        ${podpisMichal()}
+      `,
+    }),
   )
 }
 
@@ -364,46 +242,19 @@ export async function sendRevisionCompleteEmail(order: Order, slug: string) {
 
   await sendEmail(
     order.email,
-    `Nobooking — Twoja strona jest ostatecznie gotowa! ✅`,
-    wrapEmail(`
-      ${renderHeader('Gotowe! Wszystkie poprawki wdrożone')}
-
-      <div style="padding: 2rem;">
-        <p style="font-size: 2rem; margin: 0 0 1rem; text-align: center;">✅</p>
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(order.first_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Wdrożyliśmy wszystkie Twoje poprawki. Twoja strona apartamentu jest gotowa!
-        </p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem;">
-            🏠 <strong>${escapeHtml(order.apartment_name)}</strong>
-          </div>
-          <div style="font-size: 0.8rem; color: #6b7280;">
-            <a href="${siteUrl}" style="color: #059669; font-weight: 600; word-break: break-all;">${siteUrl}</a>
-          </div>
-        </div>
-
-        <div style="text-align: center; margin: 1.5rem 0;">
-          <a href="${siteUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
-            Otwórz swoją stronę →
-          </a>
-        </div>
-
-        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7;">
-          Jeśli potrzebujesz jeszcze czegoś — dodatkowych poprawek, podłączenia własnej domeny,
-          wgrania zdjęć — odpowiedz na tego emaila. Chętnie pomogę!
-        </p>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0;">
-          Dziękujemy za zaufanie 🙏<br/>
-          <strong>Michał · Nobooking</strong>
-        </p>
-      </div>
-
-      ${renderFooter()}
-    `)
+    `Nobooking — wszystkie poprawki wdrożone`,
+    szkielet({
+      tytul: 'Wszystkie poprawki wdrożone',
+      ikonaTytulu: 'dom',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(order.first_name)}</strong>!`)}
+        ${akapit('Wdrożyliśmy wszystkie Twoje poprawki. Strona apartamentu jest gotowa.')}
+        ${grupa([{ ikona: 'dom', tytul: escapeHtml(order.apartment_name), opis: link(siteUrl) }])}
+        ${przycisk(siteUrl, 'Otwórz swoją stronę')}
+        ${akapit('Zdjęcia, ceny i kalendarz zmieniasz sam w panelu. Gdyby trzeba było czegoś więcej, odpowiedz na tego maila.', { maly: true })}
+        ${podpisMichal()}
+      `,
+    }),
   )
 }
 
@@ -434,101 +285,47 @@ export async function sendOwnerWelcomeEmail(params: {
   // Panel zostaje pod adresem głównym: logowanie właściciela sprawdzone tam na żywo.
   const adminUrl = `${SITE_URL}/sites/${slug}/admin`
 
+  const kroki = [
+    {
+      ikona: 'platnosci' as const,
+      tytul: 'Krok obowiązkowy: podłącz płatności Stripe',
+      opis: 'Bez tego goście nie zapłacą za rezerwację. Zajmuje kilka minut — pieniądze trafiają prosto na Twoje konto.',
+      tresc: przycisk(stripe_onboard_url, 'Podłącz płatności', 'ciemny'),
+    },
+    ...(params.revision_url ? [{
+      ikona: 'poprawki' as const,
+      tytul: 'Chcesz coś zmienić? Masz 4 rundy poprawek',
+      opis: 'Teksty, opis, okolica, kolory — napisz, co poprawić. Zdjęcia, ceny i kalendarz zmieniasz sam w panelu.',
+      tresc: przycisk(params.revision_url, 'Wyślij poprawki', 'szary'),
+    }] : []),
+    ...(plan === 'pro' ? [{
+      ikona: 'pro' as const,
+      tytul: 'Plan Pro jest aktywny',
+      opis: 'SMS o rezerwacjach, online check-in i kody rabatowe czekają w panelu.',
+    }] : []),
+  ]
+
   await sendEmail(
     email,
-    `🎉 Twoja strona jest gotowa — adres, panel i następne kroki`,
-    wrapEmail(`
-      ${renderHeader('Twoja strona jest gotowa!')}
-
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(first_name)}</strong>! 🎉</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Strona apartamentu <strong>${escapeHtml(apartment_name)}</strong> już działa. Zostały dwa kroki:
-          podłącz płatności, żeby goście mogli rezerwować, i — jeśli chcesz coś zmienić — wyślij nam poprawki.
-        </p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; font-weight: 700; color: #059669; margin-bottom: 0.25rem;">
-            🏠 Twoja strona
-          </div>
-          <a href="${previewUrl}" style="color: #059669; font-weight: 600; word-break: break-all; font-size: 0.9rem;">${previewUrl}</a>
-        </div>
-
-        <div style="background: #1f2937; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; color: white;">
-          <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 1rem;">
-            Dane logowania do panelu admina
-          </div>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem; width: 40%;">Adres panelu</td>
-              <td style="padding: 0.4rem 0; font-size: 0.8rem;">
-                <a href="${adminUrl}" style="color: #34d399; word-break: break-all;">${adminUrl}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem;">Email</td>
-              <td style="padding: 0.4rem 0; font-size: 0.8rem; color: white;">${escapeHtml(email)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.4rem 0; color: #9ca3af; font-size: 0.8rem;">Hasło tymczasowe</td>
-              <td style="padding: 0.4rem 0; font-size: 0.9rem; font-weight: 700; color: #fbbf24; font-family: monospace; letter-spacing: 0.05em;">
-                ${escapeHtml(temp_password)}
-              </td>
-            </tr>
-          </table>
-          <p style="margin: 1rem 0 0; font-size: 0.75rem; color: #6b7280;">
-            ⚠️ Zmień hasło po pierwszym logowaniu w Ustawieniach panelu.
-          </p>
-        </div>
-
-        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">
-            💳 Krok obowiązkowy: podłącz płatności Stripe
-          </div>
-          <p style="font-size: 0.8rem; color: #78350f; margin: 0 0 1rem; line-height: 1.6;">
-            Aby goście mogli płacić za rezerwacje, musisz podłączyć swoje konto Stripe.
-            Zajmuje to 5 minut.
-          </p>
-          <a href="${stripe_onboard_url}" style="display: inline-block; background: #d97706; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
-            Podłącz płatności →
-          </a>
-        </div>
-
-        ${params.revision_url ? `
-        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 0.875rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">
-            ✏️ Chcesz coś zmienić? Masz 4 rundy poprawek
-          </div>
-          <p style="font-size: 0.8rem; color: #4b5563; margin: 0 0 1rem; line-height: 1.6;">
-            Teksty, opis, okolica, kolory — napisz, co poprawić. Zdjęcia, ceny i kalendarz zmieniasz sam w panelu.
-          </p>
-          <a href="${params.revision_url}" style="display: inline-block; background: #111827; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.875rem;">
-            Wyślij poprawki →
-          </a>
-        </div>
-        ` : ''}
-
-        ${plan === 'pro' ? `
-        <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #5b21b6;">
-          ⭐ <strong>Plan Pro</strong> — SMS, online check-in i kody rabatowe są już aktywne w Twoim panelu.
-        </div>
-        ` : ''}
-
-        <div style="text-align: center; margin: 2rem 0;">
-          <a href="${adminUrl}" style="display: inline-block; background: #059669; color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
-            Przejdź do panelu admina →
-          </a>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0; font-size: 0.875rem; line-height: 1.7;">
-          W razie pytań odpowiedz na tego emaila — jestem do dyspozycji.<br/>
-          <strong>Michał · Nobooking</strong>
-        </p>
-      </div>
-
-      ${renderFooter()}
-    `)
+    `Twoja strona jest gotowa — adres, panel i następne kroki`,
+    szkielet({
+      tytul: 'Twoja strona jest gotowa',
+      ikonaTytulu: 'dom',
+      podglad: `${escapeHtml(apartment_name)} już działa. Zostało podłączenie płatności.`,
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(first_name)}</strong>!`)}
+        ${akapit(`Strona apartamentu <strong>${escapeHtml(apartment_name)}</strong> już działa. Zostały dwa kroki: podłącz płatności, żeby goście mogli rezerwować, i — jeśli chcesz coś zmienić — wyślij nam poprawki.`)}
+        ${grupa([{ ikona: 'dom', tytul: 'Twoja strona', opis: link(previewUrl) }])}
+        ${ciemnaKarta([
+          ['Panel', `<a href="${adminUrl}" style="color:#34D399;text-decoration:none;">${adminUrl}</a>`],
+          ['Email', escapeHtml(email)],
+          ['Hasło tymczasowe', `<span style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:15px;font-weight:700;color:#FFCC00;letter-spacing:0.04em;">${escapeHtml(temp_password)}</span>`],
+        ], 'Zmień hasło po pierwszym logowaniu w Ustawieniach panelu.')}
+        ${grupa(kroki, 'Następne kroki')}
+        ${przycisk(adminUrl, 'Przejdź do panelu')}
+        ${podpisMichal()}
+      `,
+    }),
   )
 }
 
@@ -536,33 +333,21 @@ export async function sendOwnerWelcomeEmail(params: {
 export async function sendOnboardingSubmittedNotification(order: Order) {
   await sendEmail(
     ADMIN_EMAIL(),
-    `✅ Formularz wypełniony — ${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)}`,
-    wrapEmail(`
-      ${renderHeader('Formularz onboardingowy wypełniony')}
-
-      <div style="padding: 2rem;">
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <div style="font-size: 1rem; font-weight: 700; color: #059669; margin-bottom: 0.25rem;">
-            ${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)}
-          </div>
-          <div style="font-size: 0.875rem; color: #6b7280;">
-            ${escapeHtml(order.apartment_name)} · ${order.apartment_location ? escapeHtml(order.apartment_location) : ''}
-          </div>
-        </div>
-
-        <p style="color: #374151;">
-          Klient wypełnił formularz onboardingowy. Wszystkie dane do realizacji są dostępne w panelu.
-        </p>
-
-        <div style="text-align: center; margin-top: 2rem;">
-          <a href="${SITE_URL}/admin/zamowienia/${order.id}" style="display: inline-block; background: #059669; color: white; padding: 0.875rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.95rem;">
-            Zobacz formularz w panelu →
-          </a>
-        </div>
-      </div>
-
-      ${renderFooter()}
-    `)
+    `Formularz wypełniony — ${order.first_name} ${order.last_name}`,
+    szkielet({
+      tytul: 'Formularz startowy wypełniony',
+      ikonaTytulu: 'formularz',
+      tresc: `
+        ${grupa([{
+          ikona: 'gosc',
+          tytul: `${escapeHtml(order.first_name)} ${escapeHtml(order.last_name)}`,
+          opis: `${escapeHtml(order.apartment_name)}${order.apartment_location ? ` · ${escapeHtml(order.apartment_location)}` : ''}`,
+        }])}
+        ${akapit('Klient wypełnił formularz. Dane do realizacji są w panelu.')}
+        ${przycisk(`${SITE_URL}/admin/zamowienia/${order.id}`, 'Zobacz formularz w panelu')}
+      `,
+    }),
+    null,
   )
 }
 
@@ -584,6 +369,9 @@ export interface BookingEmailData {
   discount_code: string | null
 }
 
+const liczbaNocy = (b: BookingEmailData) =>
+  Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / (1000 * 60 * 60 * 24))
+
 /**
  * E-mail: rezerwacja anulowana.
  *
@@ -598,24 +386,17 @@ export async function sendBookingCancelled(booking: BookingEmailData, powod?: st
   await sendEmail(
     booking.guest_email,
     `Rezerwacja anulowana — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
-    wrapEmail(`
-      ${renderHeader('Rezerwacja anulowana')}
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>,</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Twoja rezerwacja w terminie <strong>${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}</strong>
-          została anulowana.
-        </p>
-        ${powod ? `
-        <div style="border-left: 3px solid #E5E7EB; padding: 0 0 0 1rem; margin: 0 0 1.5rem; color: #4b5563; line-height: 1.7;">
-          ${escapeHtml(powod)}
-        </div>` : ''}
-        <p style="color: #6b7280; font-size: 0.9rem; margin: 0; line-height: 1.7;">
-          Jeśli płatność została już pobrana, zwrot trafi na tę samą kartę — zwykle w ciągu kilku dni roboczych.
-          W razie pytań odpisz na tę wiadomość.
-        </p>
-      </div>
-    `),
+    szkielet({
+      tytul: 'Rezerwacja anulowana',
+      ikonaTytulu: 'anulowanie',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(booking.guest_name)}</strong>,`)}
+        ${akapit(`Twoja rezerwacja w terminie <strong>${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}</strong> została anulowana.`)}
+        ${powod ? cytat(escapeHtml(powod)) : ''}
+        ${akapit('Jeśli płatność została już pobrana, zwrot trafi tą samą metodą płatności — zwykle w ciągu kilku dni roboczych. W razie pytań skontaktuj się z gospodarzem; dane kontaktowe są na stronie apartamentu.', { maly: true, wyciszony: true })}
+      `,
+    }),
+    null,
   )
 }
 
@@ -633,32 +414,31 @@ export async function sendPreArrivalReminder(params: {
   linkCheckin: string | null
 }) {
   const { booking, slug, nazwaApartamentu, linkCheckin } = params
+  const linkRezerwacji = `${escapeHtml(adresStronyKlienta(slug))}/guest/${escapeHtml(booking.id)}`
 
   await sendEmail(
     booking.guest_email,
-    `Do zobaczenia za tydzień — ${escapeHtml(nazwaApartamentu)}`,
-    wrapEmail(`
-      ${renderHeader('Przyjazd za tydzień')}
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Za tydzień zaczyna się Twój pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong>
-          — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}.
-        </p>
-
-        ${linkCheckin ? `
-        <a href="${linkCheckin}" style="display: block; background: #059669; color: white; text-decoration: none; border-radius: 10px; padding: 0.9rem 1.25rem; text-align: center; font-weight: 700; margin-bottom: 1.5rem;">
-          Wypełnij check-in online →
-        </a>
-        <p style="color: #6b7280; font-size: 0.85rem; margin: 0 0 1.5rem; line-height: 1.6;">
-          Zajmie minutę, a skróci formalności na miejscu.
-        </p>` : ''}
-
-        <a href="${escapeHtml(adresStronyKlienta(slug))}/guest/${escapeHtml(booking.id)}" style="color: #059669; font-size: 0.9rem;">
-          Podgląd rezerwacji →
-        </a>
-      </div>
-    `),
+    `Do zobaczenia za tydzień — ${nazwaApartamentu}`,
+    szkielet({
+      tytul: 'Przyjazd za tydzień',
+      ikonaTytulu: 'kalendarz',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!`)}
+        ${akapit(`Za tydzień zaczyna się Twój pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong>.`)}
+        ${dane([
+          ['Przyjazd', fmtDate(booking.check_in)],
+          ['Wyjazd', fmtDate(booking.check_out)],
+        ])}
+        ${linkCheckin ? grupa([{
+          ikona: 'checkin',
+          tytul: 'Check-in online',
+          opis: 'Zajmie minutę, a skróci formalności na miejscu.',
+          tresc: przycisk(linkCheckin, 'Wypełnij check-in'),
+        }]) : ''}
+        ${przycisk(linkRezerwacji, 'Szczegóły rezerwacji', linkCheckin ? 'szary' : 'glowny')}
+      `,
+    }),
+    null,
   )
 }
 
@@ -675,99 +455,55 @@ export async function sendReviewRequest(params: {
   nazwaApartamentu: string
 }) {
   const { booking, slug, nazwaApartamentu } = params
-  const link = `${adresStronyKlienta(slug)}/guest/${booking.id}/opinia`
+  const adres = `${adresStronyKlienta(slug)}/guest/${booking.id}/opinia`
 
   await sendEmail(
     booking.guest_email,
     `Jak było w ${nazwaApartamentu}?`,
-    wrapEmail(`
-      ${renderHeader('Podziel się opinią')}
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Mamy nadzieję, że pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong> się udał.
-          Jeśli znajdziesz chwilę, napisz kilka zdań — pomoże to kolejnym gościom
-          przy wyborze.
-        </p>
-
-        <a href="${link}" style="display: block; background: #059669; color: white; text-decoration: none; border-radius: 10px; padding: 0.9rem 1.25rem; text-align: center; font-weight: 700; margin-bottom: 1.5rem;">
-          Napisz opinię →
-        </a>
-
-        <p style="color: #9ca3af; font-size: 0.82rem; margin: 0; line-height: 1.6;">
-          Zajmie minutę. Opinia pojawi się na stronie po zatwierdzeniu przez gospodarza.
-        </p>
-      </div>
-    `),
+    szkielet({
+      tytul: 'Jak minął pobyt?',
+      ikonaTytulu: 'opinia',
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!`)}
+        ${akapit(`Mamy nadzieję, że pobyt w <strong>${escapeHtml(nazwaApartamentu)}</strong> się udał. Jeśli znajdziesz chwilę, napisz kilka zdań — pomoże to kolejnym gościom przy wyborze.`)}
+        ${przycisk(adres, 'Napisz opinię')}
+        ${akapit('Zajmie minutę. Opinia pojawi się na stronie po zatwierdzeniu przez gospodarza.', { maly: true, wyciszony: true })}
+      `,
+    }),
+    null,
   )
 }
 
 /** Email: Guest booking confirmation */
 export async function sendBookingConfirmation(booking: BookingEmailData) {
-  const nights = Math.round(
-    (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const wiersze: [string, string][] = [
+    ['Przyjazd', fmtDate(booking.check_in)],
+    ['Wyjazd', fmtDate(booking.check_out)],
+    ['Liczba nocy', String(liczbaNocy(booking))],
+    ['Zapłacono', `${booking.total_price} ${booking.currency}`],
+  ]
+  if (booking.discount_code) wiersze.push(['Kod rabatowy', escapeHtml(booking.discount_code)])
 
   await sendEmail(
     booking.guest_email,
-    `✅ Rezerwacja potwierdzona — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
-    wrapEmail(`
-      ${renderHeader('Rezerwacja potwierdzona!')}
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1rem;">Cześć <strong>${escapeHtml(booking.guest_name)}</strong>! 🎉</p>
-        <p style="color: #374151; margin: 0 0 1.5rem; line-height: 1.7;">
-          Twoja rezerwacja została potwierdzona. Płatność przyjęta — czekamy na Ciebie!
-        </p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280; width: 40%;">📅 Przyjazd</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_in)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Wyjazd</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_out)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🌙 Liczba nocy</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${nights}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">💳 Kwota</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700; color: #059669;">${booking.total_price} ${booking.currency}</td>
-            </tr>
-            ${booking.discount_code ? `
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🏷️ Kod rabatowy</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${escapeHtml(booking.discount_code)}</td>
-            </tr>
-            ` : ''}
-          </table>
-        </div>
-
-        <p style="color: #374151; font-size: 0.875rem; line-height: 1.7; margin-bottom: 1.5rem;">
-          Szczegóły rezerwacji, instrukcje dojazdu i kody dostępu znajdziesz w portalu gościa.
-          Link wyślemy osobno przed przyjazdem.
-        </p>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0; font-size: 0.875rem; line-height: 1.7;">
-          Do zobaczenia! 🏖️<br/>
-          <strong>Nobooking</strong>
-        </p>
-      </div>
-      ${renderFooter()}
-    `)
+    `Rezerwacja potwierdzona — ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
+    szkielet({
+      tytul: 'Rezerwacja potwierdzona',
+      ikonaTytulu: 'kalendarz',
+      podglad: `${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)} · płatność przyjęta`,
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(booking.guest_name)}</strong>!`)}
+        ${akapit('Płatność przyjęta, rezerwacja potwierdzona. Do zobaczenia!')}
+        ${dane(wiersze)}
+        ${akapit('Przed przyjazdem przyślemy link do szczegółów rezerwacji: adres z mapą i kontakt do gospodarza.', { maly: true, wyciszony: true })}
+      `,
+    }),
+    null,
   )
 }
 
 /** Email: Owner notification about new booking */
 export async function sendOwnerBookingNotification(booking: BookingEmailData) {
-  const nights = Math.round(
-    (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) / (1000 * 60 * 60 * 24)
-  )
-
   // Get owner email from sites table via REST (avoids circular dependency with supabase client)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -780,48 +516,23 @@ export async function sendOwnerBookingNotification(booking: BookingEmailData) {
 
   await sendEmail(
     ownerEmail,
-    `🎉 Nowa rezerwacja! ${escapeHtml(booking.guest_name)} · ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
-    wrapEmail(`
-      ${renderHeader('Nowa rezerwacja!')}
-      <div style="padding: 2rem;">
-        <p style="font-size: 1rem; margin: 0 0 1.5rem;">Masz nową potwierdzoną rezerwację! 🎉</p>
-
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280; width: 40%;">👤 Gość</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${escapeHtml(booking.guest_name)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">✉️ Email</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem;">${escapeHtml(booking.guest_email)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Przyjazd</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_in)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">📅 Wyjazd</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${fmtDate(booking.check_out)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">🌙 Noce</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700;">${nights}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; color: #6b7280;">💳 Kwota</td>
-              <td style="padding: 0.35rem 0; font-size: 0.85rem; font-weight: 700; color: #059669;">${booking.total_price} ${booking.currency}</td>
-            </tr>
-          </table>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 2rem 0;" />
-        <p style="color: #374151; margin: 0; font-size: 0.875rem;">
-          <strong>Nobooking</strong>
-        </p>
-      </div>
-      ${renderFooter()}
-    `)
+    `Nowa rezerwacja — ${booking.guest_name} · ${fmtDate(booking.check_in)} → ${fmtDate(booking.check_out)}`,
+    szkielet({
+      tytul: 'Nowa rezerwacja',
+      ikonaTytulu: 'kalendarz',
+      podglad: `${escapeHtml(booking.guest_name)} · ${booking.total_price} ${booking.currency}`,
+      tresc: `
+        ${akapit('Masz nową, opłaconą rezerwację.')}
+        ${dane([
+          ['Gość', escapeHtml(booking.guest_name)],
+          ['Email', link(`mailto:${escapeHtml(booking.guest_email)}`, escapeHtml(booking.guest_email))],
+          ['Przyjazd', fmtDate(booking.check_in)],
+          ['Wyjazd', fmtDate(booking.check_out)],
+          ['Noce', String(liczbaNocy(booking))],
+          ['Kwota', `<span style="color:#059669;">${booking.total_price} ${booking.currency}</span>`],
+        ])}
+      `,
+    }),
   )
 }
 
