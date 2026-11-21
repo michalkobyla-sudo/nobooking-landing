@@ -1,6 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import type { Icon } from '@phosphor-icons/react'
+import Kafelek, { type KolorKafelka } from '@/components/ui/Kafelek'
+import { CheckCircle, CrownSimple, HouseLine, Images, ListChecks, Phone, Plus, Tag, TextAlignLeft, WarningCircle, X } from '@/components/ui/ikony'
 
 interface Props {
   token: string
@@ -17,45 +20,39 @@ interface Season {
   minNights: string
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '0.65rem 0.875rem',
-  border: '1.5px solid #D1D5DB',
-  borderRadius: '8px',
-  fontSize: '0.95rem', fontFamily: 'inherit',
-  outline: 'none', boxSizing: 'border-box',
-  background: 'white', color: '#111827',
-}
-
-const textareaStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical', minHeight: '90px' }
-
-const selectStyle: React.CSSProperties = { ...inputStyle }
+// Pola w stylu iOS (`.n-input` w `src/app/ios.css` daje też obwódkę przy fokusie).
+const inputStyle: React.CSSProperties = {}
+const textareaStyle: React.CSSProperties = { resize: 'vertical', minHeight: '96px' }
+const selectStyle: React.CSSProperties = {}
 
 function Field({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: '1.25rem' }}>
-      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.3rem' }}>
-        {label}{required && <span style={{ color: '#DC2626', marginLeft: '2px' }}>*</span>}
-      </label>
-      {hint && <p style={{ fontSize: '0.78rem', color: '#9CA3AF', margin: '0 0 0.4rem' }}>{hint}</p>}
+    <div className="n-field">
+      <span className="n-label">{label}{required && <span className="n-req" aria-hidden>*</span>}</span>
+      {hint && <span className="n-hint">{hint}</span>}
       {children}
     </div>
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+/** Sekcja formularza: podpis z płytką ikony i biała karta z polami, jak grupa w Ustawieniach. */
+function Sekcja({ tytul, ikona, kolor, children }: { tytul: string; ikona: Icon; kolor: KolorKafelka; children: React.ReactNode }) {
   return (
-    <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', margin: '2rem 0 1.25rem', paddingBottom: '0.625rem', borderBottom: '1px solid #E5E7EB' }}>
-      {children}
-    </h2>
+    <section className="n-form-block">
+      <h2 className="n-group-label" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>
+        <Kafelek ikona={ikona} kolor={kolor} rozmiar="xs" />{tytul}
+      </h2>
+      <div className="n-form-card">{children}</div>
+    </section>
   )
 }
 
 function Grid2({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1rem' }}>{children}</div>
+  return <div className="n-form-grid">{children}</div>
 }
 
 function Grid3({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 1rem' }}>{children}</div>
+  return <div className="n-form-grid n-form-grid--3">{children}</div>
 }
 
 const AMENITIES_OPTIONS = [
@@ -184,82 +181,83 @@ export default function OnboardingForm({ token, firstName, apartmentName, plan }
 
   if (done) {
     return (
-      <div style={{ minHeight: '100vh', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div style={{ textAlign: 'center', maxWidth: '480px' }}>
-          <div style={{ width: '72px', height: '72px', background: '#059669', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '2rem', color: 'white' }}>✓</div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', marginBottom: '0.75rem' }}>Dziękujemy, {firstName}!</h1>
-          <p style={{ color: '#374151', lineHeight: 1.7 }}>Formularz dla <strong>{apartmentName}</strong> został wysłany. Odezwiemy się wkrótce z informacją o postępie prac.</p>
+      <div className="n-page" style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="n-page__inner" style={{ maxWidth: 480, textAlign: 'center' }}>
+          <CheckCircle weight="fill" size={72} color="var(--emerald)" aria-hidden style={{ margin: '0 auto 18px', display: 'block' }} />
+          <h1>Dziękujemy, {firstName}</h1>
+          <p className="n-page__lead">Formularz dla <strong style={{ color: 'var(--ink)' }}>{apartmentName}</strong> został wysłany. Gdy strona będzie gotowa, dostaniesz maila z adresem i dostępem do panelu.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F9FAFB', padding: '3rem 1rem' }}>
-      <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'inline-block', background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#059669', fontSize: '0.78rem', fontWeight: 700, padding: '0.3rem 0.875rem', borderRadius: '20px', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <div className="n-page">
+      <div className="n-page__inner" style={{ maxWidth: 680 }}>
+        <div style={{ marginBottom: 28 }}>
+          <span className="n-chip" style={{ marginBottom: 14 }}>
+            <Kafelek ikona={plan === 'pro' ? CrownSimple : HouseLine} kolor={plan === 'pro' ? 'ink' : 'emerald'} rozmiar="xs" />
             Plan {plan === 'pro' ? 'Pro' : 'Basic'}
-          </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.5rem', color: '#111827' }}>
-            Formularz budowy strony
-          </h1>
-          <p style={{ fontSize: '0.9rem', color: '#6B7280', lineHeight: 1.6 }}>
-            Cześć {firstName}! Wypełnij formularz dla <strong>{apartmentName}</strong>. Im więcej informacji, tym lepsza strona.
+          </span>
+          <h1>Formularz budowy strony</h1>
+          <p className="n-page__lead">
+            Cześć {firstName}! Wypełnij formularz dla <strong style={{ color: 'var(--ink)' }}>{apartmentName}</strong>. Im więcej informacji, tym lepsza strona.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
 
           {/* ── 1. OPIS I SPECYFIKACJA ─────────────────────────────────────── */}
-          <SectionTitle>1. Opis i specyfikacja</SectionTitle>
+          <Sekcja tytul="Opis i specyfikacja" ikona={TextAlignLeft} kolor="graphite">
 
           <Field label="Opis apartamentu" required hint="Napisz zachęcający opis — co wyróżnia Twój apartament, widok, styl, atmosfera.">
-            <textarea style={{ ...textareaStyle, minHeight: '120px' }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Np. Nowoczesny apartament z panoramicznym widokiem na morze, 50 m od plaży. Urządzony w śródziemnomorskim stylu, z prywatnym tarasem i basenem..." />
+            <textarea className="n-input" style={{ ...textareaStyle, minHeight: '120px' }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Np. Nowoczesny apartament z panoramicznym widokiem na morze, 50 m od plaży. Urządzony w śródziemnomorskim stylu, z prywatnym tarasem i basenem..." />
           </Field>
 
           <Field label="Krótkie hasło marketingowe (tagline)" hint="Pojawi się pod nazwą apartamentu w hero strony. Np. «Słońce, morze i brak prowizji»">
-            <input style={inputStyle} type="text" value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Np. Twój azyl nad Morzem Śródziemnym" maxLength={80} />
+            <input className="n-input" style={inputStyle} type="text" value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Np. Twój azyl nad Morzem Śródziemnym" maxLength={80} />
           </Field>
 
           <Field label="Pełny adres apartamentu" required hint="Będzie użyty do mapy Google Maps na stronie.">
-            <input style={inputStyle} type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Np. Calle del Mar 15, 03181 Torrevieja, Alicante, Hiszpania" />
+            <input className="n-input" style={inputStyle} type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Np. Calle del Mar 15, 03181 Torrevieja, Alicante, Hiszpania" />
           </Field>
 
           <Grid3>
             <Field label="Sypialnie">
-              <input style={inputStyle} type="number" min="0" max="20" value={bedrooms} onChange={e => setBedrooms(e.target.value)} placeholder="np. 2" />
+              <input className="n-input" style={inputStyle} type="number" min="0" max="20" value={bedrooms} onChange={e => setBedrooms(e.target.value)} placeholder="np. 2" />
             </Field>
             <Field label="Łazienki">
-              <input style={inputStyle} type="number" min="0" max="10" value={bathrooms} onChange={e => setBathrooms(e.target.value)} placeholder="np. 1" />
+              <input className="n-input" style={inputStyle} type="number" min="0" max="10" value={bathrooms} onChange={e => setBathrooms(e.target.value)} placeholder="np. 1" />
             </Field>
             <Field label="Powierzchnia (m²)">
-              <input style={inputStyle} type="number" min="1" value={sqm} onChange={e => setSqm(e.target.value)} placeholder="np. 65" />
+              <input className="n-input" style={inputStyle} type="number" min="1" value={sqm} onChange={e => setSqm(e.target.value)} placeholder="np. 65" />
             </Field>
           </Grid3>
 
+          </Sekcja>
+
           {/* ── 2. ZDJĘCIA I MEDIA ────────────────────────────────────────── */}
-          <SectionTitle>2. Zdjęcia i media</SectionTitle>
+          <Sekcja tytul="Zdjęcia i media" ikona={Images} kolor="teal">
 
           <Field label="Link do zdjęć" required={false} hint="Google Drive, Dropbox, WeTransfer lub iCloud. Minimum 10 zdjęć w dobrej jakości (poziome, min. 1920px).">
-            <input style={inputStyle} type="url" value={photosLink} onChange={e => setPhotosLink(e.target.value)} placeholder="https://drive.google.com/..." />
+            <input className="n-input" style={inputStyle} type="url" value={photosLink} onChange={e => setPhotosLink(e.target.value)} placeholder="https://drive.google.com/..." />
           </Field>
 
           <Field label="Link do wideo (opcjonalne)" hint="YouTube lub Vimeo. Film z apartamentu lub okolicy — pojawi się w galerii.">
-            <input style={inputStyle} type="url" value={videoLink} onChange={e => setVideoLink(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
+            <input className="n-input" style={inputStyle} type="url" value={videoLink} onChange={e => setVideoLink(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
           </Field>
 
+          </Sekcja>
+
           {/* ── 3. CENNIK ─────────────────────────────────────────────────── */}
-          <SectionTitle>3. Cennik</SectionTitle>
+          <Sekcja tytul="Cennik" ikona={Tag} kolor="orange">
 
           <Grid2>
             <Field label="Podstawowa cena za noc" required>
-              <input style={inputStyle} type="number" min="1" value={pricePerNight} onChange={e => setPricePerNight(e.target.value)} placeholder="np. 350" />
+              <input className="n-input" style={inputStyle} type="number" min="1" value={pricePerNight} onChange={e => setPricePerNight(e.target.value)} placeholder="np. 350" />
             </Field>
             <Field label="Waluta" required>
-              <select style={selectStyle} value={obCurrency} onChange={e => setObCurrency(e.target.value as 'pln' | 'eur')}>
+              <select className="n-input" style={selectStyle} value={obCurrency} onChange={e => setObCurrency(e.target.value as 'pln' | 'eur')}>
                 <option value="eur">EUR (€)</option>
                 <option value="pln">PLN (zł)</option>
               </select>
@@ -267,137 +265,136 @@ export default function OnboardingForm({ token, firstName, apartmentName, plan }
           </Grid2>
 
           <Field label="Maks. liczba gości" required>
-            <input style={{ ...inputStyle, maxWidth: '180px' }} type="number" min="1" max="50" value={maxGuests} onChange={e => setMaxGuests(e.target.value)} placeholder="np. 4" />
+            <input className="n-input" style={{ maxWidth: '180px' }} type="number" min="1" max="50" value={maxGuests} onChange={e => setMaxGuests(e.target.value)} placeholder="np. 4" />
           </Field>
 
           <Field label="Ceny sezonowe (opcjonalne)" hint="Ustaw różne ceny na sezon letni, zimowy, święta itp.">
             {seasons.map((season, i) => (
-              <div key={i} style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '1rem', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: '0.5rem', alignItems: 'end' }}>
+              <div key={i} style={{ background: 'var(--group)', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                <div className="n-season-grid">
                   <Field label="Nazwa sezonu">
-                    <input style={inputStyle} type="text" value={season.label} onChange={e => updateSeason(i, 'label', e.target.value)} placeholder="np. Lato" />
+                    <input className="n-input" style={inputStyle} type="text" value={season.label} onChange={e => updateSeason(i, 'label', e.target.value)} placeholder="np. Lato" />
                   </Field>
                   <Field label="Od">
-                    <input style={inputStyle} type="date" value={season.from} onChange={e => updateSeason(i, 'from', e.target.value)} />
+                    <input className="n-input" style={inputStyle} type="date" value={season.from} onChange={e => updateSeason(i, 'from', e.target.value)} />
                   </Field>
                   <Field label="Do">
-                    <input style={inputStyle} type="date" value={season.to} onChange={e => updateSeason(i, 'to', e.target.value)} />
+                    <input className="n-input" style={inputStyle} type="date" value={season.to} onChange={e => updateSeason(i, 'to', e.target.value)} />
                   </Field>
                   <Field label="Cena/noc">
-                    <input style={inputStyle} type="number" value={season.price} onChange={e => updateSeason(i, 'price', e.target.value)} placeholder="np. 450" />
+                    <input className="n-input" style={inputStyle} type="number" value={season.price} onChange={e => updateSeason(i, 'price', e.target.value)} placeholder="np. 450" />
                   </Field>
                   <Field label="Min. nocy">
-                    <input style={inputStyle} type="number" min="1" value={season.minNights} onChange={e => updateSeason(i, 'minNights', e.target.value)} placeholder="np. 7" />
+                    <input className="n-input" style={inputStyle} type="number" min="1" value={season.minNights} onChange={e => updateSeason(i, 'minNights', e.target.value)} placeholder="np. 7" />
                   </Field>
-                  <button type="button" onClick={() => removeSeason(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: '1.25rem', padding: '0.65rem 0.25rem', marginBottom: '1.25rem', alignSelf: 'end' }}>×</button>
+                  <button type="button" onClick={() => removeSeason(i)} aria-label="Usuń sezon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ios-graphite)', fontSize: 20, padding: '10px 4px', alignSelf: 'end' }}><X weight="bold" /></button>
                 </div>
               </div>
             ))}
-            <button type="button" onClick={addSeason} style={{ background: 'white', border: '1.5px dashed #D1D5DB', borderRadius: '8px', padding: '0.65rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
-              + Dodaj sezon
+            <button type="button" onClick={addSeason} className="n-btn n-btn--ghost n-btn--sm n-btn--block">
+              <Plus weight="bold" aria-hidden />Dodaj sezon
             </button>
           </Field>
 
+          </Sekcja>
+
           {/* ── 4. UDOGODNIENIA I ZASADY ──────────────────────────────────── */}
-          <SectionTitle>4. Udogodnienia i zasady</SectionTitle>
+          <Sekcja tytul="Udogodnienia i zasady" ikona={ListChecks} kolor="emerald">
 
           <Grid2>
             <Field label="Godzina check-in" required>
-              <input style={inputStyle} type="text" value={checkinTime} onChange={e => setCheckinTime(e.target.value)} placeholder="np. 15:00" />
+              <input className="n-input" style={inputStyle} type="text" value={checkinTime} onChange={e => setCheckinTime(e.target.value)} placeholder="np. 15:00" />
             </Field>
             <Field label="Godzina check-out" required>
-              <input style={inputStyle} type="text" value={checkoutTime} onChange={e => setCheckoutTime(e.target.value)} placeholder="np. 11:00" />
+              <input className="n-input" style={inputStyle} type="text" value={checkoutTime} onChange={e => setCheckoutTime(e.target.value)} placeholder="np. 11:00" />
             </Field>
           </Grid2>
 
           <Field label="Udogodnienia" hint="Zaznacz wszystkie dostępne.">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
               {AMENITIES_OPTIONS.map(a => (
-                <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: amenities.includes(a) ? '#F0FDF4' : 'white', border: `1.5px solid ${amenities.includes(a) ? '#BBF7D0' : '#E5E7EB'}`, borderRadius: '8px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
-                  <input type="checkbox" checked={amenities.includes(a)} onChange={() => toggleAmenity(a)} style={{ accentColor: '#059669', width: 15, height: 15, flexShrink: 0 }} />
+                <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: amenities.includes(a) ? 'rgba(5,150,105,0.1)' : 'var(--group)', border: 0, borderRadius: 10, padding: '9px 12px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
+                  <input type="checkbox" checked={amenities.includes(a)} onChange={() => toggleAmenity(a)} style={{ accentColor: 'var(--emerald)', width: 17, height: 17, flexShrink: 0 }} />
                   {a}
                 </label>
               ))}
             </div>
-            <input style={{ ...inputStyle, marginTop: '0.75rem' }} type="text" value={amenitiesOther} onChange={e => setAmenitiesOther(e.target.value)} placeholder="Inne udogodnienia, oddzielone przecinkiem..." />
+            <input className="n-input" style={{ marginTop: '0.75rem' }} type="text" value={amenitiesOther} onChange={e => setAmenitiesOther(e.target.value)} placeholder="Inne udogodnienia, oddzielone przecinkiem..." />
           </Field>
 
           <Field label="Zasady pobytu" hint="Np. zakaz palenia, zakaz imprez, cisza nocna od 22:00, zwierzęta po uzgodnieniu...">
-            <textarea style={textareaStyle} value={rules} onChange={e => setRules(e.target.value)} placeholder="Opisz zasady pobytu..." />
+            <textarea className="n-input" style={textareaStyle} value={rules} onChange={e => setRules(e.target.value)} placeholder="Opisz zasady pobytu..." />
           </Field>
 
+          </Sekcja>
+
           {/* ── 5. KONTAKT I DOMENA ───────────────────────────────────────── */}
-          <SectionTitle>5. Kontakt i domena</SectionTitle>
+          <Sekcja tytul="Kontakt i domena" ikona={Phone} kolor="blue">
 
           <Grid2>
             <Field label="Email kontaktowy apartamentu" required hint="Pojawi się w stopce strony. Może być inny niż email zamówienia.">
-              <input style={inputStyle} type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="np. rezerwacje@mojastrona.pl" />
+              <input className="n-input" style={inputStyle} type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="np. rezerwacje@mojastrona.pl" />
             </Field>
             <Field label="Telefon kontaktowy" required hint="Do dyspozycji gości na stronie.">
-              <input style={inputStyle} type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="np. +48 600 123 456" />
+              <input className="n-input" style={inputStyle} type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="np. +48 600 123 456" />
             </Field>
           </Grid2>
 
           <Field label="Własna domena" hint="Jeśli masz już domenę (np. mojaapartament.pl) — wpisz ją. Jeśli nie — wpisz «brak» i dobierzemy subdomenę.">
-            <input style={inputStyle} type="text" value={domain} onChange={e => setDomain(e.target.value)} placeholder="np. apartamentplaya.eu lub «brak»" />
+            <input className="n-input" style={inputStyle} type="text" value={domain} onChange={e => setDomain(e.target.value)} placeholder="np. apartamentplaya.eu lub «brak»" />
           </Field>
 
           <Grid2>
             <Field label="Instagram (opcjonalne)" hint="Sama nazwa profilu, bez @.">
-              <input style={inputStyle} type="text" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="np. apartamentplaya" />
+              <input className="n-input" style={inputStyle} type="text" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="np. apartamentplaya" />
             </Field>
             <Field label="Facebook (opcjonalne)" hint="Link do strony lub profilu.">
-              <input style={inputStyle} type="text" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="np. facebook.com/apartamentplaya" />
+              <input className="n-input" style={inputStyle} type="text" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="np. facebook.com/apartamentplaya" />
             </Field>
           </Grid2>
 
           <Field label="Preferowany kolor strony" hint="Główny kolor marki. Możesz wybrać z palety lub wpisać kod hex.">
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               {['#1A5276', '#1B4F72', '#154360', '#6E2F7B', '#922B21', '#1E8449', '#B7770D', '#1A1A1A'].map(c => (
-                <button key={c} type="button" onClick={() => setColor(c)} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: color === c ? '3px solid #111827' : '2px solid transparent', cursor: 'pointer', outline: color === c ? '2px solid white' : 'none', outlineOffset: -4 }} title={c} />
+                <button key={c} type="button" onClick={() => setColor(c)} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: color === c ? '3px solid var(--ink)' : '2px solid transparent', cursor: 'pointer', outline: color === c ? '2px solid white' : 'none', outlineOffset: -4 }} title={c} />
               ))}
               <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #D1D5DB', cursor: 'pointer', padding: 0 }} title="Własny kolor" />
               <span style={{ fontSize: '0.8rem', color: '#9CA3AF', fontFamily: 'monospace' }}>{color}</span>
             </div>
           </Field>
 
+          </Sekcja>
+
           {/* ── 6. PRO — DODATKOWE USTAWIENIA ────────────────────────────── */}
           {plan === 'pro' && (
             <>
-              <SectionTitle>6. Plan Pro — dodatkowe ustawienia</SectionTitle>
+              <Sekcja tytul="Plan Pro" ikona={CrownSimple} kolor="ink">
 
-              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#374151' }}>
-                ✨ Poniższe opcje są dostępne tylko w planie Pro.
-              </div>
+              <p className="n-hint">Te ustawienia są dostępne tylko w planie Pro.</p>
 
               <Field label="Numer telefonu do powiadomień SMS" hint="Na ten numer będziesz otrzymywać SMS gdy klient złoży rezerwację lub wyśle wiadomość.">
-                <input style={inputStyle} type="tel" value={smsPhone} onChange={e => setSmsPhone(e.target.value)} placeholder="np. +48 600 123 456" />
+                <input className="n-input" style={inputStyle} type="tel" value={smsPhone} onChange={e => setSmsPhone(e.target.value)} placeholder="np. +48 600 123 456" />
               </Field>
 
               <Field label="Dodatkowe pola w formularzu online check-in (opcjonalne)" hint="Podaj pytania które chcesz zadać gościom przed przyjazdem, np.: «Szacowana godzina przyjazdu», «Numer rejestracyjny auta», «Czy potrzebujesz łóżeczka dziecięcego?». Każde pytanie w osobnej linii.">
-                <textarea style={{ ...textareaStyle, minHeight: '100px' }} value={checkinFields} onChange={e => setCheckinFields(e.target.value)} placeholder="Szacowana godzina przyjazdu&#10;Numer rejestracyjny&#10;Czy potrzebujesz łóżeczka dziecięcego?" />
+                <textarea className="n-input" style={{ ...textareaStyle, minHeight: '100px' }} value={checkinFields} onChange={e => setCheckinFields(e.target.value)} placeholder="Szacowana godzina przyjazdu&#10;Numer rejestracyjny&#10;Czy potrzebujesz łóżeczka dziecięcego?" />
               </Field>
+              </Sekcja>
             </>
           )}
 
           {/* ── ERROR & SUBMIT ────────────────────────────────────────────── */}
           {error && (
-            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.875rem 1rem', marginBottom: '1.25rem', fontSize: '0.875rem', color: '#DC2626' }}>
-              {error}
+            <div className="n-alert n-alert--error" role="alert" style={{ marginTop: 24 }}>
+              <WarningCircle weight="fill" aria-hidden />{error}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ width: '100%', background: '#059669', color: 'white', border: 'none', borderRadius: '8px', padding: '1rem', fontSize: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}
-          >
-            {loading ? 'Wysyłam...' : 'Wyślij formularz →'}
+          <button type="submit" disabled={loading} className="n-btn n-btn--primary n-btn--block" style={{ marginTop: 24 }}>
+            {loading ? <><span className="spinner" />Wysyłam…</> : 'Wyślij formularz'}
           </button>
 
-          <p style={{ fontSize: '0.78rem', color: '#9CA3AF', textAlign: 'center', marginTop: '1rem' }}>
-            Po wysłaniu formularza Michał z Nobooking skontaktuje się z Tobą w ciągu 24 godzin.
-          </p>
+          <p className="n-fineprint">Stronę budujemy zwykle w ciągu 24 godzin od wysłania formularza.</p>
         </form>
       </div>
     </div>

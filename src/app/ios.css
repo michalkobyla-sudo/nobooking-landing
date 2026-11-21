@@ -280,3 +280,43 @@ h1, h2, h3, .n-display { font-family: var(--font-display); }
   .l-plan { padding: 24px; }
   .l-plan__price { font-size: 46px; }
 }
+
+/* ══════════════════ STRONY FORMULARZY (zamówienie, start, poprawki, sukces) ══════════════════ */
+.n-page { min-height: 100vh; background: var(--group); padding: 40px 16px 72px; }
+.n-page__inner { max-width: 640px; margin: 0 auto; }
+.n-back { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; color: var(--emerald-dark); text-decoration: none; margin-bottom: 24px; }
+.n-back:hover { color: #065F46; }
+.n-page h1 { font-size: clamp(30px, 5vw, 40px); line-height: 1.08; letter-spacing: -.035em; font-weight: 700; color: var(--ink); }
+.n-page__lead { font-size: 17px; color: var(--muted); margin-top: 10px; }
+.n-form-card { background: #fff; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.n-form-card + .n-group-label, .n-form-block + .n-form-block { margin-top: 28px; }
+.n-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.n-req { color: var(--ios-red); margin-left: 2px; }
+textarea.n-input { resize: vertical; min-height: 88px; }
+.n-check { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; font-size: 15px; line-height: 1.5; color: var(--ink); }
+.n-check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--emerald); cursor: pointer; }
+.n-check a { color: var(--emerald-dark); }
+.n-check--muted { font-size: 14px; color: var(--muted); }
+.n-alert { display: flex; gap: 10px; align-items: flex-start; border-radius: 14px; padding: 12px 14px; font-size: 15px; }
+.n-alert svg { flex: none; font-size: 20px; margin-top: 1px; }
+.n-alert--error { background: #FFF1F0; color: #C9271E; }
+.n-alert--info { background: #EAF4FF; color: #0059C7; }
+.n-alert--ok { background: #E8F8F1; color: var(--emerald-dark); }
+.n-summary { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 20px; padding: 18px 20px; }
+.n-summary__txt { flex: 1; min-width: 0; }
+.n-summary__txt span { display: block; font-size: 13px; color: var(--muted); }
+.n-summary__txt b { display: block; font-size: 18px; color: var(--ink); letter-spacing: -.01em; }
+.n-summary__price { font-size: 28px; font-weight: 700; letter-spacing: -.04em; color: var(--ink); font-family: var(--font-display); white-space: nowrap; }
+.n-fineprint { text-align: center; font-size: 13px; color: var(--muted); margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+@media (max-width: 520px) {
+  .n-form-grid { grid-template-columns: 1fr; }
+  .n-form-card { padding: 18px; }
+  .n-page { padding-top: 24px; }
+}
+.n-form-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 520px) { .n-form-grid--3 { grid-template-columns: 1fr 1fr; } }
+.n-season-grid { display: grid; grid-template-columns: 2fr 1.3fr 1.3fr 1fr 1fr auto; gap: 8px; align-items: end; }
+.n-season-grid .n-input { padding: 10px; font-size: 15px; }
+@media (max-width: 640px) { .n-season-grid { grid-template-columns: 1fr 1fr; } }
+.n-input[type="number"] { text-align: left; font-weight: 400; padding: 12px 14px; border-radius: 12px; }
+.n-season-grid .n-input[type="number"] { padding: 10px; }
