@@ -85,7 +85,7 @@ naglowek "── Tabele uzywane w kodzie"
 # wprost, zeby ich brak nie zamienil sie w codzienny czerwony szum.
 OCZEKIWANY_BRAK="bot_settings bot_knowledge bot_leads bot_conversations"
 
-for T in $(grep -rho "from('[a-z_]*')" src/ | sed "s/from('//;s/')//" | sort -u); do
+for T in $(grep -rho --exclude='*.test.ts' "from('[a-z_]*')" src/ | sed "s/from('//;s/')//" | sort -u); do
   KOD=$(curl -s -o /dev/null -w '%{http_code}' \
     "$BAZA/rest/v1/$T?select=*&limit=1" \
     -H "apikey: $KLUCZ" -H "Authorization: Bearer $KLUCZ")
