@@ -18,7 +18,8 @@ export default function HowItWorks() {
       opis: t.howStep1Desc,
       chipy: [
         { ikona: CreditCard, kolor: 'var(--ios-blue)', tekst: pl ? 'Karta' : 'Card' },
-        { ikona: DeviceMobile, kolor: 'var(--ink)', tekst: 'BLIK' },
+        // BLIK działa w Stripe tylko w złotówkach, a wersja angielska płaci w euro.
+        ...(pl ? [{ ikona: DeviceMobile, kolor: 'var(--ink)', tekst: 'BLIK' }] : []),
         { ikona: AppleLogo, kolor: 'var(--ink)', tekst: 'Apple Pay' },
       ],
     },

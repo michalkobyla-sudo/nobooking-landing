@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase'
 import ApartmentPage from '@/components/apartment/ApartmentPage'
+import Kafelek from '@/components/ui/Kafelek'
+import { Timer } from '@/components/ui/ikony'
 import type { ApartmentConfig } from '@/lib/apartmentTypes'
 import { metadaneApartamentu, poprawnyJezyk } from '@/lib/metadataStrony'
 
@@ -76,21 +78,13 @@ export default async function SitePage({ params, searchParams }: Props) {
 
   if (!site?.config) {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', padding: '2rem',
-        fontFamily: '-apple-system, sans-serif',
-      }}>
-        <div style={{ textAlign: 'center', maxWidth: '480px' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚧</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', marginBottom: '0.75rem' }}>
-            Strona w przygotowaniu
-          </h1>
-          <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>
-            Ta strona apartamentu jest właśnie budowana. Wróć wkrótce!
-          </p>
+      <main className="n-page" style={{ display: 'grid', placeItems: 'center' }}>
+        <div className="n-card" style={{ textAlign: 'center', maxWidth: 440 }}>
+          <Kafelek ikona={Timer} kolor="emerald" rozmiar="lg" />
+          <h1 style={{ fontSize: 26, margin: '16px 0 8px' }}>Strona w przygotowaniu</h1>
+          <p className="n-page__lead" style={{ marginTop: 0 }}>Ta strona apartamentu jest właśnie budowana. Wróć wkrótce.</p>
         </div>
-      </div>
+      </main>
     )
   }
 
@@ -136,6 +130,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       showDemoBanner={false}
       stripeEnabled={site.stripe_onboarded === true}
       kodyRabatowe={site.plan === 'pro'}
+      checkinOnline={site.plan === 'pro'}
       jezykStartowy={lang}
     />
   )

@@ -128,4 +128,4 @@ Lokalny `.env.local` ma **testowy** klucz Stripe (`sk_test_`) i produkcyjną baz
 | VAT, OSS, faktury | `PODATKI-I-FAKTUROWANIE.md` |
 | nazewnictwo kampanii | `ATRYBUCJA-NAZEWNICTWO.md` |
 | migracje SQL | `docs/supabase/` |
-| wygląd (styl iOS) | `src/app/ios.css` (klocki `n-*`, landing `l-*`), płytki ikon `components/ui/Kafelek.tsx` + `ui/ikony.ts` (Phosphor), maile `lib/mailUi.ts` + PNG z `scripts/ikony-maili.mjs` |
+| wygląd (styl iOS) | `src/app/ios.css` (klocki `n-*`, landing `l-*`, strona apartamentu `a-*` w kolorze właściciela — kontrast `lib/koloryMarki.ts`), płytki ikon `components/ui/Kafelek.tsx` + `ui/ikony.ts` (Phosphor), maile `lib/mailUi.ts` + PNG z `scripts/ikony-maili.mjs` |
