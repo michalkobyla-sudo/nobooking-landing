@@ -9,6 +9,7 @@ import { sendOwnerWelcomeEmail } from '@/lib/email'
 import { sprawdzConfig, sprawdzStrone, blokujeWysylke, podsumowanie, MARKER_PRZEGLADU, MAX_PROB_PROVISIONINGU } from '@/lib/provisionCheck'
 import type { Order } from '@/lib/types'
 import { adresSerwisu } from '@/lib/adresSerwisu'
+import { ponowDemo } from '@/lib/demoGeneracja'
 
 // Allow up to 300s on Vercel Pro, 60s on Hobby
 export const maxDuration = 300
@@ -33,6 +34,14 @@ export async function GET(request: NextRequest) {
   await odnotujPrzebieg(supabase, request.nextUrl.pathname)
   const staleCutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString()
 
+  // Darmowe demo: ponowienie jednego nieudanego albo porzuconego generowania
+  // (`lib/demoGeneracja.ts`). Przed zamówieniami, bo te kończą się wcześniej,
+  // gdy nie ma nic do zrobienia. Jedno na przebieg — cron ma budżet czasu.
+  const demaGotowe = await ponowDemo(supabase, 1).catch(err => {
+    console.error('[provision-cron] ponowienie demo:', err instanceof Error ? err.message : String(err))
+    return 0
+  })
+
   // Find orders: onboarding submitted but site not yet generated
   // Note: stripe_paid not required — onboarding token is only sent after payment
   const { data: orders, error } = await supabase
@@ -50,7 +59,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!orders || orders.length === 0) {
-    return NextResponse.json({ processed: 0, message: 'nothing to do' })
+    return NextResponse.json({ processed: 0, demo: demaGotowe, message: 'nothing to do' })
   }
 
   const results: Array<{ id: string; status: string; error?: string }> = []
@@ -196,5 +205,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ processed: results.length, results })
+  return NextResponse.json({ processed: results.length, demo: demaGotowe, results })
 }

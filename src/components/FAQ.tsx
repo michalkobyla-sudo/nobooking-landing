@@ -4,7 +4,7 @@ import type { Icon } from '@phosphor-icons/react'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
 import Kafelek, { type KolorKafelka } from '@/components/ui/Kafelek'
-import { ArrowsCounterClockwise, CaretRight, CreditCard, DeviceMobile, Images, Question, Timer, Wallet } from '@/components/ui/ikony'
+import { ArrowsCounterClockwise, CalendarBlank, CaretRight, CreditCard, DeviceMobile, Images, Question, Timer, Wallet } from '@/components/ui/ikony'
 
 /** Ikona i kolor dla pytania o danym numerze w `TR[lang].faqs` (kolejność taka sama w obu językach). */
 const IKONY: { ikona: Icon; kolor: KolorKafelka }[] = [
@@ -14,6 +14,7 @@ const IKONY: { ikona: Icon; kolor: KolorKafelka }[] = [
   { ikona: DeviceMobile, kolor: 'blue' },
   { ikona: Timer, kolor: 'emerald' },
   { ikona: Wallet, kolor: 'orange' },
+  { ikona: CalendarBlank, kolor: 'indigo' },
 ]
 
 export default function FAQ() {

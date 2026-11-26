@@ -234,10 +234,30 @@ function Gwiazdki({ ocena }: { ocena: number }) {
 
 // ─── Pasek demo ──────────────────────────────────────────────────────────────
 
-function DemoBanner({ ui }: { ui: Teksty }) {
+/** Pasek demo z własną treścią — podgląd strony klienta (`/podglad/[token]`). */
+export interface BanerDemo {
+  tekst: string
+  etykieta: string
+  /** Ścieżka wewnętrzna — przejście przez router, żeby źródło wejścia przeżyło. */
+  sciezka: string
+}
+
+function DemoBanner({ ui, baner }: { ui: Teksty; baner?: BanerDemo }) {
   const [visible, setVisible] = useState(true)
   const router = useRouter()
   if (!visible) return null
+
+  if (baner) {
+    return (
+      <div className="a-demo" data-demo-banner>
+        <div className="a-wrap">
+          <span>{baner.tekst}</span>
+          <a href={baner.sciezka} onClick={e => { e.preventDefault(); router.push(baner.sciezka) }}>{baner.etykieta}</a>
+          <button type="button" onClick={() => setVisible(false)} aria-label={ui.close}><X weight="bold" aria-hidden /></button>
+        </div>
+      </div>
+    )
+  }
 
   // Demo pod ścieżką `/demo` stoi w tej samej aplikacji co strona sprzedażowa
   // (nobooking.eu, localhost, podgląd Vercela) — przejście bez przeładowania,
@@ -1051,12 +1071,14 @@ function Stopka({ config, ui, informacje, lang }: { config: ApartmentConfig; ui:
 
 // ─── Strona ──────────────────────────────────────────────────────────────────
 
-export default function ApartmentPage({ config, slug = '', showDemoBanner = false, stripeEnabled = true, kodyRabatowe = false, checkinOnline = false, jezykStartowy = 'pl' }: {
+export default function ApartmentPage({ config, slug = '', showDemoBanner = false, baner, stripeEnabled = true, kodyRabatowe = false, checkinOnline = false, jezykStartowy = 'pl' }: {
   config: ApartmentConfig
   /** Zostaje dla zgodności wywołań; strona nie potrzebuje już identyfikatora. */
   siteId?: string
   slug?: string
   showDemoBanner?: boolean
+  /** Własna treść paska demo; bez niej pasek reklamuje Nobooking. */
+  baner?: BanerDemo
   stripeEnabled?: boolean
   /** Czy pokazywać pole kodu rabatowego. Kody są wyłącznie w pakiecie Pro. */
   kodyRabatowe?: boolean
@@ -1076,7 +1098,8 @@ export default function ApartmentPage({ config, slug = '', showDemoBanner = fals
   const [lang, setLang] = useState<Lang>(jezykStartowy)
   // Informacja dla gości: `/sites/[slug]/informacje`, a w demo `/demo/informacje`.
   // Ścieżki z prefiksem działają też na subdomenach — patrz `sciezkaDlaSubdomeny`.
-  const baza = slug ? `/sites/${slug}` : showDemoBanner ? '/demo' : ''
+  // Podgląd demo klienta (`baner`) nie ma własnej strony informacji — ta z `/demo` opisuje inny obiekt.
+  const baza = slug ? `/sites/${slug}` : showDemoBanner && !baner ? '/demo' : ''
   const informacje = baza ? `${baza}/informacje${lang === 'pl' ? '' : `?lang=${lang}`}` : ''
 
   /**
@@ -1150,7 +1173,7 @@ export default function ApartmentPage({ config, slug = '', showDemoBanner = fals
 
   return (
     <div className="a-page" style={zmienne}>
-      {showDemoBanner && <DemoBanner ui={ui} />}
+      {showDemoBanner && <DemoBanner ui={ui} baner={baner} />}
       <Naglowek config={config} lang={lang} setLang={zmienJezyk} ui={ui} linki={linki} />
       <main>
         <Hero config={config} lang={lang} ui={ui} />

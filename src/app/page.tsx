@@ -1,5 +1,7 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
+import Przewagi from '@/components/Przewagi'
+import Zalozyciel from '@/components/Zalozyciel'
 import CommissionCalculator from '@/components/CommissionCalculator'
 import HowItWorks from '@/components/HowItWorks'
 import FeaturesGrid from '@/components/FeaturesGrid'
@@ -55,12 +57,14 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
+        <Przewagi />
         <CommissionCalculator />
         <HowItWorks />
         <FeaturesGrid />
         <ComparisonTable />
         <PricingCards />
         <Testimonials />
+        <Zalozyciel />
         <FAQ />
         <DemoCTA />
       </main>

@@ -4,6 +4,7 @@ import { requireCron } from '@/lib/cronAuth'
 import { odnotujPrzebieg } from '@/lib/cronHeartbeat'
 import { odswiezStatusConnect, MINUT_DO_ANULOWANIA_REZERWACJI } from '@/lib/stripe-connect'
 import { DNI_RETENCJI } from '@/lib/checkin'
+import { RETENCJA_DEMO_DNI } from '@/lib/demoZgloszenie'
 
 // GET /api/cron/cleanup-pending-bookings
 // Runs every 30 minutes via Vercel Cron.
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
   // i tak zaczyna od nowa, gdy okno minelo — ale bez sprzatania tabela rosnie
   // o wiersz na kazdy adres IP, ktory kiedykolwiek dotknal chronionej trasy.
   const usunieteLimity = await skasujWygasleLimity(supabase)
+  const usunieteDema = await skasujStareDema(supabase)
 
   // Konta polaczone, ktorych weryfikacja u Stripe skonczyla sie juz PO
   // powrocie wlasciciela z onboardingu. Bez tego ich strony zostawaly
@@ -54,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!stale || stale.length === 0) {
-    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, connect_gotowe: connectPodniesione })
+    return NextResponse.json({ cleaned: 0, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, dema_usuniete: usunieteDema, connect_gotowe: connectPodniesione })
   }
 
   const ids = stale.map(b => b.id)
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
 
   console.log(`[cleanup-pending] cancelled ${ids.length} stale pending bookings:`, ids)
 
-  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, connect_gotowe: connectPodniesione })
+  return NextResponse.json({ cleaned: ids.length, ids, checkiny_usuniete: usunieteCheckiny, limity_usuniete: usunieteLimity, dema_usuniete: usunieteDema, connect_gotowe: connectPodniesione })
 }
 
 /**
@@ -136,4 +138,28 @@ async function skasujWygasleLimity(supabase: ReturnType<typeof createServiceClie
     return 0
   }
   return data?.length ?? 0
+}
+
+/**
+ * Retencja zgłoszeń darmowego demo bez zakupu — obietnica z polityki
+ * prywatności (pkt 9). Zgłoszenie, z którego ktoś kupił (`order_id`), zostaje
+ * jako część historii zamówienia.
+ */
+async function skasujStareDema(supabase: ReturnType<typeof createServiceClient>): Promise<number> {
+  const granica = new Date(Date.now() - RETENCJA_DEMO_DNI * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await supabase
+    .from('demo_requests')
+    .delete()
+    .is('order_id', null)
+    .lt('created_at', granica)
+    .select('id')
+
+  if (error) {
+    console.error('[cleanup-pending] retencja zgloszen demo nie powiodla sie:', error.message)
+    return 0
+  }
+  const ile = data?.length ?? 0
+  if (ile > 0) console.log(`[cleanup-pending] retencja RODO: usunieto ${ile} zgloszen demo`)
+  return ile
 }

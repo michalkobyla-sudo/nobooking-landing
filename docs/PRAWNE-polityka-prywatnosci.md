@@ -1,6 +1,6 @@
 # Polityka prywatności
 
-Obowiązuje od 20 listopada 2026 r.
+Obowiązuje od 26 listopada 2026 r.
 
 ## 1. Kto przetwarza Twoje dane
 
@@ -35,6 +35,7 @@ podstawie umowy powierzenia (pkt 13 [regulaminu](/regulamin)).
 | hasło do panelu | dostęp do panelu | wykonanie umowy |
 | źródło wejścia: parametry kampanii (UTM), identyfikator kliknięcia reklamy, strona odsyłająca, strona wejścia | sprawdzenie, która reklama przyprowadza klientów | nasz prawnie uzasadniony interes (art. 6 ust. 1 lit. f RODO) |
 | treść korespondencji i reklamacji | obsługa zgłoszeń, obrona przed roszczeniami | nasz prawnie uzasadniony interes |
+| z formularza darmowego demo: imię, e-mail, nazwa i miejscowość apartamentu, opis, cena, liczba gości i sypialni, link do oferty | przygotowanie demo strony, wysłanie linku i kontakt w sprawie demo | działania na Twoje żądanie przed zawarciem umowy (art. 6 ust. 1 lit. b RODO) |
 
 Hasło przechowujemy wyłącznie jako skrót z solą — nie da się go odczytać, także nam.
 
@@ -78,7 +79,7 @@ wskazanym niżej.
 | **Stripe Payments Europe Ltd** | Irlandia | dane płatności, e-mail kupującego | obsługa płatności |
 | **Brevo** | Francja | adres e-mail i treść wiadomości | wysyłka maili |
 | **Twilio** | USA | numer telefonu i treść SMS-a | wysyłka SMS-ów, pakiet Pro |
-| **Anthropic PBC** | USA | opis apartamentu z formularza, treść wiadomości do asystenta | przygotowanie treści strony, odpowiedzi asystenta |
+| **Anthropic PBC** | USA | opis apartamentu z formularza zamówienia lub demo, treść wiadomości do asystenta | przygotowanie treści strony, odpowiedzi asystenta |
 | **Meta Platforms Ireland Ltd** | Irlandia | wiadomości wysłane przez Messengera | komunikacja przez Facebooka |
 
 Przekazujemy też dane biurom księgowym i organom, gdy wymagają tego przepisy.
@@ -122,6 +123,7 @@ prywatności YouTube.
 | rezerwacje i opinie | przez czas działania strony właściciela |
 | dane strony po wygaśnięciu | 12 miesięcy od wygaśnięcia, żeby odnowienie przywróciło stronę w całości; potem je usuwamy, a na żądanie właściciela — wcześniej |
 | rozmowy przez Facebooka | do zakończenia rozmowy o ofercie albo do Twojego sprzeciwu |
+| zgłoszenia darmowego demo | 180 dni od zgłoszenia, usuwane automatycznie; jeśli kupisz stronę — razem z zamówieniem |
 
 ## 10. Twoje prawa
 

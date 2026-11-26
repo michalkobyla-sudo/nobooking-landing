@@ -26,6 +26,8 @@ export const KOPIOWANE = [
   'bot_knowledge',
   'bot_leads',
   'stripe_webhook_events',
+  // Po `orders` (klucz `order_id`). Zgłoszenia demo to kontakty handlowe.
+  'demo_requests',
 ] as const
 
 export type TabelaKopii = (typeof KOPIOWANE)[number]

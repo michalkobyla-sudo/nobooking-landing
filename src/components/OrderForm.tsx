@@ -9,9 +9,19 @@ import { zapamietaneZrodlo } from '@/lib/zrodloWPamieci'
 import Kafelek from '@/components/ui/Kafelek'
 import { CaretLeft, CrownSimple, HouseLine, Lock, WarningCircle } from '@/components/ui/ikony'
 
+/** Dane z darmowego demo (`/podglad/[token]`) — formularz startuje wypełniony. */
+export interface DaneZDemo {
+  token: string
+  first_name: string
+  email: string
+  apartment_name: string
+  apartment_location: string
+}
+
 interface Props {
   plan: 'basic' | 'pro'
   currency: 'pln' | 'eur'
+  demo?: DaneZDemo | null
 }
 
 interface FormData {
@@ -44,8 +54,10 @@ function Field({ label, required, htmlFor, children }: { label: string; required
   )
 }
 
-export default function OrderForm({ plan, currency }: Props) {
-  const [form, setForm] = useState<FormData>(INITIAL)
+export default function OrderForm({ plan, currency, demo = null }: Props) {
+  const [form, setForm] = useState<FormData>(() => demo
+    ? { ...INITIAL, first_name: demo.first_name, email: demo.email, apartment_name: demo.apartment_name, apartment_location: demo.apartment_location }
+    : INITIAL)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Akceptacja regulaminu. Osobny stan, nie pole `form`: nie jest daną
@@ -110,6 +122,7 @@ export default function OrderForm({ plan, currency }: Props) {
           wczesny_start: wczesnyStart,
           // Źródło zapamiętane przy wejściu (`ZapiszZrodlo`), tylko w pamięci karty.
           zrodlo: zapamietaneZrodlo() ?? PUSTE_ZRODLO,
+          demo: demo?.token ?? null,
         }),
       })
 
@@ -132,7 +145,11 @@ export default function OrderForm({ plan, currency }: Props) {
         <Link href="/#cennik" className="n-back"><CaretLeft weight="bold" aria-hidden />Zmień plan</Link>
 
         <h1>Zamówienie</h1>
-        <p className="n-page__lead">Dane do umowy i faktury. Szczegóły apartamentu zbierzemy po płatności.</p>
+        <p className="n-page__lead">
+          {demo
+            ? 'Dane z Twojego demo są już wpisane. Uzupełnij resztę — szczegóły apartamentu zbierzemy po płatności.'
+            : 'Dane do umowy i faktury. Szczegóły apartamentu zbierzemy po płatności.'}
+        </p>
 
         <div className="n-summary" style={{ marginTop: 24 }}>
           <Kafelek ikona={plan === 'pro' ? CrownSimple : HouseLine} kolor={plan === 'pro' ? 'ink' : 'emerald'} />

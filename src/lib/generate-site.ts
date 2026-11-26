@@ -1,6 +1,19 @@
 import type { Order } from './types'
 import type { ApartmentConfig } from './apartmentTypes'
 
+/**
+ * Pola, z których generator buduje stronę. Zamówienie ma je wszystkie, a darmowe
+ * demo (`lib/demoZgloszenie.ts`) składa je z krótkiego formularza — dlatego
+ * generator nie wymaga pełnego `Order`.
+ */
+export type DaneDoGeneracji = Pick<Order,
+  | 'id' | 'apartment_name' | 'apartment_location' | 'email' | 'phone'
+  | 'ob_address' | 'ob_seasons' | 'ob_currency' | 'ob_bedrooms' | 'ob_bathrooms' | 'ob_sqm'
+  | 'ob_max_guests' | 'ob_description' | 'ob_tagline' | 'ob_amenities' | 'ob_rules'
+  | 'ob_checkin_time' | 'ob_checkout_time' | 'ob_contact_email' | 'ob_contact_phone'
+  | 'ob_instagram' | 'ob_facebook' | 'ob_color' | 'ob_price_per_night' | 'revision_notes'
+>
+
 // ─── Slug ────────────────────────────────────────────────────────────────────
 
 /** Używany, gdy nazwa nie zawiera ani jednego znaku, który przetrwa slugifikację. */
@@ -38,7 +51,7 @@ const PLACEHOLDER_PHOTOS = [
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
 
-function buildPrompt(order: Order): string {
+function buildPrompt(order: DaneDoGeneracji): string {
   const address = order.ob_address || order.apartment_location
 
   let seasonsText = '(nie podano)'
@@ -114,7 +127,7 @@ House rules: ${order.ob_rules ?? '(nie podano)'}
 Check-in time: ${order.ob_checkin_time ?? '15:00'}
 Check-out time: ${order.ob_checkout_time ?? '10:00'}
 Contact email: ${order.ob_contact_email ?? order.email}
-Contact phone: ${order.ob_contact_phone ?? order.phone ?? '(nie podano)'}
+Contact phone: ${order.ob_contact_phone ?? (order.phone || '(nie podano)')}
 Instagram: ${order.ob_instagram ?? '(nie podano)'}
 Facebook: ${order.ob_facebook ?? '(nie podano)'}
 Preferred primary color: ${order.ob_color ?? '#1A5276'}
@@ -129,7 +142,7 @@ INSTRUCTIONS:
 4. pricing: If seasons data provided, map to low/mid/high tiers by price ascending. cleaningFee = ~50% of low-season price, rounded to nearest 10. If no seasons, derive low=base*0.75, mid=base, high=base*1.5 with minNights 3/5/7.
 5. map.embedUrl: Use exact format https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed&zoom=15 (replace the address with the actual encoded address).
 6. map.nearby: Generate 4–5 realistic nearby attractions/services for this location with accurate distances.
-7. contact: Use ob_contact fields. Omit instagram/facebook keys entirely if "(nie podano)".
+7. contact: Use ob_contact fields. Omit phone/instagram/facebook keys entirely if "(nie podano)".
 8. theme.primary: Use the preferred primary color exactly. theme.accent: Choose a warm complementary accent (orange/amber/coral tones work well).
 9. reviews/bookedDates/photos: Always output exactly [], [], and { "score": 5.0, "count": 0, "items": [] }.${order.revision_notes ? `
 
@@ -141,7 +154,7 @@ IMPORTANT: Apply ALL requested changes precisely. Do not change anything that wa
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export async function generateSiteConfig(order: Order): Promise<ApartmentConfig> {
+export async function generateSiteConfig(order: DaneDoGeneracji): Promise<ApartmentConfig> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
 

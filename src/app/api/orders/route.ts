@@ -7,6 +7,7 @@ import { utworzSesjeZamowienia } from '@/lib/checkoutZamowienia'
 import { WERSJA_REGULAMINU } from '@/lib/dokumentyPrawne'
 import { normalizujNumerPodatkowy } from '@/lib/numerPodatkowy'
 import { krajZIp } from '@/lib/krajNabywcy'
+import { poprawnyToken } from '@/lib/demoZgloszenie'
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
     zrodlo?: unknown
     akceptacja_regulaminu?: unknown
     wczesny_start?: unknown
+    /** Token darmowego demo, gdy klient kupuje z podglądu (`/podglad/[token]`). */
+    demo?: unknown
   }
 
   // Validate required fields
@@ -107,6 +110,16 @@ export async function POST(request: NextRequest) {
       })
     : Promise.resolve()
 
+  // Zakup z darmowego demo — wiąże zgłoszenie z zamówieniem (konwersja demo
+  // i wyjątek od retencji). Dodatkowy zapis: przed migracją tabeli nie istnieje,
+  // a zamówienie nie może przez to przepaść.
+  const zapisDemo = typeof body.demo === 'string' && poprawnyToken(body.demo)
+    ? supabase.from('demo_requests').update({ order_id: order.id }).eq('token', body.demo).is('order_id', null)
+        .then(({ error: bladDemo }) => {
+          if (bladDemo) console.error('[orders] powiązanie z demo nie powiodło się:', bladDemo.message)
+        })
+    : Promise.resolve()
+
   // Sesja platnosci — wywolanie bezposrednie, bez wychodzenia na siec.
   //
   // Wczesniej szlo tu zadanie HTTP na `${NEXT_PUBLIC_SITE_URL}/api/stripe/checkout`,
@@ -121,7 +134,7 @@ export async function POST(request: NextRequest) {
     // Pole dobrowolne: ściśle `true`, wszystko inne to brak żądania.
     wczesnyStart: body.wczesny_start === true,
     adresPowrotu: request.nextUrl.origin,
-  }), zapisKraju])
+  }), zapisKraju, zapisDemo])
 
   if (!wynikSesji.ok) {
     console.error('[orders] Stripe checkout error:', wynikSesji.blad)

@@ -51,7 +51,7 @@ export default function Header() {
               </button>
             ))}
           </div>
-          <Link href="/demo" className="l-nav__demo">Demo</Link>
+          <Link href="/darmowe-demo" className="l-nav__demo">{lang === 'pl' ? 'Darmowe demo' : 'Free demo'}</Link>
           <button type="button" className="n-btn n-btn--primary n-btn--sm" onClick={() => przewinDo('cennik')}>
             {lang === 'pl' ? 'Zamów stronę' : 'Order site'}
           </button>

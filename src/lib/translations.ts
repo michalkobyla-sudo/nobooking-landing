@@ -1,4 +1,8 @@
 import { Lang } from '@/context/LangContext'
+import { PRICE_LABELS, PRICES } from '@/lib/prices'
+
+/** Ile najwyżej miesięcznie wychodzi pakiet Basic (2 lata), zaokrąglone w górę. */
+const miesiecznieBasic = (c: 'pln' | 'eur') => Math.ceil(PRICES.basic[c] / 100 / 24)
 
 export const TR: Record<Lang, {
   // Hero
@@ -132,6 +136,10 @@ export const TR: Record<Lang, {
         q: 'Jakie są opcje płatności dla moich gości?',
         a: 'Karta, Apple Pay i Google Pay, a przy cenach w złotówkach także BLIK. Stripe może dodać inne metody popularne w kraju gościa. Pieniądze trafiają na nie zazwyczaj w ciągu 2 dni roboczych.',
       },
+      {
+        q: 'Mój apartament działa tylko w sezonie. Czy to się opłaca?',
+        a: `Płacisz raz za dwa lata: Basic kosztuje ${PRICE_LABELS.basic.pln}, czyli mniej niż ${miesiecznieBasic('pln')} zł miesięcznie — niezależnie od tego, ile miesięcy w roku przyjmujesz gości. Nie ma abonamentu, który trzeba zawieszać poza sezonem, a strona działa cały rok, więc goście rezerwują kolejny sezon wtedy, gdy apartament stoi zamknięty.`,
+      },
     ],
     footerCopyright: '© 2026 Nobooking',
   },
@@ -219,6 +227,10 @@ export const TR: Record<Lang, {
       {
         q: 'What payment options do my guests have?',
         a: 'Card, Apple Pay and Google Pay, plus BLIK when your prices are in złoty. Stripe may add other methods popular in the guest\'s country. Funds reach your account typically within 2 business days.',
+      },
+      {
+        q: 'My apartment only runs in season. Is it worth it?',
+        a: `You pay once for two years: Basic costs ${PRICE_LABELS.basic.eur}, which is less than €${miesiecznieBasic('eur')} a month — however many months a year you host guests. There is no subscription to pause off-season, and the site runs all year, so guests book next season while the apartment is closed.`,
       },
     ],
     footerCopyright: '© 2026 Nobooking',

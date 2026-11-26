@@ -22,6 +22,8 @@ export default function robots(): MetadataRoute.Robots {
           '/sukces',
           // Poprawki strony otwierane z maila; token w adresie.
           '/poprawki/',
+          // Podgląd darmowego demo — imię i e-mail klienta, token w adresie.
+          '/podglad/',
         ],
       },
     ],

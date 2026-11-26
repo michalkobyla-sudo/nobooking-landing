@@ -35,6 +35,10 @@ const RATE_RULES: Array<[RegExp, number, number, number]> = [
   [/^\/api\/sites\/[^/]+\/book$/, 15, 10 * 60_000, 600],           // 15 req / 10 min
   [/^\/api\/orders$/, 5, 15 * 60_000, 900],                        // 5 req / 15 min
 
+  // Darmowe demo: każde zgłoszenie to wywołanie Claude. Dalsze limity
+  // (na adres e-mail i dzienny) siedzą w samej trasie.
+  [/^\/api\/demo$/, 3, 60 * 60_000, 3600],                         // 3 req / godz.
+
   // Każdy POST uruchamia generowanie strony przez Claude — bez limitu wyciek
   // tokenu poprawek oznaczał nieograniczony rachunek za API.
   [/^\/api\/revisions\/[^/]+$/, 5, 15 * 60_000, 900],

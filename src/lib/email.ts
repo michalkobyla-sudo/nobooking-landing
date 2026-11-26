@@ -351,6 +351,88 @@ export async function sendOnboardingSubmittedNotification(order: Order) {
   )
 }
 
+// ─── Darmowe demo ─────────────────────────────────────────────────────────────
+
+/** Dane zgłoszenia potrzebne mailom — bez zależności od modułu demo. */
+export interface DemoDoMaila {
+  first_name: string
+  email: string
+  apartment_name: string
+  apartment_location: string
+  offer_link: string | null
+  token: string
+}
+
+/** Klient: link do podglądu jego strony. Wysyłany po udanym wygenerowaniu. */
+export async function sendDemoReadyEmail(d: DemoDoMaila) {
+  const url = `${SITE_URL}/podglad/${d.token}`
+  await sendEmail(
+    d.email,
+    `Demo strony ${d.apartment_name} jest gotowe`,
+    szkielet({
+      tytul: 'Twoje demo jest gotowe',
+      ikonaTytulu: 'dom',
+      podglad: `Zobacz, jak może wyglądać strona ${escapeHtml(d.apartment_name)}.`,
+      tresc: `
+        ${akapit(`Cześć <strong>${escapeHtml(d.first_name)}</strong>!`)}
+        ${akapit(`Przygotowaliśmy demo strony apartamentu <strong>${escapeHtml(d.apartment_name)}</strong>. Teksty powstały z Twojego opisu, w czterech językach. Zdjęcia są przykładowe — po zakupie dodajesz swoje w panelu, a teksty poprawiamy w czterech rundach poprawek.`)}
+        ${przycisk(url, 'Zobacz swoje demo')}
+        ${grupa([
+          { ikona: 'kalendarz', tytul: 'Kalendarz i ceny', opis: 'Gość wybiera daty i od razu widzi cenę pobytu.' },
+          { ikona: 'platnosci', tytul: 'Płatności w cenie', opis: 'Karta, Apple Pay i Google Pay, a przy cenach w złotówkach także BLIK — przez Twoje konto Stripe.' },
+        ], 'Co zobaczysz')}
+        ${akapit('Masz pytania? Odpowiedz na tego maila.', { wyciszony: true })}
+        ${podpisMichal()}
+      `,
+    }),
+  )
+}
+
+/** Administrator: nowe zgłoszenie demo, czyli ciepły kontakt. */
+export async function sendDemoRequestNotification(d: DemoDoMaila, zrodlo: string) {
+  const pary: [string, string][] = [
+    ['Imię', escapeHtml(d.first_name)],
+    ['Email', link(`mailto:${escapeHtml(d.email)}`, escapeHtml(d.email))],
+    ['Apartament', escapeHtml(d.apartment_name)],
+    ['Lokalizacja', escapeHtml(d.apartment_location)],
+  ]
+  if (d.offer_link) pary.push(['Oferta', link(escapeHtml(d.offer_link))])
+  await sendEmail(
+    ADMIN_EMAIL(),
+    `Nowe demo — ${d.apartment_name} (${d.first_name})`,
+    szkielet({
+      tytul: 'Ktoś zamówił darmowe demo',
+      ikonaTytulu: 'lupa',
+      podglad: `${escapeHtml(d.apartment_name)} · ${escapeHtml(d.apartment_location)}`,
+      tresc: `
+        ${dane(pary, 'Zgłoszenie')}
+        ${akapit(escapeHtml(zrodlo), { maly: true, wyciszony: true })}
+        ${akapit('Strona generuje się sama; klient dostanie link mailem. Podgląd poniżej zadziała po minucie.')}
+        ${przycisk(`${SITE_URL}/podglad/${d.token}`, 'Zobacz demo klienta')}
+      `,
+    }),
+    null,
+  )
+}
+
+/** Administrator: generowanie nie udało się po wszystkich próbach — trzeba ręcznie. */
+export async function sendDemoFailedNotification(d: DemoDoMaila, blad: string) {
+  await sendEmail(
+    ADMIN_EMAIL(),
+    `Demo nie powstało — ${d.apartment_name}`,
+    szkielet({
+      tytul: 'Demo nie wygenerowało się',
+      ikonaTytulu: 'anulowanie',
+      tresc: `
+        ${akapit(`Zgłoszenie <strong>${escapeHtml(d.apartment_name)}</strong> (${escapeHtml(d.email)}) przeszło wszystkie próby bez skutku. Klient widzi komunikat, że odezwiemy się mailem.`)}
+        ${cytat(escapeHtml(blad.slice(0, 400)))}
+        ${przycisk(`mailto:${escapeHtml(d.email)}`, 'Napisz do klienta', 'szary')}
+      `,
+    }),
+    null,
+  )
+}
+
 // ─── Booking emails ───────────────────────────────────────────────────────────
 
 function fmtDate(dateStr: string): string {

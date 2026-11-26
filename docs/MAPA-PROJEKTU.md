@@ -1,7 +1,7 @@
 # Mapa projektu — od tego zacznij
 
 Krótki punkt wejścia: co gdzie leży, jak płyną dane, na co uważać. Szczegóły są
-w `TECHNICZNA-DOKUMENTACJA.md` (numery sekcji podane niżej). Stan: 2026-11-20.
+w `TECHNICZNA-DOKUMENTACJA.md` (numery sekcji podane niżej). Stan: 2026-11-26.
 **Zmieniasz przepływ, konto albo adres — popraw tę mapę w tym samym commicie.**
 
 ## Czym jest Nobooking
@@ -32,6 +32,16 @@ Supabase (REST, klucz serwisowy po stronie serwera), Stripe, Brevo (maile), Twil
    Status zamówienia: `onboarding_sent` → `building` (cron bierze) → `completed` (mail wysłany);
    strona wstrzymana do przeglądu zostaje `building` z `provisioning_error`.
 5. Poprawki: `/poprawki/[token]` → `api/revisions/[token]` (4 rundy).
+
+## Przepływ 1a — darmowe demo przed zakupem (od 2026-11-26)
+
+`/darmowe-demo` → `DemoForm.tsx` → `POST /api/demo` (walidacja `lib/demoZgloszenie.ts`, limity: proxy
+3/godz. na IP, 2/dobę na e-mail, 40/dobę łącznie) → wiersz `demo_requests` → w `after()`
+`lib/demoGeneracja.ts` (ten sam generator co strony, `generateSiteConfig`) → mail z linkiem
+`/podglad/[token]` do klienta + powiadomienie do administratora. Ponowienia (maks. 3) robi cron
+`provision-sites`, po wyczerpaniu mail do administratora. Zakup z podglądu: token w pamięci karty
+(`lib/demoWPamieci.ts`) → `/zamow?demo=` wypełnia formularz → `orders` ustawia `demo_requests.order_id`.
+Zgłoszenia bez zakupu kasuje `cleanup-pending-bookings` po 180 dniach (polityka prywatności pkt 9).
 
 ## Przepływ 2 — rezerwacja gościa
 

@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
-import { PRICE_LABELS } from '@/lib/prices'
+import { PRICE_LABELS, PRICES } from '@/lib/prices'
+import { zapamietaneDemo } from '@/lib/demoWPamieci'
 import Kafelek from '@/components/ui/Kafelek'
 import { CheckCircle, CrownSimple, HouseLine } from '@/components/ui/ikony'
 
@@ -17,7 +18,17 @@ export default function PricingCards() {
 
   function handleBuy(plan: 'basic' | 'pro') {
     setLoading(plan)
-    router.push(`/zamow?plan=${plan}&currency=${currency}`)
+    // Klient przyszedł z podglądu swojego demo — formularz wypełni się jego danymi.
+    const demo = zapamietaneDemo()
+    router.push(`/zamow?plan=${plan}&currency=${currency}${demo ? `&demo=${encodeURIComponent(demo)}` : ''}`)
+  }
+
+  // Cena pakietu rozłożona na 24 miesiące, w górę do pełnej jednostki —
+  // „mniej niż” zostaje prawdą także po zaokrągleniu.
+  const miesiecznie = (plan: 'basic' | 'pro') => {
+    const n = Math.ceil(PRICES[plan][currency] / 100 / 24)
+    const kwota = currency === 'pln' ? `${n} zł` : pl ? `${n} €` : `€${n}`
+    return pl ? `mniej niż ${kwota} miesięcznie` : `less than ${kwota} a month`
   }
 
   // Z `prices.ts`, nie z literałów: kwota pokazana i pobrana przez Stripe
@@ -32,7 +43,9 @@ export default function PricingCards() {
       <div className="l-wrap">
         <div className="l-head">
           <h2>{pl ? 'Jedna opłata na dwa lata.' : 'One payment for two years.'}</h2>
-          <p>{pl ? 'Bez abonamentu i bez prowizji. Cenę odnowienia zapisujemy w dniu zakupu.' : 'No subscription and no commission. Your renewal price is locked in on the day you buy.'}</p>
+          <p>{pl
+            ? 'Bez abonamentu i bez prowizji — poza sezonem nie płacisz nic więcej. Cenę odnowienia zapisujemy w dniu zakupu.'
+            : 'No subscription and no commission — nothing more to pay off-season. Your renewal price is locked in on the day you buy.'}</p>
         </div>
 
         <div className="n-seg" role="group" aria-label={pl ? 'Waluta' : 'Currency'}>
@@ -54,6 +67,7 @@ export default function PricingCards() {
                   {p.nazwa}
                 </h3>
                 <div className="l-plan__price">{p.cena}<small>{t.pricingPeriod}</small></div>
+                <p className="l-plan__month">{miesiecznie(p.id)}</p>
                 <ul>
                   {p.cechy.map(c => <li key={c}><CheckCircle weight="fill" aria-hidden />{c}</li>)}
                 </ul>

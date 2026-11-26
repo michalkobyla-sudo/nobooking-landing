@@ -231,6 +231,38 @@ h1, h2, h3, .n-display { font-family: var(--font-display); }
 .l-faq details + details summary::before { content: ""; position: absolute; top: 0; left: 62px; right: 0; height: 1px; background: var(--line); }
 .l-faq__ans { padding: 0 18px 18px 62px; color: var(--muted); font-size: 16px; }
 
+/* przewagi — pas faktów pod hero */
+.l-edge { padding: 72px 0 88px; border-top: 1px solid var(--line); }
+.l-edge .l-wrap { display: grid; grid-template-columns: minmax(0,.75fr) minmax(0,1.5fr); gap: 56px; align-items: start; }
+.l-edge h2 { font-size: clamp(28px, 3vw, 40px); line-height: 1.08; letter-spacing: -.035em; font-weight: 700; color: var(--ink); max-width: 380px; }
+.l-edge__facts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border-top: 1px solid var(--line); margin: 0; }
+.l-edge__fact { padding: 26px 0 28px; border-bottom: 1px solid var(--line); }
+.l-edge__fact:nth-child(odd) { padding-right: 32px; border-right: 1px solid var(--line); }
+.l-edge__fact:nth-child(even) { padding-left: 32px; }
+.l-edge__fact dt b { display: block; font-family: var(--font-display); font-size: 60px; line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+.l-edge__fact:nth-child(2) dt b { color: var(--emerald-dark); }
+.l-edge__fact dt span { display: block; margin-top: 10px; font-size: 17px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+.l-edge__fact dd { margin: 6px 0 0; font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 300px; }
+
+/* założyciel */
+.l-founder { padding-bottom: 32px; }
+.l-founder .l-wrap { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); gap: 64px; align-items: center; }
+.l-founder__text h2 { font-size: clamp(34px, 4.4vw, 56px); line-height: 1.05; letter-spacing: -.04em; font-weight: 700; color: var(--ink); max-width: 640px; }
+.l-founder__text p { font-size: 19px; line-height: 1.55; color: var(--muted); margin-top: 22px; max-width: 560px; }
+.l-founder__card { background: var(--group); border-radius: 28px; padding: 28px; }
+.l-founder__who { display: flex; align-items: center; gap: 16px; margin: 0 4px 22px; }
+.l-founder__who div b { display: block; font-size: 19px; letter-spacing: -.02em; color: var(--ink); }
+.l-founder__who div span { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
+.l-founder__photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; }
+.l-founder__photo--initials { display: grid; place-items: center; background: var(--ink); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
+.l-founder__row { text-decoration: none; color: inherit; transition: background .15s ease; }
+.l-founder__row:hover { background: #FAFBFA; }
+.l-founder__row .n-row__txt span { font-size: 13px; }
+
+/* cena miesięcznie pod ceną pakietu */
+.l-plan__month { margin-top: -8px; font-size: 15px; color: var(--muted); }
+.l-plan--pro .l-plan__month { color: #A1A1A6; }
+
 /* demo */
 .l-demo { border-radius: 32px; background: #1D1D1F; color: #fff; padding: 56px; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: 40px; align-items: center; }
 .l-demo h2 { color: #fff; font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -.035em; line-height: 1.05; }
@@ -261,6 +293,9 @@ h1, h2, h3, .n-display { font-family: var(--font-display); }
   .l-hero .l-wrap, .l-feature-hero, .l-demo, .l-calc { grid-template-columns: 1fr; }
   .l-feature-hero { grid-column: auto; }
   .l-groups, .l-plans, .l-widgets, .l-steps, .l-quotes { grid-template-columns: 1fr; }
+  .l-edge .l-wrap, .l-founder .l-wrap { grid-template-columns: 1fr; gap: 32px; }
+  .l-edge { padding: 56px 0 64px; }
+  .l-edge__fact dt b { font-size: 46px; }
   .l-hero { padding-top: 48px; }
   .l-stage { margin-top: 12px; }
   .l-notif { right: 0; }
@@ -273,6 +308,11 @@ h1, h2, h3, .n-display { font-family: var(--font-display); }
 }
 @media (max-width: 480px) {
   .l-wrap { padding: 0 16px; }
+  .l-edge__fact:nth-child(odd) { padding-right: 16px; }
+  .l-edge__fact:nth-child(even) { padding-left: 16px; }
+  .l-edge__fact dt b { font-size: 40px; }
+  .l-edge__fact dt span { font-size: 15px; }
+  .l-founder__card { padding: 20px; }
   .l-nav .n-btn--sm { padding: 8px 12px; }
   .l-logo { font-size: 17px; }
   .l-notif { width: calc(100% - 8px); }

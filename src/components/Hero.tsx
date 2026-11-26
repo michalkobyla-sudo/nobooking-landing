@@ -42,9 +42,9 @@ export default function Hero() {
             <button type="button" className="n-btn n-btn--primary" onClick={() => przewinDo('cennik')}>
               {pl ? `Zamów stronę — od ${PRICE_LABELS.basic.pln}` : `Order your site — from ${PRICE_LABELS.basic.eur}`}
             </button>
-            <Link href="/demo" className="n-btn n-btn--ghost">
+            <Link href="/darmowe-demo" className="n-btn n-btn--ghost">
               <PlayCircle weight="fill" size={20} color="var(--emerald)" aria-hidden />
-              {pl ? 'Zobacz demo' : 'See the demo'}
+              {pl ? 'Darmowe demo Twojego apartamentu' : 'Free demo of your apartment'}
             </Link>
           </div>
           <ul className="l-trust">

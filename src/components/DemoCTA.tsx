@@ -3,10 +3,8 @@
 import Link from 'next/link'
 import { useLang } from '@/context/LangContext'
 import { TR } from '@/lib/translations'
-import { PRICE_LABELS } from '@/lib/prices'
 import Kafelek from '@/components/ui/Kafelek'
 import { Browser, CalendarCheck, Translate } from '@/components/ui/ikony'
-import { przewinDo } from '@/components/Header'
 
 /** Demo to strona apartamentu (`/demo`) — lista mówi tylko o tym, co tam naprawdę jest. */
 export default function DemoCTA() {
@@ -25,13 +23,13 @@ export default function DemoCTA() {
       <div className="l-wrap">
         <div className="l-demo">
           <div>
-            <h2>{pl ? 'Sprawdź wszystko sam, zanim kupisz.' : 'Try it yourself before you buy.'}</h2>
-            <p>{t.demoText}</p>
+            <h2>{pl ? 'Zobacz demo na swoim apartamencie, zanim kupisz.' : 'See a demo of your own apartment before you buy.'}</h2>
+            <p>{pl
+              ? 'Podaj nazwę, miejscowość i kilka zdań opisu. Zwykle w minutę zobaczysz stronę z Twoimi tekstami i cenami, w czterech językach. Bez płacenia.'
+              : 'Give us the name, town and a few sentences about it. Usually within a minute you will see a site with your texts and prices, in four languages. No payment.'}</p>
             <div className="l-demo__ctas">
-              <Link href="/demo" className="n-btn n-btn--light">{t.demoCta}</Link>
-              <button type="button" className="n-btn l-btn-dark-ghost" onClick={() => przewinDo('cennik')}>
-                {pl ? `Zamów — od ${PRICE_LABELS.basic.pln}` : `Order — from ${PRICE_LABELS.basic.eur}`}
-              </button>
+              <Link href="/darmowe-demo" className="n-btn n-btn--light">{pl ? 'Przygotuj moje demo' : 'Make my demo'}</Link>
+              <Link href="/demo" className="n-btn l-btn-dark-ghost">{t.demoCta}</Link>
             </div>
           </div>
           <div className="l-demo__list">

@@ -79,6 +79,10 @@ export const WYMAGANE: WymaganaKolumna[] = [
   ['renewal_reminders', 'id'],
   // Bez tej tabeli limit żądań cicho przestaje być wspólny: proxy zawodzi
   // na otwarto i zostaje tylko licznik w pamięci instancji.
+  // Darmowe demo (`lib/demoZgloszenie.ts`). `order_id` — ostatnia kolumna
+  // migracji, więc jej obecność znaczy, że przeszła w całości.
+  ['demo_requests', 'order_id'],
+
   ['rate_limits', 'koniec'],
   ['cron_runs', 'ostatni_przebieg'],
 ]
