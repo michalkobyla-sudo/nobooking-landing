@@ -35,7 +35,7 @@ export default function Zalozyciel() {
         <div className="l-founder__card">
           <div className="l-founder__who">
             {z.zdjecie
-              ? <img src={z.zdjecie} alt={z.imie} width={64} height={64} className="l-founder__photo" />
+              ? <img src={z.zdjecie} alt={z.imie} width={72} height={72} className="l-founder__photo" />
               : <span className="l-founder__photo l-founder__photo--initials" aria-hidden>{z.inicjaly}</span>}
             <div>
               <b>{z.imie}</b>

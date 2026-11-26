@@ -253,7 +253,7 @@ h1, h2, h3, .n-display { font-family: var(--font-display); }
 .l-founder__who { display: flex; align-items: center; gap: 16px; margin: 0 4px 22px; }
 .l-founder__who div b { display: block; font-size: 19px; letter-spacing: -.02em; color: var(--ink); }
 .l-founder__who div span { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
-.l-founder__photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; }
+.l-founder__photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; object-position: 50% 30%; flex: none; }
 .l-founder__photo--initials { display: grid; place-items: center; background: var(--ink); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
 .l-founder__row { text-decoration: none; color: inherit; transition: background .15s ease; }
 .l-founder__row:hover { background: #FAFBFA; }
